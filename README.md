@@ -1,2 +1,2 @@
-# airiv
-Archiving Infrastructure for Reproducible Interactive Visualizations (AIRIV)
+# raiv
+Reproducible Archives for Interactive Visualizations (RAIV)
