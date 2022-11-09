@@ -1,0 +1,41 @@
+{
+  "name": "raiv",
+  "version": "0.0.0",
+  "watch": {
+    "build": {
+      "patterns": [
+        "public/**",
+        "src/**"
+      ],
+      "extensions": "css,js,json,vue"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -r chrome_extension/dist",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "watch": "npm-watch"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.2.0",
+    "@fortawesome/free-regular-svg-icons": "^6.2.0",
+    "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@fortawesome/vue-fontawesome": "^3.0.1",
+    "pinia": "^2.0.23",
+    "vue": "^3.2.41",
+    "vue-router": "^4.1.5"
+  },
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.1.4",
+    "@vitejs/plugin-vue": "^3.1.2",
+    "@vue/eslint-config-prettier": "^7.0.0",
+    "eslint": "^8.22.0",
+    "eslint-plugin-vue": "^9.3.0",
+    "npm-watch": "^0.11.0",
+    "prettier": "^2.7.1",
+    "vite": "^3.1.8",
+    "vue-eslint-parser": "^8.3.0"
+  }
+}
