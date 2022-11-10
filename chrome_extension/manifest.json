@@ -12,10 +12,7 @@
   },
 
   "host_permissions": ["*://*/*"],
-  "permissions": [
-    "activeTab",
-    "scripting"
-  ],
+  "permissions": ["scripting"],
 
   "content_scripts": [{
     "matches": ["*://*/*"],
