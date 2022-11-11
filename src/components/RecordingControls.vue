@@ -62,7 +62,7 @@ function startRecording() {
 }
 
 function stopRecording() {
-  paused.value = false
   recording.value = false
+  paused.value = false
 }
 </script>

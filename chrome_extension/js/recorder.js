@@ -1,1 +1,3 @@
-console.log('hello')
+document.addEventListener('click', (event) => {
+  console.log(event)
+})

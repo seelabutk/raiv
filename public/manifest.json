@@ -17,6 +17,11 @@
     "scripting"
   ],
 
+  "background": {
+    "service_worker": "js/recorder_service.js",
+    "type": "module"
+  },
+
   "content_scripts": [{
     "matches": ["*://*/*"],
     "js": ["js/recorder.js"]
