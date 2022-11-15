@@ -27,7 +27,7 @@ import { computed } from 'vue'
 
 import ServiceWorker from '@/entry/background'
 
-const worker = ServiceWorker.create()
+const worker = new ServiceWorker()
 const store = worker.store
 
 const recordPauseIcon = computed(() =>

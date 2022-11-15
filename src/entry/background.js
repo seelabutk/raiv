@@ -2,14 +2,10 @@
 import { reactive, watch } from 'vue'
 
 export default class ServiceWorker {
-  constructor(store) {
-    this.store = store
-  }
-
-  static create() {
+  constructor() {
     const storageObj = localStorage.getItem('store')
 
-    const store =
+    this.store =
       storageObj === null
         ? reactive({
             paused: false,
@@ -17,11 +13,9 @@ export default class ServiceWorker {
           })
         : reactive(JSON.parse(storageObj))
 
-    watch(store, () => {
-      localStorage.setItem('store', JSON.stringify(store))
+    watch(this.store, () => {
+      localStorage.setItem('store', JSON.stringify(this.store))
     })
-
-    return new ServiceWorker(store)
   }
 
   sendMessage(obj) {

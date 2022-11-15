@@ -1,6 +1,6 @@
 {
   "name": "raiv",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -47,9 +47,6 @@
     "rules": {}
   },
   "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead",
-    "not ie 11"
+    "last 2 Chrome versions"
   ]
 }
