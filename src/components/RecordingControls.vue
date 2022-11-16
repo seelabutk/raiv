@@ -8,11 +8,13 @@
     <button
       type="button"
       :disabled="!store.recording"
-      @click="worker.stopRecording"
+      @click="props.worker.stopRecording"
     >
       <font-awesome-icon icon="fa-solid fa-circle-stop" />
       Stop Recording
     </button>
+
+    <button type="button" @click="props.worker.clear">Clear</button>
   </div>
 </template>
 
@@ -23,34 +25,38 @@ button:not(:first-child) {
 </style>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, defineProps } from 'vue'
 
-import ServiceWorker from '@/entry/background'
+const props = defineProps({
+  worker: {
+    required: true,
+    type: Object,
+  },
+})
 
-const worker = new ServiceWorker()
-const store = worker.store
+const store = computed(() => props.worker.store)
 
 const recordPauseIcon = computed(() =>
-  store.recording ? 'fa-solid fa-circle-pause' : 'fa-solid fa-circle'
+  store.value.recording ? 'fa-solid fa-circle-pause' : 'fa-solid fa-circle'
 )
 
 const recordPauseText = computed(() => {
-  if (!store.recording) {
+  if (!store.value.recording) {
     return 'Start recording'
   }
-  if (!store.paused) {
+  if (!store.value.paused) {
     return 'Pause recording'
   }
   return 'Resume recording'
 })
 
 function recordPause() {
-  if (!store.recording) {
-    worker.startRecording()
-  } else if (!store.paused) {
-    store.paused = true
+  if (!store.value.recording) {
+    props.worker.startRecording()
+  } else if (!store.value.paused) {
+    store.value.paused = true
   } else {
-    store.paused = false
+    store.value.paused = false
   }
 }
 </script>
