@@ -89,11 +89,11 @@ chrome.runtime.onConnect.addListener((port) => {
   if (port.name === 'raiv') {
     port.onMessage.addListener((message) => {
       if (message.launch) {
-        const frame = document.createElement('iframe')
-        frame.src = chrome.runtime.getURL('/recorder.html')
+        const recorder = document.createElement('div')
+        recorder.id = 'raiv'
 
-        document.body.insertBefore(frame, document.body.firstChild)
-        createApp(App).mount(frame.querySelector('#raiv'))
+        document.body.insertBefore(recorder, document.body.firstChild)
+        createApp(App).mount('#raiv')
       }
     })
   }
