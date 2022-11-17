@@ -15,6 +15,7 @@ export default class ServiceWorker {
       localStorage.setItem('store', JSON.stringify(this.store))
     })
 
+    /*
     chrome.tabs.query(
       {
         active: true,
@@ -36,6 +37,36 @@ export default class ServiceWorker {
             this.store.actionMap.splice(index, 1)
           }
         })
+      }
+    )
+    */
+  }
+
+  start() {
+    chrome.tabs.query(
+      {
+        active: true,
+        currentWindow: true,
+      },
+      (tabs) => {
+        this.port = chrome.tabs.connect(tabs[0].id, { name: 'raiv' })
+        this.port.postMessage({ launch: true })
+
+        /*
+        this.port.onMessage.addListener((message) => {
+          const element = message.target
+
+          const index = this.store.actionMap.findIndex(
+            (obj) => obj.target === element
+          )
+
+          if (index === -1) {
+            this.store.actionMap.push(message)
+          } else {
+            this.store.actionMap.splice(index, 1)
+          }
+        })
+        */
       }
     )
   }

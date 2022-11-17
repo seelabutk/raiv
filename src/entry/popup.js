@@ -14,4 +14,4 @@ library.add(faCircle, faCirclePause, faCircleStop)
 const app = createApp(App)
 
 app.component('font-awesome-icon', FontAwesomeIcon)
-app.mount('#app')
+app.mount('#raiv')

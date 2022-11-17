@@ -1,4 +1,5 @@
 /* global chrome */
+/*
 const selectedElements = []
 const elementBorders = []
 let port = null
@@ -78,3 +79,22 @@ function onClick(event) {
     })
   }
 }
+*/
+
+import { createApp } from 'vue'
+
+import App from '@/views/RecorderView'
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === 'raiv') {
+    port.onMessage.addListener((message) => {
+      if (message.launch) {
+        const frame = document.createElement('iframe')
+        frame.src = chrome.runtime.getURL('/recorder.html')
+
+        document.body.insertBefore(frame, document.body.firstChild)
+        createApp(App).mount(frame.querySelector('#raiv'))
+      }
+    })
+  }
+})
