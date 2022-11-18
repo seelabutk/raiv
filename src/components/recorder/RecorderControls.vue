@@ -1,62 +1,76 @@
 <template>
   <div>
-    <button type="button" @click="recordPause">
-      <font-awesome-icon :icon="recordPauseIcon" />
-      {{ recordPauseText }}
-    </button>
+    <div class="controls">
+      <button type="button" @click="recordPause">
+        <font-awesome-icon :icon="recordPauseIcon" />
+      </button>
 
-    <button
-      type="button"
-      :disabled="!store.recording"
-      @click="props.worker.stopRecording"
-    >
-      <font-awesome-icon icon="fa-solid fa-circle-stop" />
-      Stop Recording
-    </button>
+      <button type="button" :disabled="!store.recording" @click="stopRecording">
+        <font-awesome-icon icon="fa-solid fa-stop" />
+      </button>
+    </div>
 
-    <button type="button" @click="props.worker.clear">Clear</button>
+    <ul class="selections">
+      <li v-for="entry in store.actionMap" :key="entry">{{ entry }}</li>
+    </ul>
   </div>
 </template>
 
-<style scoped>
-button:not(:first-child) {
-  margin-left: 1em;
-}
-</style>
-
 <script setup>
-import { computed, defineProps } from 'vue'
-
-const props = defineProps({
-  worker: {
-    required: true,
-    type: Object,
-  },
-})
-
-const store = computed(() => props.worker.store)
+import { computed } from 'vue'
+import store from '@/store/store'
 
 const recordPauseIcon = computed(() =>
-  store.value.recording ? 'fa-solid fa-circle-pause' : 'fa-solid fa-circle'
+  store.recording && !store.paused ? 'fa-solid fa-pause' : 'fa-solid fa-play'
 )
 
-const recordPauseText = computed(() => {
-  if (!store.value.recording) {
-    return 'Start recording'
-  }
-  if (!store.value.paused) {
-    return 'Pause recording'
-  }
-  return 'Resume recording'
-})
+function onClick(event) {
+  const raivWidget = document.querySelector('#raiv')
+  const target = event.target
 
-function recordPause() {
-  if (!store.value.recording) {
-    props.worker.startRecording()
-  } else if (!store.value.paused) {
-    store.value.paused = true
-  } else {
-    store.value.paused = false
+  if (!raivWidget.contains(target)) {
+    const index = store.actionMap.indexOf(target)
+    if (index === -1) {
+      store.actionMap.push(target)
+    } else {
+      store.actionMap.splice(index, 1)
+    }
   }
 }
+
+function recordPause() {
+  if (!store.recording) {
+    store.recording = true
+    document.addEventListener('click', onClick, true)
+  } else if (!store.paused) {
+    store.paused = true
+    document.removeEventListener('click', onClick, true)
+  } else {
+    store.paused = false
+    document.addEventListener('click', onClick, true)
+  }
+}
+
+function stopRecording() {
+  store.actionMap = []
+  store.paused = false
+  store.recording = false
+
+  document.removeEventListener('click', onClick, true)
+}
 </script>
+
+<style scoped>
+button {
+  cursor: pointer;
+  font-size: 1.5em;
+  height: 1.75em;
+  outline: 0;
+  padding: 0.25em;
+  width: 1.75em;
+}
+
+button:not(:last-child) {
+  margin-right: 1em;
+}
+</style>
