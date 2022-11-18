@@ -25,15 +25,25 @@ const recordPauseIcon = computed(() =>
 )
 
 function onClick(event) {
+  event.preventDefault() // NOTE: This may be a terrible idea. Will this work with menus?
+
   const raivWidget = document.querySelector('#raiv')
   const target = event.target
 
   if (!raivWidget.contains(target)) {
-    const index = store.actionMap.indexOf(target)
+    const index = store.actionMap.findIndex((entry) => entry.target === target)
     if (index === -1) {
-      store.actionMap.push(target)
+      store.actionMap.push({
+        target,
+        action: 'click',
+        originalFilter: target.style.filter,
+      })
+
+      target.classList.add('raiv-selected')
     } else {
       store.actionMap.splice(index, 1)
+
+      target.classList.remove('raiv-selected')
     }
   }
 }
