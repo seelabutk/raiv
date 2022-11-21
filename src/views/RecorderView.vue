@@ -1,11 +1,17 @@
 <template>
   <div>
-    <RecorderControls />
+    <RecorderControls :store="store" />
+    <ActionMap :store="store" />
   </div>
 </template>
 
 <script setup>
+import ActionMap from '@/components/recorder/ActionMap'
 import RecorderControls from '@/components/recorder/RecorderControls'
+
+import Store from '@/store/store'
+
+const store = new Store()
 </script>
 
 <style>

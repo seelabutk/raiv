@@ -1,22 +1,105 @@
-import { reactive, watch } from 'vue'
+import { ref, watch } from 'vue'
 
-const storageObj = localStorage.getItem('store')
-let store = null
+export default class Store {
+  constructor() {
+    // NOTE: if we need to communicate with the service worker, it would be nice to pass in the port for messages to this method
+    this.actionMap = ref({
+      action: null,
+      children: [],
+      target: null,
+    })
+    this.lastAction = null
+    this.paused = ref(false)
+    this.recording = ref(false)
 
-if (storageObj === null) {
-  store = reactive({
-    actionMap: [],
-    paused: false,
-    recording: false,
-  })
-} else {
-  store = reactive(JSON.parse(storageObj))
+    const storageString = localStorage.getItem('store')
+    if (storageString !== null) {
+      const storageObj = JSON.parse(storageString)
+
+      this.set('actionMap', storageObj.actionMap)
+      this.set('paused', storageObj.paused)
+      this.set('recording', storageObj.recording)
+    }
+
+    watch([this.actionMap, this.paused, this.recording], () => {
+      localStorage.setItem(
+        'store',
+        JSON.stringify({
+          actionMap: this.actionMap.value,
+          paused: this.paused.value,
+          recording: this.recording.value,
+        })
+      )
+
+      // TODO: send message to service worker with updated object???
+    })
+  }
+
+  // Returns the parent of action and its index in parent's children array for
+  // easy removal from this.actionMap
+  _findAction(node, action) {
+    for (let index = 0; index < node.children.length; index++) {
+      const child = node.children[index]
+
+      if (child.target === action.target) {
+        return [node, index]
+      }
+
+      const result = this._findAction(child, action)
+      if (result !== null) {
+        return result
+      }
+    }
+
+    return null
+  }
+
+  // Returns true if the action is already in this.actionMap
+  findAction(action) {
+    return this._findAction(this.actionMap.value, action) !== null
+  }
+
+  addAction(action) {
+    action.children = []
+
+    if (this.lastAction === null) {
+      this.actionMap.value.children.push(action)
+    } else {
+      this.lastAction.children.push(action)
+    }
+
+    this.lastAction = action
+  }
+
+  removeAction(action) {
+    const searchResult = this._findAction(this.actionMap.value, action)
+
+    if (searchResult !== null) {
+      const parent = searchResult[0]
+      const index = searchResult[1]
+
+      if (this.lastAction.target === action.target) {
+        this.lastAction = parent
+      }
+
+      return parent.children.splice(index, 1)
+    }
+
+    return null
+  }
+
+  reset() {
+    this.actionMap.value = {
+      action: null,
+      children: [],
+      target: null,
+    }
+    this.lastAction = null
+    this.paused.value = false
+    this.recording.value = false
+  }
+
+  set(key, value) {
+    this[key].value = value
+  }
 }
-
-watch(store, () => {
-  localStorage.setItem('store', JSON.stringify(store))
-
-  // TODO: send message to service worker with updated object???
-})
-
-export default store

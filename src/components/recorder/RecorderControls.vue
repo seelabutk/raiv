@@ -1,29 +1,43 @@
 <template>
-  <div>
-    <div class="controls">
-      <button type="button" @click="recordPause">
-        <font-awesome-icon :icon="recordPauseIcon" />
-      </button>
+  <div class="controls">
+    <button type="button" @click="recordPause">
+      <font-awesome-icon :icon="recordPauseIcon" />
+    </button>
 
-      <button type="button" :disabled="!store.recording" @click="stopRecording">
-        <font-awesome-icon icon="fa-solid fa-stop" />
-      </button>
-    </div>
-
-    <ul class="selections">
-      <li v-for="entry in store.actionMap" :key="entry">{{ entry }}</li>
-    </ul>
+    <button
+      type="button"
+      :disabled="!props.store.recording"
+      @click="stopRecording"
+    >
+      <font-awesome-icon icon="fa-solid fa-stop" />
+    </button>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, defineProps } from 'vue'
 import throttle from 'lodash.throttle'
-import store from '@/store/store'
+
+const props = defineProps({
+  store: {
+    required: true,
+    type: Object,
+  },
+})
 
 const recordPauseIcon = computed(() =>
-  store.recording && !store.paused ? 'fa-solid fa-pause' : 'fa-solid fa-play'
+  props.store.recording.value && !props.store.paused.value
+    ? 'fa-solid fa-pause'
+    : 'fa-solid fa-play'
 )
+
+function unhighlight(node) {
+  node.target.classList.remove('raiv-selected')
+
+  node.children.forEach((child) => {
+    unhighlight(child)
+  })
+}
 
 function onClick(event) {
   event.preventDefault() // NOTE: This may be a terrible idea. Will this work with menus?
@@ -32,18 +46,17 @@ function onClick(event) {
   const target = event.target
 
   if (!raivWidget.contains(target)) {
-    const index = store.actionMap.findIndex((entry) => entry.target === target)
-    if (index === -1) {
-      store.actionMap.push({
-        target,
-        action: 'click',
-      })
+    const action = {
+      target,
+      action: 'click',
+    }
 
-      target.classList.add('raiv-selected')
+    if (!props.store.findAction(action)) {
+      action.target.classList.add('raiv-selected')
+      props.store.addAction(action)
     } else {
-      store.actionMap.splice(index, 1)
-
-      target.classList.remove('raiv-selected')
+      const deleted = props.store.removeAction(action)
+      unhighlight(deleted[0])
     }
   }
 }
@@ -65,16 +78,19 @@ function onMousemove(event) {
 const throttledMousemove = throttle(onMousemove, 100)
 
 function recordPause() {
-  if (!store.recording) {
-    store.recording = true
+  if (!props.store.recording.value) {
+    props.store.set('recording', true)
+
     document.addEventListener('click', onClick, true)
     document.addEventListener('mousemove', throttledMousemove, true)
-  } else if (!store.paused) {
-    store.paused = true
+  } else if (!props.store.paused.value) {
+    props.store.set('paused', true)
+
     document.removeEventListener('click', onClick, true)
     document.removeEventListener('mousemove', throttledMousemove, true)
   } else {
-    store.paused = false
+    props.store.set('paused', false)
+
     document.addEventListener('click', onClick, true)
     document.addEventListener('mousemove', throttledMousemove, true)
   }
@@ -87,13 +103,11 @@ function stopRecording() {
   if (hoveredElement !== null) {
     hoveredElement.classList.remove('raiv-hovered')
   }
-  store.actionMap.forEach((entry) => {
-    entry.target.classList.remove('raiv-selected')
+  document.querySelectorAll('.raiv-selected').forEach((element) => {
+    element.classList.remove('raiv-selected')
   })
 
-  store.actionMap = []
-  store.paused = false
-  store.recording = false
+  props.store.reset()
 }
 </script>
 
