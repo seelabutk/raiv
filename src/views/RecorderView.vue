@@ -18,8 +18,11 @@ import RecorderControls from '@/components/recorder/RecorderControls'
   top: 1em;
 }
 
+.raiv-hovered {
+  border: 2px solid #0000ff;
+}
+
 .raiv-selected {
-  filter: invert(63%) sepia(53%) saturate(2990%) hue-rotate(75deg)
-    brightness(111%) contrast(134%);
+  border: 2px solid #00ff00 !important;
 }
 </style>

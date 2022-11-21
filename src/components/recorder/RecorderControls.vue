@@ -18,6 +18,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import throttle from 'lodash.throttle'
 import store from '@/store/store'
 
 const recordPauseIcon = computed(() =>
@@ -36,7 +37,6 @@ function onClick(event) {
       store.actionMap.push({
         target,
         action: 'click',
-        originalFilter: target.style.filter,
       })
 
       target.classList.add('raiv-selected')
@@ -48,25 +48,52 @@ function onClick(event) {
   }
 }
 
+let hoveredElement = null
+function onMousemove(event) {
+  const raivWidget = document.querySelector('#raiv')
+  const target = event.target
+
+  if (!raivWidget.contains(target) && hoveredElement !== target) {
+    if (hoveredElement !== null) {
+      hoveredElement.classList.remove('raiv-hovered')
+    }
+    target.classList.add('raiv-hovered')
+
+    hoveredElement = target
+  }
+}
+const throttledMousemove = throttle(onMousemove, 100)
+
 function recordPause() {
   if (!store.recording) {
     store.recording = true
     document.addEventListener('click', onClick, true)
+    document.addEventListener('mousemove', throttledMousemove, true)
   } else if (!store.paused) {
     store.paused = true
     document.removeEventListener('click', onClick, true)
+    document.removeEventListener('mousemove', throttledMousemove, true)
   } else {
     store.paused = false
     document.addEventListener('click', onClick, true)
+    document.addEventListener('mousemove', throttledMousemove, true)
   }
 }
 
 function stopRecording() {
+  document.removeEventListener('click', onClick, true)
+  document.removeEventListener('mousemove', throttledMousemove, true)
+
+  if (hoveredElement !== null) {
+    hoveredElement.classList.remove('raiv-hovered')
+  }
+  store.actionMap.forEach((entry) => {
+    entry.target.classList.remove('raiv-selected')
+  })
+
   store.actionMap = []
   store.paused = false
   store.recording = false
-
-  document.removeEventListener('click', onClick, true)
 }
 </script>
 
