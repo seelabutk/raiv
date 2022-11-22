@@ -65,7 +65,15 @@ export default class Store {
     if (this.lastAction === null) {
       this.actionMap.value.children.push(action)
     } else {
-      this.lastAction.children.push(action)
+      // We can't add the new action directly via this.lastAction since that won't trigger this.actionMap's watchers/computeds.
+      const searchResult = this._findAction(
+        this.actionMap.value,
+        this.lastAction
+      )
+      const parent = searchResult[0]
+      const index = searchResult[1]
+
+      parent.children[index].children.push(action)
     }
 
     this.lastAction = action
@@ -79,7 +87,12 @@ export default class Store {
       const index = searchResult[1]
 
       if (this.lastAction.target === action.target) {
-        this.lastAction = parent
+        // If the parent of the removed action is the root, then we want to set this.lastAction to null so that the next addAction call works.
+        if (parent !== this.actionMap.value) {
+          this.lastAction = parent
+        } else {
+          this.lastAction = null
+        }
       }
 
       return parent.children.splice(index, 1)

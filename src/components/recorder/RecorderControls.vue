@@ -66,7 +66,13 @@ function onMousemove(event) {
   const raivWidget = document.querySelector('#raiv')
   const target = event.target
 
-  if (!raivWidget.contains(target) && hoveredElement !== target) {
+  if (raivWidget.contains(target)) {
+    if (hoveredElement !== null) {
+      hoveredElement.classList.remove('raiv-hovered')
+    }
+
+    hoveredElement = null
+  } else if (hoveredElement !== target) {
     if (hoveredElement !== null) {
       hoveredElement.classList.remove('raiv-hovered')
     }

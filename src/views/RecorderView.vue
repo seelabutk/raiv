@@ -16,6 +16,7 @@ const store = new Store()
 
 <style>
 #raiv {
+  background: white;
   border: 1px solid black;
   border-radius: 4px;
   padding: 1em;
