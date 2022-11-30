@@ -6,7 +6,7 @@
 
     <button
       type="button"
-      :disabled="!props.store.recording"
+      :disabled="!props.store.recording.value"
       @click="stopRecording"
     >
       <font-awesome-icon icon="fa-solid fa-stop" />
@@ -80,6 +80,7 @@ const throttledMousemove = throttle(onMousemove, 100)
 
 function recordPause() {
   if (!props.store.recording.value) {
+    props.store.reset()
     props.store.set('recording', true)
 
     document.addEventListener('click', onClick, true)
@@ -108,7 +109,8 @@ function stopRecording() {
     element.classList.remove('raiv-selected')
   })
 
-  props.store.reset()
+  props.store.set('recording', false)
+  props.store.set('paused', false)
 }
 
 onMounted(() => {

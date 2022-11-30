@@ -107,6 +107,8 @@ export default class Store {
     this.lastAction.value = null
     this.paused.value = false
     this.recording.value = false
+
+    this.save()
   }
 
   _loadTargets(node) {
@@ -162,5 +164,9 @@ export default class Store {
 
   set(key, value) {
     this[key].value = value
+  }
+
+  capture() {
+    this.reset()
   }
 }
