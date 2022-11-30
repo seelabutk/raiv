@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps } from 'vue'
+import { computed, defineProps, onMounted } from 'vue'
 import throttle from 'lodash.throttle'
 
 const props = defineProps({
@@ -46,16 +46,11 @@ function onClick(event) {
   const target = event.target
 
   if (!raivWidget.contains(target)) {
-    const action = {
-      target,
-      action: 'click',
-    }
-
-    if (!props.store.findAction(action)) {
-      action.target.classList.add('raiv-selected')
-      props.store.addAction(action)
+    if (!props.store.findAction(target)) {
+      target.classList.add('raiv-selected')
+      props.store.addAction(target, event)
     } else {
-      const deleted = props.store.removeAction(action)
+      const deleted = props.store.removeAction(target)
       unhighlight(deleted[0])
     }
   }
@@ -115,6 +110,13 @@ function stopRecording() {
 
   props.store.reset()
 }
+
+onMounted(() => {
+  if (props.store.recording.value && !props.store.paused.value) {
+    document.addEventListener('click', onClick, true)
+    document.addEventListener('mousemove', throttledMousemove, true)
+  }
+})
 </script>
 
 <style scoped>

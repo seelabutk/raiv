@@ -1,11 +1,7 @@
 <template>
   <ul>
     <li v-for="(action, index) in actions" :key="action.target">
-      <span>{{ index + 1 }}. {{ action.target.tagName.toLowerCase() }}</span>
-      <span v-if="action.target.id !== ''">#{{ action.target.id }}</span>
-      <span v-if="getClasses(action.target).length > 0"
-        >.{{ getClasses(action.target).join('.') }}
-      </span>
+      <span>{{ index + 1 }}. {{ action.boundingBox }}</span>
 
       <select v-model="action.action">
         <option value="click">Click</option>
@@ -16,7 +12,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps } from 'vue'
+import { computed, defineProps, onMounted } from 'vue'
 
 const props = defineProps({
   store: {
@@ -35,9 +31,9 @@ const actions = computed(() => {
   return _actions
 })
 
-function getClasses(element) {
-  return [...element.classList].filter(
-    (className) => !className.startsWith('raiv')
-  )
-}
+onMounted(() => {
+  for (let index = 0; index < actions.value.length; index++) {
+    actions.value[index].target.classList.add('raiv-selected')
+  }
+})
 </script>

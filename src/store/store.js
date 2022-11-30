@@ -8,44 +8,28 @@ export default class Store {
       children: [],
       target: null,
     })
-    this.lastAction = null
+    this.lastAction = ref(null)
     this.paused = ref(false)
     this.recording = ref(false)
 
-    const storageString = localStorage.getItem('store')
-    if (storageString !== null) {
-      const storageObj = JSON.parse(storageString)
+    this.load()
 
-      this.set('actionMap', storageObj.actionMap)
-      this.set('paused', storageObj.paused)
-      this.set('recording', storageObj.recording)
-    }
-
-    watch([this.actionMap, this.paused, this.recording], () => {
-      localStorage.setItem(
-        'store',
-        JSON.stringify({
-          actionMap: this.actionMap.value,
-          paused: this.paused.value,
-          recording: this.recording.value,
-        })
-      )
-
-      // TODO: send message to service worker with updated object???
+    watch([this.paused, this.recording], () => {
+      this.save()
     })
   }
 
   // Returns the parent of action and its index in parent's children array for
   // easy removal from this.actionMap
-  _findAction(node, action) {
+  _findAction(node, target) {
     for (let index = 0; index < node.children.length; index++) {
       const child = node.children[index]
 
-      if (child.target === action.target) {
+      if (child.target === target) {
         return [node, index]
       }
 
-      const result = this._findAction(child, action)
+      const result = this._findAction(child, target)
       if (result !== null) {
         return result
       }
@@ -54,51 +38,64 @@ export default class Store {
     return null
   }
 
-  // Returns true if the action is already in this.actionMap
-  findAction(action) {
-    return this._findAction(this.actionMap.value, action) !== null
+  // Returns true if the target is already in this.actionMap
+  findAction(target) {
+    return this._findAction(this.actionMap.value, target) !== null
   }
 
-  addAction(action) {
-    action.children = []
+  addAction(target, event) {
+    const boundingRect = target.getBoundingClientRect()
+    const boundingBox = [
+      boundingRect.left,
+      boundingRect.top,
+      boundingRect.right,
+      boundingRect.bottom,
+    ]
 
-    if (this.lastAction === null) {
-      this.actionMap.value.children.push(action)
-    } else {
-      // We can't add the new action directly via this.lastAction since that won't trigger this.actionMap's watchers/computeds.
-      const searchResult = this._findAction(
-        this.actionMap.value,
-        this.lastAction
-      )
-      const parent = searchResult[0]
-      const index = searchResult[1]
-
-      parent.children[index].children.push(action)
+    const action = {
+      boundingBox,
+      target,
+      action: 'click',
+      children: [],
+      clickPosition: [event.clientX, event.clientY],
+      scrollPosition:
+        document.documentElement.scrollTop || document.body.scrollTop,
     }
 
-    this.lastAction = action
+    if (this.lastAction.value === null) {
+      this.actionMap.value.children.push(action)
+    } else {
+      this.lastAction.value.children.push(action)
+    }
+
+    this.lastAction.value = action
+
+    this.save()
   }
 
-  removeAction(action) {
-    const searchResult = this._findAction(this.actionMap.value, action)
+  removeAction(target) {
+    let removedAction = null
+    const searchResult = this._findAction(this.actionMap.value, target)
 
     if (searchResult !== null) {
       const parent = searchResult[0]
       const index = searchResult[1]
 
-      if (this.lastAction.target === action.target) {
-        // If the parent of the removed action is the root, then we want to set this.lastAction to null so that the next addAction call works.
+      if (this.lastAction.value.target === target) {
+        // If the parent of the removed action is the root, then we want to set this.lastAction.value to null so that the next addAction call works.
         if (parent !== this.actionMap.value) {
-          this.lastAction = parent
+          this.lastAction.value = parent
         } else {
-          this.lastAction = null
+          this.lastAction.value = null
         }
       }
 
-      return parent.children.splice(index, 1)
+      removedAction = parent.children.splice(index, 1)
+
+      this.save()
     }
 
-    return null
+    return removedAction
   }
 
   reset() {
@@ -107,9 +104,60 @@ export default class Store {
       children: [],
       target: null,
     }
-    this.lastAction = null
+    this.lastAction.value = null
     this.paused.value = false
     this.recording.value = false
+  }
+
+  _loadTargets(node) {
+    for (let index = 0; index < node.children.length; index++) {
+      const child = node.children[index]
+
+      child.target = document.elementFromPoint(...child.clickPosition)
+
+      this._loadTargets(child)
+    }
+  }
+
+  load() {
+    const storageString = localStorage.getItem('store')
+    if (storageString !== null) {
+      const storageObj = JSON.parse(storageString)
+
+      this.actionMap.value = storageObj.actionMap
+      this._loadTargets(this.actionMap.value)
+
+      this.paused.value = storageObj.paused
+      this.recording.value = storageObj.recording
+
+      if (storageObj.lastAction !== null) {
+        const lastActionTarget = document.elementFromPoint(
+          ...storageObj.lastAction.clickPosition
+        )
+        const searchResult = this._findAction(
+          this.actionMap.value,
+          lastActionTarget
+        )
+
+        this.lastAction.value = searchResult[0].children[searchResult[1]]
+      } else {
+        this.lastAction.value = null
+      }
+    }
+  }
+
+  save() {
+    localStorage.setItem(
+      'store',
+      JSON.stringify({
+        actionMap: this.actionMap.value,
+        lastAction: this.lastAction.value,
+        paused: this.paused.value,
+        recording: this.recording.value,
+      })
+    )
+
+    // TODO: send message to service worker with updated object???
   }
 
   set(key, value) {
