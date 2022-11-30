@@ -4,7 +4,7 @@
 
 <script setup>
 import ServiceWorker from '@/entry/background'
-import HomeComponent from '@/components/HomeComponent'
+import HomeComponent from '@/components/popup/HomeComponent'
 
 const worker = new ServiceWorker()
 </script>
