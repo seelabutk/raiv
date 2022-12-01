@@ -17,13 +17,16 @@
       </li>
     </ul>
 
-    <button
-      v-if="actions.length > 0"
-      :disabled="props.store.recording.value"
-      @click="props.store.capture"
-    >
-      Capture
-    </button>
+    <div v-if="actions.length > 0">
+      <p>{{ actions.length + 1 }} frames will be captured.</p>
+
+      <button
+        :disabled="props.store.recording.value"
+        @click="props.store.capture"
+      >
+        Capture
+      </button>
+    </div>
   </div>
 </template>
 
