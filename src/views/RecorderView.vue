@@ -8,7 +8,6 @@
 <script setup>
 import ActionMap from '@/components/recorder/ActionMap'
 import RecorderControls from '@/components/recorder/RecorderControls'
-
 import Store from '@/store/store'
 
 const store = new Store()

@@ -1,14 +1,18 @@
 <template>
-  <button @click="props.worker.start">Start RAIV</button>
+  <button @click="start">Start RAIV</button>
 </template>
 
 <script setup>
-import { defineProps } from 'vue'
-
-const props = defineProps({
-  worker: {
-    required: true,
-    type: Object,
-  },
-})
+/* global chrome */
+function start() {
+  chrome.tabs.query(
+    {
+      active: true,
+      currentWindow: true,
+    },
+    (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, { launch: true })
+    }
+  )
+}
 </script>

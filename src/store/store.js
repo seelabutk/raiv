@@ -1,3 +1,4 @@
+/* global chrome */
 import { ref, watch } from 'vue'
 
 export default class Store {
@@ -158,15 +159,39 @@ export default class Store {
         recording: this.recording.value,
       })
     )
-
-    // TODO: send message to service worker with updated object???
   }
 
   set(key, value) {
     this[key].value = value
   }
 
-  capture() {
+  async _capture(node, port) {
+    if (node.target !== null) {
+      if (node.action === 'click') {
+        node.target.click()
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    port.postMessage({ capture: true })
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    for (let index = 0; index < node.children.length; index++) {
+      await this._capture(node.children[index], port)
+    }
+  }
+
+  async capture() {
+    const widget = document.querySelector('#raiv')
+
+    widget.style.display = 'none'
+
+    const port = chrome.runtime.connect({ name: 'raiv' })
+    await this._capture(this.actionMap.value, port)
+
+    widget.style.display = 'block'
+
+    port.disconnect()
     this.reset()
   }
 }
