@@ -46,11 +46,13 @@ function onClick(event) {
   const target = event.target
 
   if (!raivWidget.contains(target)) {
-    if (!props.store.findAction(target)) {
+    if (props.store.actionMap.value.find(target) === null) {
       target.classList.add('raiv-selected')
-      props.store.addAction(target, event)
+      props.store.actionMap.value.add(target, event)
+      props.store.save()
     } else {
-      const deleted = props.store.removeAction(target)
+      const deleted = props.store.actionMap.value.remove(target)
+      props.store.save()
       unhighlight(deleted[0])
     }
   }
