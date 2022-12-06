@@ -5,13 +5,11 @@ import ActionMap from '@/store/ActionMap'
 
 export default class Store {
   constructor() {
-    // NOTE: if we need to communicate with the service worker, it would be nice to pass in the port for messages to this method
     this.actionMap = ref(new ActionMap())
-    this.lastAction = ref(null)
     this.paused = ref(false)
     this.recording = ref(false)
 
-    //this.load()
+    this.load()
 
     watch([this.paused, this.recording], () => {
       this.save()
@@ -20,7 +18,6 @@ export default class Store {
 
   reset() {
     this.actionMap.value = new ActionMap()
-    this.lastAction.value = null
     this.paused.value = false
     this.recording.value = false
 
@@ -32,22 +29,10 @@ export default class Store {
     if (storageString !== null) {
       const storageObj = JSON.parse(storageString)
 
-      this.actionMap.value = storageObj.actionMap
-      this.actionMap.value.load()
-
       this.paused.value = storageObj.paused
       this.recording.value = storageObj.recording
 
-      if (storageObj.lastAction !== null) {
-        const lastActionTarget = document.elementFromPoint(
-          ...storageObj.lastAction.clickPosition
-        )
-        const searchResult = this.actionMap.find(lastActionTarget)
-
-        this.lastAction.value = searchResult[0].children[searchResult[1]]
-      } else {
-        this.lastAction.value = null
-      }
+      this.actionMap.value.load(storageObj)
     }
   }
 
@@ -55,8 +40,8 @@ export default class Store {
     localStorage.setItem(
       'store',
       JSON.stringify({
-        actionMap: this.actionMap.value,
-        lastAction: this.lastAction.value,
+        actions: this.actionMap.value.children,
+        lastAction: this.actionMap.value.lastAction,
         paused: this.paused.value,
         recording: this.recording.value,
       })

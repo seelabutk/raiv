@@ -4,21 +4,34 @@ export default class ActionMap {
   constructor() {
     this.action = null
     this.children = []
+    this.lastAction = null
     this.target = null
   }
 
-  load(node) {
-    let currentNode = node
-    if (currentNode === undefined) {
-      currentNode = this
-    }
-
-    for (let index = 0; index < currentNode.children.length; index++) {
-      const child = currentNode.children[index]
+  _load(node) {
+    for (let index = 0; index < node.children.length; index++) {
+      const child = node.children[index]
 
       child.target = document.elementFromPoint(...child.clickPosition)
 
-      this.load(child)
+      this._load(child)
+    }
+  }
+
+  load(storageObj) {
+    this.children = storageObj.actions
+
+    this._load(this)
+
+    if (storageObj.lastAction !== null) {
+      const lastActionTarget = document.elementFromPoint(
+        ...storageObj.lastAction.clickPosition
+      )
+      const searchResult = this.find(lastActionTarget)
+
+      this.lastAction = searchResult[0].children[searchResult[1]]
+    } else {
+      this.lastAction = null
     }
   }
 
@@ -47,15 +60,13 @@ export default class ActionMap {
   add(target, event) {
     const action = new Action(target, event)
 
-    if (this.lastAction.value === null) {
-      this.actionMap.value.children.push(action)
+    if (this.lastAction === null) {
+      this.children.push(action)
     } else {
-      this.lastAction.value.children.push(action)
+      this.lastAction.children.push(action)
     }
 
-    this.lastAction.value = action
-
-    this.save()
+    this.lastAction = action
   }
 
   remove(target) {
@@ -66,18 +77,16 @@ export default class ActionMap {
       const parent = searchResult[0]
       const index = searchResult[1]
 
-      if (this.lastAction.value.target === target) {
-        // If the parent of the removed action is the root, then we want to set this.lastAction.value to null so that the next addAction call works.
-        if (parent !== this.actionMap.value) {
-          this.lastAction.value = parent
+      if (this.lastAction.target === target) {
+        // If the parent of the removed action is the root, then we want to set this.lastAction to null so that the next addAction call works.
+        if (parent !== this) {
+          this.lastAction = parent
         } else {
-          this.lastAction.value = null
+          this.lastAction = null
         }
       }
 
       removedAction = parent.children.splice(index, 1)
-
-      this.save()
     }
 
     return removedAction
