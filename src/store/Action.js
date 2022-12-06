@@ -1,19 +1,44 @@
 export default class Action {
-  constructor(target) {
-    const boundingRect = target.getBoundingClientRect()
-    const boundingBox = [
-      boundingRect.left,
-      boundingRect.top,
-      boundingRect.right,
-      boundingRect.bottom,
-    ]
+  constructor(target, event) {
+    if (target instanceof Element) {
+      const boundingRect = target.getBoundingClientRect()
+      const boundingBox = [
+        boundingRect.left,
+        boundingRect.top,
+        boundingRect.right,
+        boundingRect.bottom,
+      ]
+
+      this.boundingBox = boundingBox
+    } else {
+      this.boundingBox = []
+    }
 
     this.action = 'click'
-    this.boundingBox = boundingBox
     this.children = []
-    this.clickPosition = [event.clientX, event.clientY]
+    if (event !== undefined) {
+      this.clickPosition = [event.clientX, event.clientY]
+    } else {
+      this.clickPosition = []
+    }
     this.scrollPosition =
       document.documentElement.scrollTop || document.body.scrollTop
     this.target = target
+  }
+
+  async capture(port) {
+    if (this.target instanceof Element) {
+      if (this.action === 'click') {
+        this.target.click()
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    port.postMessage({ capture: true })
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    for (let index = 0; index < this.children.length; index++) {
+      await this.children[index].capture(port)
+    }
   }
 }

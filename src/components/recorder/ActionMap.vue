@@ -20,10 +20,16 @@
     <div v-if="actions.length > 0">
       <p>{{ actions.length + 1 }} frames will be captured.</p>
 
-      <button
-        :disabled="props.store.recording.value"
-        @click="props.store.capture"
-      >
+      <label class="server-input">
+        Server Location
+        <input
+          :value="props.store.server.value"
+          @input="(event) => props.store.set('server', event.target.value)"
+          type="text"
+        />
+      </label>
+
+      <button :disabled="props.store.recording.value" @click="capture">
         Capture
       </button>
     </div>
@@ -60,6 +66,11 @@ function isElement(element) {
   return element instanceof Element
 }
 
+function capture() {
+  props.store.actionMap.value.capture()
+  props.store.reset()
+}
+
 onMounted(() => {
   if (props.store.recording.value) {
     for (let index = 0; index < actions.value.length; index++) {
@@ -72,5 +83,10 @@ onMounted(() => {
 <style scoped>
 li select {
   margin-left: 0.5em;
+}
+
+.server-input {
+  display: block;
+  margin-bottom: 1em;
 }
 </style>

@@ -1,3 +1,4 @@
+/* global chrome */
 import Action from '@/store/Action'
 
 export default class ActionMap {
@@ -10,11 +11,17 @@ export default class ActionMap {
 
   _load(node) {
     for (let index = 0; index < node.children.length; index++) {
-      const child = node.children[index]
+      const childObj = node.children[index]
+      const target = document.elementFromPoint(...childObj.clickPosition)
 
-      child.target = document.elementFromPoint(...child.clickPosition)
+      node.children[index] = new Action(target)
+      node.children[index].action = childObj.action
+      node.children[index].boundingBox = childObj.boundingBox
+      node.children[index].children = childObj.children
+      node.children[index].clickPosition = childObj.clickPosition
+      node.children[index].scrollPosition = childObj.scrollPosition
 
-      this._load(child)
+      this._load(node.children[index])
     }
   }
 
@@ -44,7 +51,7 @@ export default class ActionMap {
         return [node, index]
       }
 
-      const result = this._findAction(child, target)
+      const result = this._find(child, target)
       if (result !== null) {
         return result
       }
@@ -90,5 +97,22 @@ export default class ActionMap {
     }
 
     return removedAction
+  }
+
+  async capture() {
+    const widget = document.querySelector('#raiv')
+
+    widget.style.display = 'none'
+
+    const port = chrome.runtime.connect({ name: 'raiv' })
+
+    await new Action(null).capture(port)
+    for (let index = 0; index < this.children.length; index++) {
+      await this.children[index].capture(port)
+    }
+
+    widget.style.display = 'block'
+
+    port.disconnect()
   }
 }
