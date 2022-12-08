@@ -2,12 +2,6 @@
   <HomeComponent />
 </template>
 
-<script>
-import HomeComponent from '@/components/HomeComponent.vue'
-
-export default {
-  components: {
-    HomeComponent,
-  },
-}
+<script setup>
+import HomeComponent from '@/components/popup/HomeComponent'
 </script>
