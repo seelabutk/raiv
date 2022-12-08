@@ -20,11 +20,20 @@
     <div v-if="actions.length > 0">
       <p>{{ actions.length + 1 }} frames will be captured.</p>
 
-      <label class="server-input">
+      <label class="input">
         Server Location
         <input
           :value="props.store.server.value"
           @input="(event) => props.store.set('server', event.target.value)"
+          type="text"
+        />
+      </label>
+
+      <label class="input">
+        Video Name
+        <input
+          :value="props.store.videoName.value"
+          @input="(event) => props.store.set('videoName', event.target.value)"
           type="text"
         />
       </label>
@@ -67,7 +76,10 @@ function isElement(element) {
 }
 
 function capture() {
-  props.store.actionMap.value.capture()
+  props.store.actionMap.value.capture(
+    props.store.server.value,
+    props.store.videoName.value
+  )
   props.store.reset()
 }
 
@@ -85,7 +97,7 @@ li select {
   margin-left: 0.5em;
 }
 
-.server-input {
+.input {
   display: block;
   margin-bottom: 1em;
 }
