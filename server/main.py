@@ -12,6 +12,8 @@ app.add_middleware(
 	allow_methods=['*'],
 	allow_origins=['*']
 )
+# TODO: CORS generally needs to be available since this server is going to be
+# public, but this needs more thought along with authentication
 
 
 @app.post('/video/')
