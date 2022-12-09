@@ -4,6 +4,18 @@ from fastapi import FastAPI
 # from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 # from fastapi.responses import FileResponse
+from pydantic import BaseModel
+
+
+class Frame(BaseModel):
+	frame: str
+	position: int
+	video: str
+
+
+class Video(BaseModel):
+	name: str
+
 
 app = FastAPI()
 app.add_middleware(
@@ -16,14 +28,16 @@ app.add_middleware(
 # public, but this needs more thought along with authentication
 
 
-@app.post('/video/')
-async def video__post():
-	return 'Video Posted'
-
-
 @app.post('/frame/')
-async def frame__post():
+async def frame__post(frame: Frame):
+	print(frame)
 	return 'Frame Posted'
+
+
+@app.post('/video/')
+async def video__post(video: Video):
+	print(video)
+	return 'Video Posted'
 
 # TODO: pull from below as necessary
 # pylint: disable=pointless-string-statement

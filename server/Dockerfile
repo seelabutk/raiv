@@ -13,4 +13,7 @@ COPY main.py .
 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.11 get-pip.py
-RUN pip install fastapi uvicorn[standard]
+RUN pip install \
+  fastapi \
+  pydantic \
+  uvicorn[standard]

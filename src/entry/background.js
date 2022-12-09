@@ -3,7 +3,7 @@ chrome.runtime.onConnect.addListener((port) => {
   if (port.name === 'raiv') {
     let framePosition = 0
     let serverLocation = ''
-    let videoResourceUri = ''
+    let videoId = ''
 
     port.onMessage.addListener((message) => {
       if (message.serverLocation) {
@@ -22,11 +22,11 @@ chrome.runtime.onConnect.addListener((port) => {
         // TODO: get the video's resource URI back from the server and store it for frame captures
       } else if (message.capture) {
         chrome.tabs.captureVisibleTab({ format: 'png' }).then((image) => {
-          fetch(`${serverLocation}/frame`, {
+          fetch(`${serverLocation}frame/`, {
             body: JSON.stringify({
               frame: image,
               position: framePosition, // TODO: Do we care about this? If we want to sort the frames before encoding then this surely is unimportant.
-              video: videoResourceUri,
+              video: videoId,
             }),
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
