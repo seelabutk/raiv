@@ -14,6 +14,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
         fetch(`${serverLocation}video/`, {
           body: JSON.stringify({
+            actionMap: message.actionMap,
             name: message.videoName,
           }),
           headers: { 'Content-Type': 'application/json' },

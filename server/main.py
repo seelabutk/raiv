@@ -1,10 +1,15 @@
-# import os
+import json
+import os
+from uuid import uuid4
 
 from fastapi import FastAPI
 # from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 # from fastapi.responses import FileResponse
 from pydantic import BaseModel
+
+
+VIDEO_DIR = os.path.join(os.getcwd(), 'videos')
 
 
 class Frame(BaseModel):
@@ -14,6 +19,7 @@ class Frame(BaseModel):
 
 
 class Video(BaseModel):
+	actionMap: object
 	name: str
 
 
@@ -36,8 +42,19 @@ async def frame__post(frame: Frame):
 
 @app.post('/video/')
 async def video__post(video: Video):
-	print(video)
-	return 'Video Posted'
+	uuid = uuid4().hex
+
+	path = os.path.join(VIDEO_DIR, uuid)
+	while os.path.exists(path):
+		uuid = uuid4().hex
+		path = os.path.join(VIDEO_DIR, uuid4)
+
+	os.makedirs(path)
+	fpath = os.path.join(path, 'action_map.json')
+	with open(fpath, 'w', encoding='utf-8') as file:
+		json.dump(video.actionMap, file)
+
+	return uuid
 
 # TODO: pull from below as necessary
 # pylint: disable=pointless-string-statement

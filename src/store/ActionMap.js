@@ -105,7 +105,11 @@ export default class ActionMap {
     widget.style.display = 'none'
 
     const port = chrome.runtime.connect({ name: 'raiv' })
-    port.postMessage({ serverLocation, videoName })
+    port.postMessage({
+      serverLocation,
+      videoName,
+      actionMap: this,
+    })
 
     await new Action(null).capture(port)
     for (let index = 0; index < this.children.length; index++) {
