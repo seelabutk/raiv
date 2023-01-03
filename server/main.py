@@ -1,9 +1,9 @@
+from base64 import b64decode
 import json
 import os
 from uuid import uuid4
 
-from fastapi import FastAPI
-# from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 # from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -36,8 +36,23 @@ app.add_middleware(
 
 @app.post('/frame/')
 async def frame__post(frame: Frame):
-	print(frame)
-	return 'Frame Posted'
+	path = os.path.join(VIDEO_DIR, frame.video)
+	if not frame.video or not os.path.exists(path):
+		raise HTTPException(status_code=404)
+
+	frames_dir = os.path.join(path, 'frames')
+	if not os.path.exists(frames_dir):
+		os.makedirs(frames_dir)
+
+	frame_data = b64decode(frame.frame.split(',')[1])
+	fpath = os.path.join(frames_dir, f'frame{frame.position}.png')
+	with open(fpath, 'wb') as file:
+		file.write(frame_data)
+
+	if frame.position == 0:
+		fpath = os.path.join(path, 'first_frame.png')
+		with open(fpath, 'wb') as file:
+			file.write(frame_data)
 
 
 @app.post('/video/')

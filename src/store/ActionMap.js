@@ -99,17 +99,10 @@ export default class ActionMap {
     return removedAction
   }
 
-  async capture(serverLocation, videoName) {
+  async _capture(port) {
     const widget = document.querySelector('#raiv')
 
     widget.style.display = 'none'
-
-    const port = chrome.runtime.connect({ name: 'raiv' })
-    port.postMessage({
-      serverLocation,
-      videoName,
-      actionMap: this,
-    })
 
     await new Action(null).capture(port)
     for (let index = 0; index < this.children.length; index++) {
@@ -119,5 +112,20 @@ export default class ActionMap {
     widget.style.display = 'block'
 
     port.disconnect()
+  }
+
+  async capture(serverLocation, videoName) {
+    const port = chrome.runtime.connect({ name: 'raiv' })
+    port.postMessage({
+      serverLocation,
+      videoName,
+      actionMap: this,
+    })
+
+    port.onMessage.addListener((message) => {
+      if (message.ready) {
+        this._capture(port)
+      }
+    })
   }
 }
