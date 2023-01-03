@@ -36,3 +36,10 @@ chrome.runtime.onConnect.addListener((port) => {
     })
   }
 })
+
+chrome.action.onClicked.addListener((tab) => {
+  chrome.scripting.executeScript({
+    files: ['/recorder.js'],
+    target: { tabId: tab.id },
+  })
+})
