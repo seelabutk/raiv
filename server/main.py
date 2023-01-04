@@ -74,6 +74,39 @@ async def video__post(video: Video):
 
 
 # Player endpoints
+@app.get('/video/')
+async def video__get__list():
+	video_list = os.listdir(VIDEO_DIR)
+
+	objects = []
+	for video_id in video_list:
+		path = os.path.join(VIDEO_DIR, video_id)
+		if os.path.isdir(path) and not os.path.exists(os.path.join(path, 'frames')):
+			with open(
+				os.path.join(path, 'manifest.json'),
+				'r',
+				encoding='utf-8'
+			) as file:
+				name = json.load(file).get('name', 'Unnamed Video')
+
+				objects.append({
+					'id': video_id,
+					'name': name
+				})
+
+	return objects
+
+
+@app.get('/preview/{video_id}/')
+async def preview__get__detail(video_id):
+	path = os.path.join(VIDEO_DIR, video_id, 'first_frame.png')
+
+	if not os.path.exists(path):
+		raise HTTPException(status_code=404, detail='Page not found')
+
+	return FileResponse(path)
+
+
 @app.get('/{path:path}')
 async def nuxt(path):
 	full_path = os.path.join(os.getcwd(), 'nuxt', 'dist', path)
@@ -88,28 +121,6 @@ async def nuxt(path):
 # TODO: pull from below as necessary
 # pylint: disable=pointless-string-statement
 """
-@app.get('/preview/{file}')
-async def preview__get__detail(file):
-	return FileResponse(
-		os.path.join(os.getcwd(), 'data', 'rva', file, 'first_frame.png')
-	)
-
-
-@app.get('/rva')
-async def rva__get__list():
-	rva_list = os.listdir(os.path.join(os.getcwd(), 'data', 'rva'))
-
-	objects = []
-	for rva in rva_list:
-		if os.path.isdir(os.path.join(os.getcwd(), 'data', 'rva', rva)):
-			objects.append({
-				'name': rva,
-				'preview': f'/preview/{rva}',
-			})
-
-	return objects
-
-
 @app.get('/rva/{file}')
 async def rva__get__detail(file):
 	return FileResponse(os.path.join(os.getcwd(), 'data', 'rva', file))
