@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-# from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 
@@ -34,6 +34,7 @@ app.add_middleware(
 # public, but this needs more thought along with authentication
 
 
+# Recording endpoints
 @app.post('/frame/')
 async def frame__post(frame: Frame):
 	path = os.path.join(VIDEO_DIR, frame.video)
@@ -70,6 +71,19 @@ async def video__post(video: Video):
 		json.dump(video.actionMap, file)
 
 	return uuid
+
+
+# Player endpoints
+@app.get('/{path:path}')
+async def nuxt(path):
+	full_path = os.path.join(os.getcwd(), 'nuxt', 'dist', path)
+	if os.path.isdir(full_path):
+		full_path = os.path.join(full_path, 'index.html')
+
+	if not os.path.isfile(full_path):
+		raise HTTPException(status_code=404, detail='Page not found')
+
+	return FileResponse(full_path)
 
 # TODO: pull from below as necessary
 # pylint: disable=pointless-string-statement
