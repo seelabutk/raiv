@@ -10,14 +10,19 @@ for video in os.listdir(VIDEO_DIR):
 		os.chdir(path)
 		subprocess.run([
 			'ffmpeg',
+			'-y',
 			'-framerate',
 			'30',
-			'-pattern_type',
-			'glob',
 			'-i',
-			'*.png',
+			'%05d.png',
 			'-c:v',
 			'libx264',
+			'-vf',
+			'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+			'-profile:v',
+			'high',
+			'-crf',
+			'20',
 			'-pix_fmt',
 			'yuv420p',
 			'../video.mp4'

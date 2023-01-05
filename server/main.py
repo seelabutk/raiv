@@ -45,7 +45,7 @@ async def frame__post(frame: Frame):
 		os.makedirs(frames_dir)
 
 	frame_data = b64decode(frame.frame.split(',')[1])
-	fpath = os.path.join(frames_dir, f'frame{frame.position}.png')
+	fpath = os.path.join(frames_dir, f'{str(frame.position).zfill(5)}.png')
 	with open(fpath, 'wb') as file:
 		file.write(frame_data)
 
