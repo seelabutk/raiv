@@ -5,8 +5,11 @@ export default class ActionMap {
   constructor() {
     this.action = null
     this.children = []
+    this.height = window.innerHeight
     this.lastAction = null
+    this.position = null
     this.target = null
+    this.width = window.innerWidth
   }
 
   _load(node) {
@@ -99,12 +102,26 @@ export default class ActionMap {
     return removedAction
   }
 
+  _assignActionPositions(node, position) {
+    node.position = position++
+
+    for (let index = 0; index < node.children.length; index++) {
+      position = this._assignActionPositions(node.children[index], position)
+    }
+
+    return position
+  }
+
   async _capture(port) {
     const widget = document.querySelector('#raiv')
 
     widget.style.display = 'none'
 
-    await new Action(null).capture(port)
+    // Capture the first frame
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    port.postMessage({ capture: true, position: this.position })
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
     for (let index = 0; index < this.children.length; index++) {
       await this.children[index].capture(port)
     }
@@ -115,6 +132,8 @@ export default class ActionMap {
   }
 
   async capture(serverLocation, videoName) {
+    this._assignActionPositions(this, 0)
+
     const port = chrome.runtime.connect({ name: 'raiv' })
     port.postMessage({
       serverLocation,

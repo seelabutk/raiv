@@ -20,7 +20,6 @@ class Frame(BaseModel):
 
 class Video(BaseModel):
 	actionMap: object
-	name: str
 
 
 app = FastAPI()
@@ -83,7 +82,7 @@ async def video__get__list():
 		path = os.path.join(VIDEO_DIR, video_id)
 		if os.path.isdir(path) and not os.path.exists(os.path.join(path, 'frames')):
 			with open(
-				os.path.join(path, 'manifest.json'),
+				os.path.join(path, 'action_map.json'),
 				'r',
 				encoding='utf-8'
 			) as file:
@@ -97,33 +96,28 @@ async def video__get__list():
 	return objects
 
 
-@app.get('/preview/{video_id}/')
-async def preview__get__detail(video_id):
-	path = os.path.join(VIDEO_DIR, video_id, 'first_frame.png')
+def _get_video_file(video_id, filename):
+	path = os.path.join(VIDEO_DIR, video_id, filename)
 
 	if not os.path.exists(path):
-		raise HTTPException(status_code=404, detail='Page not found')
+		raise HTTPException(status_code=404, detail='File not found')
 
 	return FileResponse(path)
 
 
-@app.get('/{path:path}')
-async def nuxt(path):
-	full_path = os.path.join(os.getcwd(), 'nuxt', 'dist', path)
-	if os.path.isdir(full_path):
-		full_path = os.path.join(full_path, 'index.html')
+@app.get('/video/{video_id}/action-map/')
+async def action_map__get__detail(video_id):
+	return _get_video_file(video_id, 'action_map.json')
 
-	if not os.path.isfile(full_path):
-		raise HTTPException(status_code=404, detail='Page not found')
 
-	return FileResponse(full_path)
+@app.get('/video/{video_id}/preview/')
+async def preview__get__detail(video_id):
+	return _get_video_file(video_id, 'first_frame.png')
 
-# TODO: pull from below as necessary
-# pylint: disable=pointless-string-statement
-"""
-@app.get('/rva/{file}')
-async def rva__get__detail(file):
-	return FileResponse(os.path.join(os.getcwd(), 'data', 'rva', file))
+
+@app.get('/video/{video_id}/video')
+async def video__get__detail(video_id):
+	return _get_video_file(video_id, 'video.mp4')
 
 
 @app.get('/{path:path}')
@@ -133,7 +127,6 @@ async def nuxt(path):
 		full_path = os.path.join(full_path, 'index.html')
 
 	if not os.path.isfile(full_path):
-		raise HTTPException(status_code=404, detail='Page not found')
+		return FileResponse(os.path.join(os.getcwd(), 'nuxt', 'dist', '404.html'))
 
 	return FileResponse(full_path)
-"""

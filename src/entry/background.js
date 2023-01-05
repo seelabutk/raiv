@@ -1,21 +1,23 @@
 /* global chrome */
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === 'raiv') {
-    let framePosition = 0
     let serverLocation = ''
     let videoId = ''
 
     port.onMessage.addListener((message) => {
       if (message.serverLocation) {
-        framePosition = 0
         serverLocation = message.serverLocation.endsWith('/')
           ? message.serverLocation
           : `${message.serverLocation}/`
 
         fetch(`${serverLocation}video/`, {
           body: JSON.stringify({
-            actionMap: message.actionMap,
-            name: message.videoName,
+            actionMap: Object.assign(
+              {
+                name: message.videoName,
+              },
+              message.actionMap
+            ),
           }),
           headers: { 'Content-Type': 'application/json' },
           method: 'POST',
@@ -30,7 +32,7 @@ chrome.runtime.onConnect.addListener((port) => {
           fetch(`${serverLocation}frame/`, {
             body: JSON.stringify({
               frame: image,
-              position: framePosition++,
+              position: message.position,
               video: videoId,
             }),
             headers: { 'Content-Type': 'application/json' },
