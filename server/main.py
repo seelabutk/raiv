@@ -115,9 +115,12 @@ async def preview__get__detail(video_id):
 	return _get_video_file(video_id, 'first_frame.png')
 
 
-@app.get('/video/{video_id}/video')
+@app.get('/video/{video_id}/video/')
 async def video__get__detail(video_id):
-	return _get_video_file(video_id, 'video.mp4')
+	response = _get_video_file(video_id, 'video.mp4')
+	response.headers['Accept-Ranges'] = 'bytes'
+
+	return response
 
 
 @app.get('/{path:path}')

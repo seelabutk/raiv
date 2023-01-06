@@ -1,13 +1,19 @@
 <template>
   <div class="player">
-    <img :src="`/video/${videoId}/preview/`" />
+    <video id="loom-video" class="video-js" preload="auto" muted>
+      <source :src="`/video/${videoId}/video/`" type="video/mp4" />
+    </video>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import 'video.js/dist/video-js.css'
+import videojs from 'video.js'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
+const fps = 30
+let player = null
 const route = useRoute()
 const videoId = ref(route.params.id)
 
@@ -17,6 +23,12 @@ function addActionElements(node) {
 
     if (node.action === 'click') {
       div.style.cursor = 'pointer'
+
+      div.addEventListener('click', () => {
+        if (player !== null) {
+          player.currentTime((node.position + 1) / fps)
+        }
+      })
     }
 
     div.style.position = 'absolute'
@@ -33,20 +45,28 @@ function addActionElements(node) {
   }
 }
 
-fetch(`/video/${videoId.value}/action-map/`)
-  .then((response) => response.json())
-  .then((actionMap) => {
-    const player = document.querySelector('.player')
+onMounted(() => {
+  fetch(`/video/${videoId.value}/action-map/`)
+    .then((response) => response.json())
+    .then((actionMap) => {
+      const container = document.querySelector('.player')
+      const videoElement = document.querySelector('#loom-video')
 
-    player.style.height = `${actionMap.height}px`
-    player.style.width = `${actionMap.width}px`
+      container.style.height = `${actionMap.height}px`
+      container.style.width = `${actionMap.width}px`
+      videoElement.style.height = `${actionMap.height}px`
+      videoElement.style.width = `${actionMap.width}px`
 
-    addActionElements(actionMap)
-  })
+      player = videojs('loom-video')
+      player.ready(() => {
+        player.currentTime(0)
 
-fetch(`/video/${videoId.value}/video`)
-  .then((response) => response.blob())
-  .then((video) => {
-    console.log('video', video)
-  })
+        player.on('click', (event) => {
+          event.preventDefault()
+        })
+      })
+
+      addActionElements(actionMap)
+    })
+})
 </script>

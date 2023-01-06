@@ -17,6 +17,7 @@
     "core-js": "^3.8.3",
     "lodash.throttle": "^4.1.1",
     "pinia": "^2.0.23",
+    "video.js": "^7.20.3",
     "vue": "^3.2.13"
   },
   "devDependencies": {
