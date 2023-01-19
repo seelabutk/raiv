@@ -29,7 +29,7 @@ export default class Action {
 
   async capture(port) {
     if (this.target instanceof Element) {
-      if (this.action === 'click') {
+      if (this.action === 'click' || this.action === 'switch') {
         this.target.click()
       } else if (this.action === 'hover') {
         this.target.dispatchEvent(
@@ -48,6 +48,10 @@ export default class Action {
 
     for (let index = 0; index < this.children.length; index++) {
       await this.children[index].capture(port)
+    }
+
+    if (this.action === 'switch') {
+      this.target.click()
     }
   }
 }

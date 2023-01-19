@@ -10,9 +10,11 @@
           </span>
         </span>
 
-        <select v-model="action.action">
+        <select v-model="action.action" @change="changeAction(action)">
           <option value="click">Click</option>
           <option value="hover">Hover</option>
+          <option value="switch">Switch</option>
+          <option value="noop" disabled>Noop</option>
         </select>
       </li>
     </ul>
@@ -64,6 +66,12 @@ const actions = computed(() => {
 
   return _actions
 })
+
+function changeAction(action) {
+  if (action.action === 'switch') {
+    props.store.actionMap.value.split(action)
+  }
+}
 
 function getClasses(element) {
   return [...element.classList].filter(

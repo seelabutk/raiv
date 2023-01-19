@@ -102,6 +102,20 @@ export default class ActionMap {
     return removedAction
   }
 
+  split(action) {
+    if (action.action === 'switch') {
+      const searchResult = this._find(this, action.target)
+      const parent = searchResult[0]
+      const index = searchResult[1]
+
+      const copy = JSON.parse(JSON.stringify(action))
+      copy.action = 'noop'
+
+      parent.children.splice(index + 1, 0, copy)
+      this._load(parent)
+    }
+  }
+
   _assignActionPositions(node, position) {
     node.position = position++
 
