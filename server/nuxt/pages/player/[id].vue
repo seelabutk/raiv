@@ -17,6 +17,12 @@ let player = null
 const route = useRoute()
 const videoId = ref(route.params.id)
 
+function seekToFrame(frame) {
+  if (player !== null) {
+    player.currentTime(frame / fps)
+  }
+}
+
 function addActionElements(node) {
   if (node.boundingBox !== undefined) {
     const div = document.createElement('div')
@@ -25,9 +31,11 @@ function addActionElements(node) {
       div.style.cursor = 'pointer'
 
       div.addEventListener('click', () => {
-        if (player !== null) {
-          player.currentTime((node.position + 1) / fps)
-        }
+        seekToFrame(node.position + 1)
+      })
+    } else if (node.action === 'hover') {
+      div.addEventListener('mouseover', () => {
+        seekToFrame(node.position + 1)
       })
     }
 

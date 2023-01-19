@@ -31,12 +31,20 @@ export default class Action {
     if (this.target instanceof Element) {
       if (this.action === 'click') {
         this.target.click()
+      } else if (this.action === 'hover') {
+        this.target.dispatchEvent(
+          new MouseEvent('mouseover', { bubbles: true })
+        )
       }
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000))
     port.postMessage({ capture: true, position: this.position })
     await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    if (this.action === 'hover') {
+      this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
+    }
 
     for (let index = 0; index < this.children.length; index++) {
       await this.children[index].capture(port)
