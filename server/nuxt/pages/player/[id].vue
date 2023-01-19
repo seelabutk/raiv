@@ -42,8 +42,14 @@ function addActionElements(node, parent, index) {
           seekToFrame(node.position + 1)
         })
       } else if (node.action === 'hover') {
-        div.addEventListener('mouseover', () => {
+        div.addEventListener('mouseenter', () => {
+          node.active = true
           seekToFrame(node.position + 1)
+        })
+
+        div.addEventListener('mouseleave', () => {
+          node.active = false
+          seekToFrame(node.parent.position + 1)
         })
       } else if (node.action === 'switch') {
         div.style.cursor = 'pointer'
@@ -51,11 +57,9 @@ function addActionElements(node, parent, index) {
         div.addEventListener('click', () => {
           if (node.active) {
             node.active = false
-
             seekToFrame(node.parent.children[index + 1].position + 1)
           } else {
             node.active = true
-
             seekToFrame(node.position + 1)
           }
         })
