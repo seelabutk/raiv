@@ -21,6 +21,7 @@ export default class Action {
     } else {
       this.clickPosition = []
     }
+    this.position = null // set at capture
     this.scrollPosition =
       document.documentElement.scrollTop || document.body.scrollTop
     this.target = target
@@ -34,7 +35,7 @@ export default class Action {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    port.postMessage({ capture: true })
+    port.postMessage({ capture: true, position: this.position })
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     for (let index = 0; index < this.children.length; index++) {

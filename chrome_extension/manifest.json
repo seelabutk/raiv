@@ -7,29 +7,10 @@
 		"service_worker": "/background.js"
 	},
 	"action": {
-		"default_popup": "popup.html"
+		"default_icon": "/video-solid.svg"
 	},
-	"content_scripts": [
-		{
-			"matches": [
-				"<all_urls>"
-			],
-			"js": [
-				"/recorder.js"
-			]
-		}
-	],
 	"permissions": [
 		"activeTab",
-		"downloads",
-		"tabs"
-	],
-	"web_accessible_resources": [{
-		"matches": [
-			"<all_urls>"
-		],
-		"resources": [
-			"/recorder.html"
-		]
-	}]
+		"scripting"
+	]
 }

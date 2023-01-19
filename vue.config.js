@@ -7,11 +7,6 @@ const isDevMode = process.env.NODE_ENV === 'development'
 export default {
   pages: {
     background: 'src/entry/background.js',
-    popup: {
-      entry: 'src/entry/popup.js',
-      template: 'public/index.html',
-      filename: 'popup.html',
-    },
     recorder: 'src/entry/recorder.js',
   },
   outputDir: 'chrome_extension',

@@ -1,4 +1,3 @@
-/* global chrome */
 import { createApp } from 'vue'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -8,15 +7,11 @@ import App from '@/views/RecorderView'
 
 library.add(faPause, faPlay, faStop)
 
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.launch) {
-    const recorder = document.createElement('div')
-    recorder.id = 'raiv'
+const recorder = document.createElement('div')
+recorder.id = 'raiv'
 
-    document.body.insertBefore(recorder, document.body.firstChild)
+document.body.insertBefore(recorder, document.body.firstChild)
 
-    const app = createApp(App)
-    app.component('font-awesome-icon', FontAwesomeIcon)
-    app.mount('#raiv')
-  }
-})
+const app = createApp(App)
+app.component('font-awesome-icon', FontAwesomeIcon)
+app.mount('#raiv')
