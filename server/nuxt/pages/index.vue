@@ -2,12 +2,14 @@
   <div>
     <h1>Gallery</h1>
 
-    <PreviewCard
-      v-for="video in videos"
-      :key="video.id"
-      :video-id="video.id"
-      :name="video.name"
-    ></PreviewCard>
+    <ul>
+      <PreviewCard
+        v-for="video in videos"
+        :key="video.id"
+        :video-id="video.id"
+        :name="video.name"
+      ></PreviewCard>
+    </ul>
   </div>
 </template>
 
@@ -23,3 +25,9 @@ fetch('/video/')
     videos.value = data
   })
 </script>
+
+<style scoped>
+ul {
+  display: flex;
+}
+</style>
