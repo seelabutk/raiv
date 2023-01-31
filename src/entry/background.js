@@ -39,6 +39,14 @@ chrome.runtime.onConnect.addListener((port) => {
             method: 'POST',
           })
         })
+      } else if (message.complete) {
+        fetch(`${serverLocation}video/${videoId}/`, {
+          body: JSON.stringify({
+            complete: true,
+          }),
+          headers: { 'Content-Type': 'application/json' },
+          method: 'PATCH',
+        })
       }
     })
   }

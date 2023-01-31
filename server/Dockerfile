@@ -9,7 +9,7 @@ RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y \
   python3.11
 
 WORKDIR /opt/run
-COPY main.py .
+COPY main.py encoder.py ./
 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.11 get-pip.py

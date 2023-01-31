@@ -140,6 +140,8 @@ export default class ActionMap {
       await this.children[index].capture(port)
     }
 
+    port.postMessage({ complete: true })
+
     widget.style.display = 'block'
 
     port.disconnect()
