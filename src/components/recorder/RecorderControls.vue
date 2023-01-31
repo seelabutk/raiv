@@ -28,7 +28,7 @@ const props = defineProps({
 const recordPauseIcon = computed(() =>
   props.store.recording.value && !props.store.paused.value
     ? 'fa-solid fa-pause'
-    : 'fa-solid fa-play'
+    : 'fa-solid fa-circle'
 )
 
 function unhighlight(node) {
