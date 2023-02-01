@@ -3,9 +3,9 @@ import json
 import os
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from .encoder import encode_video
@@ -113,25 +113,48 @@ def _get_video_file(video_id, filename):
 	if not os.path.exists(path):
 		raise HTTPException(status_code=404, detail='File not found')
 
-	return FileResponse(path)
+	return path
 
 
 @app.get('/video/{video_id}/action-map/')
 async def action_map__get__detail(video_id):
-	return _get_video_file(video_id, 'action_map.json')
+	return FileResponse(_get_video_file(video_id, 'action_map.json'))
 
 
 @app.get('/video/{video_id}/preview/')
 async def preview__get__detail(video_id):
-	return _get_video_file(video_id, 'first_frame.png')
+	return FileResponse(_get_video_file(video_id, 'first_frame.png'))
 
 
 @app.get('/video/{video_id}/video/')
-async def video__get__detail(video_id):
-	response = _get_video_file(video_id, 'video.mp4')
-	response.headers['Accept-Ranges'] = 'bytes'
+async def video__get__detail(video_id, range: str = Header(None)):  # pylint: disable=redefined-builtin # noqa: E501
+	if not range:
+		raise HTTPException(status_code=404, detail='Video range not specified')
 
-	return response
+	video_path = _get_video_file(video_id, 'video.mp4')
+	filesize = os.path.getsize(video_path)
+
+	start, end = range.replace('bytes=', '').split('-')
+	start = int(start)
+	end = int(end) if end else start + 1048576
+	if end > filesize - 1:
+		end = filesize - 1
+
+	with open(video_path, 'rb') as video:
+		video.seek(start)
+		data = video.read(end - start)
+
+		headers = {
+			'Accept-Ranges': 'bytes',
+			'Content-Range': f'bytes {str(start)}-{str(end)}/{filesize}',
+		}
+
+		return Response(
+			data,
+			status_code=206,
+			headers=headers,
+			media_type='video/mp4'
+		)
 
 
 @app.get('/{path:path}')
