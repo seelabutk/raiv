@@ -136,7 +136,11 @@ async def video__get__detail(video_id):
 
 @app.get('/{path:path}')
 async def nuxt(path):
-	full_path = os.path.join('..', os.getcwd(), 'nuxt', 'dist', path)
+	try:
+		full_path = os.path.join('..', os.getcwd(), 'nuxt', 'dist', path)
+	except FileNotFoundError:
+		full_path = os.path.join('..', os.getcwd(), 'nuxt', 'dist')
+
 	if os.path.isdir(full_path):
 		full_path = os.path.join(full_path, 'index.html')
 

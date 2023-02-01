@@ -23,60 +23,57 @@ function seekToFrame(frame) {
   }
 }
 
-function addActionElements(node, parent, index) {
-  node.active = node.action === 'noop'
+function addActionElements(node, parent) {
+  node.active = false
 
-  if (parent !== undefined && index !== undefined) {
-    node.index = index
+  if (parent !== undefined) {
     node.parent = parent
   }
 
-  if (node.action !== 'noop') {
-    if (node.boundingBox !== undefined) {
-      const div = document.createElement('div')
+  if (node.boundingBox !== undefined) {
+    const div = document.createElement('div')
 
-      if (node.action === 'click') {
-        div.style.cursor = 'pointer'
+    if (node.action === 'click') {
+      div.style.cursor = 'pointer'
 
-        div.addEventListener('click', () => {
-          seekToFrame(node.position + 1)
-        })
-      } else if (node.action === 'hover') {
-        div.addEventListener('mouseenter', () => {
-          node.active = true
-          seekToFrame(node.position + 1)
-        })
+      div.addEventListener('click', () => {
+        seekToFrame(node.position + 1)
+      })
+    } else if (node.action === 'hover') {
+      div.addEventListener('mouseenter', () => {
+        node.active = true
+        seekToFrame(node.position + 1)
+      })
 
-        div.addEventListener('mouseleave', () => {
+      div.addEventListener('mouseleave', () => {
+        node.active = false
+        seekToFrame(node.parent.position + 1)
+      })
+    } else if (node.action === 'switch') {
+      div.style.cursor = 'pointer'
+
+      div.addEventListener('click', () => {
+        if (node.active) {
           node.active = false
           seekToFrame(node.parent.position + 1)
-        })
-      } else if (node.action === 'switch') {
-        div.style.cursor = 'pointer'
-
-        div.addEventListener('click', () => {
-          if (node.active) {
-            node.active = false
-            seekToFrame(node.parent.children[index + 1].position + 1)
-          } else {
-            node.active = true
-            seekToFrame(node.position + 1)
-          }
-        })
-      }
-
-      div.style.position = 'absolute'
-      div.style.left = `${node.boundingBox[0]}px`
-      div.style.top = `${node.boundingBox[1]}px`
-      div.style.height = `${node.boundingBox[3] - node.boundingBox[1]}px`
-      div.style.width = `${node.boundingBox[2] - node.boundingBox[0]}px`
-
-      document.body.appendChild(div)
+        } else {
+          node.active = true
+          seekToFrame(node.position + 1)
+        }
+      })
     }
 
-    for (let index = 0; index < node.children.length; index++) {
-      addActionElements(node.children[index], node, index)
-    }
+    div.style.position = 'absolute'
+    div.style.left = `${node.boundingBox[0]}px`
+    div.style.top = `${node.boundingBox[1]}px`
+    div.style.height = `${node.boundingBox[3] - node.boundingBox[1]}px`
+    div.style.width = `${node.boundingBox[2] - node.boundingBox[0]}px`
+
+    document.body.appendChild(div)
+  }
+
+  for (let index = 0; index < node.children.length; index++) {
+    addActionElements(node.children[index], node)
   }
 }
 

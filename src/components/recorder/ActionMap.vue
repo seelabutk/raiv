@@ -14,7 +14,6 @@
           <option value="click">Click</option>
           <option value="hover">Hover</option>
           <option value="switch">Switch</option>
-          <option value="noop" disabled>Noop</option>
         </select>
       </li>
     </ul>
@@ -69,7 +68,7 @@ const actions = computed(() => {
 
 function changeAction(action) {
   if (action.action === 'switch') {
-    props.store.actionMap.value.split(action)
+    console.log('do something here')
   }
 }
 
