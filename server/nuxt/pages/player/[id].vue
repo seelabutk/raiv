@@ -17,7 +17,19 @@ let player = null
 const route = useRoute()
 const videoId = ref(route.params.id)
 
-function addActionElements(node) {
+function seekToFrame(frame) {
+  if (player !== null) {
+    player.currentTime(frame / fps)
+  }
+}
+
+function addActionElements(node, parent) {
+  node.active = false
+
+  if (parent !== undefined) {
+    node.parent = parent
+  }
+
   if (node.boundingBox !== undefined) {
     const div = document.createElement('div')
 
@@ -25,8 +37,28 @@ function addActionElements(node) {
       div.style.cursor = 'pointer'
 
       div.addEventListener('click', () => {
-        if (player !== null) {
-          player.currentTime((node.position + 1) / fps)
+        seekToFrame(node.position + 1)
+      })
+    } else if (node.action === 'hover') {
+      div.addEventListener('mouseenter', () => {
+        node.active = true
+        seekToFrame(node.position + 1)
+      })
+
+      div.addEventListener('mouseleave', () => {
+        node.active = false
+        seekToFrame(node.parent.position + 1)
+      })
+    } else if (node.action === 'switch') {
+      div.style.cursor = 'pointer'
+
+      div.addEventListener('click', () => {
+        if (node.active) {
+          node.active = false
+          seekToFrame(node.parent.position + 1)
+        } else {
+          node.active = true
+          seekToFrame(node.position + 1)
         }
       })
     }
@@ -41,7 +73,7 @@ function addActionElements(node) {
   }
 
   for (let index = 0; index < node.children.length; index++) {
-    addActionElements(node.children[index])
+    addActionElements(node.children[index], node)
   }
 }
 
