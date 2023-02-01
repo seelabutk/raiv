@@ -1,12 +1,20 @@
 {
   "private": true,
+  "watch": {
+    "generate": {
+      "patterns": ["**"],
+      "extensions": ["css", "js", "vue"],
+      "ignore": "dist"
+    }
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "lint": "eslint --ext .js,.vue .",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "watch": "npm-watch"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.19.1",
@@ -17,6 +25,7 @@
     "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-vue": "^9.8.0",
+    "npm-watch": "^0.11.0",
     "nuxt": "3.0.0",
     "prettier": "^2.8.1"
   },
