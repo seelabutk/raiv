@@ -38,9 +38,9 @@ export default class Action {
       }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 500))
     port.postMessage({ capture: true, position: this.position })
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
     if (this.action === 'hover') {
       this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))

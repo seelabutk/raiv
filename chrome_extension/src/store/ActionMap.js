@@ -118,9 +118,9 @@ export default class ActionMap {
     widget.style.display = 'none'
 
     // Capture the first frame
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 500))
     port.postMessage({ capture: true, position: this.position })
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
     for (let index = 0; index < this.children.length; index++) {
       await this.children[index].capture(port)
