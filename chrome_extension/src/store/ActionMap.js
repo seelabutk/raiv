@@ -7,7 +7,10 @@ export default class ActionMap {
     this.children = []
     this.height = window.innerHeight
     this.lastAction = null
+    this.originalTarget = null
+    this.parentCount = 0
     this.position = null
+    this.siblings = []
     this.target = null
     this.width = window.innerWidth
   }
@@ -15,13 +18,22 @@ export default class ActionMap {
   _load(node) {
     for (let index = 0; index < node.children.length; index++) {
       const childObj = node.children[index]
-      const target = document.elementFromPoint(...childObj.clickPosition)
+      const originalTarget = document.elementFromPoint(
+        ...childObj.clickPosition
+      )
+
+      let target = originalTarget
+      for (let count = 0; count < childObj.parentCount; count++) {
+        target = target.parentElement
+      }
 
       node.children[index] = new Action(target)
       node.children[index].action = childObj.action
+      node.children[index].originalTarget = originalTarget
       node.children[index].boundingBox = childObj.boundingBox
       node.children[index].children = childObj.children
       node.children[index].clickPosition = childObj.clickPosition
+      node.children[index].parentCount = childObj.parentCount
       node.children[index].scrollPosition = childObj.scrollPosition
 
       this._load(node.children[index])
@@ -50,7 +62,7 @@ export default class ActionMap {
     for (let index = 0; index < node.children.length; index++) {
       const child = node.children[index]
 
-      if (child.target === target) {
+      if (child.target === target || child.originalTarget === target) {
         return [node, index]
       }
 

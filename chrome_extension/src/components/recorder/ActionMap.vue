@@ -10,6 +10,15 @@
           </span>
         </span>
 
+        <button
+          v-if="
+            isElement(action.target) && isElement(action.target.parentElement)
+          "
+          @click="useParent(action)"
+        >
+          Use Parent Element
+        </button>
+
         <select v-model="action.action" @change="changeAction(action)">
           <option value="click">Click</option>
           <option value="hover">Hover</option>
@@ -66,6 +75,14 @@ const actions = computed(() => {
   return _actions
 })
 
+function capture() {
+  props.store.actionMap.value.capture(
+    props.store.server.value,
+    props.store.videoName.value
+  )
+  props.store.reset()
+}
+
 function changeAction(action) {
   if (action.action === 'switch') {
     console.log('do something here')
@@ -82,12 +99,9 @@ function isElement(element) {
   return element instanceof Element
 }
 
-function capture() {
-  props.store.actionMap.value.capture(
-    props.store.server.value,
-    props.store.videoName.value
-  )
-  props.store.reset()
+function useParent(action) {
+  action.useParent(props.store.actionMap.value.lastAction)
+  props.store.save()
 }
 
 onMounted(() => {

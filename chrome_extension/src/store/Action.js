@@ -21,10 +21,24 @@ export default class Action {
     } else {
       this.clickPosition = []
     }
+    this.originalTarget = target
+    this.parentCount = 0 // How many parentElements are we away from the original target?
     this.position = null // set at capture
     this.scrollPosition =
       document.documentElement.scrollTop || document.body.scrollTop
     this.target = target
+
+    this.siblings = this._findSiblings()
+  }
+
+  _findSiblings() {
+    const parentEl = this.target.parentElement
+
+    if (parentEl !== null) {
+      return [...parentEl.children].filter((node) => node !== this.target)
+    }
+
+    return []
   }
 
   async capture(port) {
@@ -52,6 +66,13 @@ export default class Action {
 
     if (this.action === 'switch') {
       this.target.click()
+    }
+  }
+
+  useParent() {
+    if (this.target.parentElement !== null) {
+      this.target = this.target.parentElement
+      this.parentCount++
     }
   }
 }
