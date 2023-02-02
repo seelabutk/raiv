@@ -24,6 +24,8 @@
           <option value="hover">Hover</option>
           <option value="switch">Switch</option>
         </select>
+
+        <span>Siblings: {{ action.siblings.length }}</span>
       </li>
     </ul>
 

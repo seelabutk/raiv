@@ -26,19 +26,22 @@ export default class Action {
     this.position = null // set at capture
     this.scrollPosition =
       document.documentElement.scrollTop || document.body.scrollTop
+    this.siblings = []
     this.target = target
 
-    this.siblings = this._findSiblings()
+    this._findSiblings()
   }
 
   _findSiblings() {
     const parentEl = this.target.parentElement
 
     if (parentEl !== null) {
-      return [...parentEl.children].filter((node) => node !== this.target)
+      this.siblings = [...parentEl.children].filter(
+        (node) => node !== this.target
+      )
+    } else {
+      this.siblings = []
     }
-
-    return []
   }
 
   async capture(port) {
@@ -73,6 +76,8 @@ export default class Action {
     if (this.target.parentElement !== null) {
       this.target = this.target.parentElement
       this.parentCount++
+
+      this._findSiblings()
     }
   }
 }
