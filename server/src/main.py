@@ -136,13 +136,14 @@ async def video__get__detail(video_id, range: str = Header(None)):  # pylint: di
 
 	start, end = range.replace('bytes=', '').split('-')
 	start = int(start)
-	end = int(end) if end else start + 1048576
-	if end > filesize - 1:
-		end = filesize - 1
+	end = min(
+		int(end) if end else start + 1048576,
+		filesize - 1
+	)
 
 	with open(video_path, 'rb') as video:
 		video.seek(start)
-		data = video.read(end - start)
+		data = video.read(end - start + 1)
 
 		headers = {
 			'Accept-Ranges': 'bytes',
