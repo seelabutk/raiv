@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from .encoder import encode_video
 
 
-VIDEO_DIR = os.path.join('..', os.getcwd(), 'videos')
+VIDEO_DIR = os.path.join(os.getcwd(), 'videos')
 
 
 class Frame(BaseModel):
@@ -160,16 +160,16 @@ async def video__get__detail(video_id, range: str = Header(None)):  # pylint: di
 @app.get('/{path:path}')
 async def nuxt(path):
 	try:
-		full_path = os.path.join('..', os.getcwd(), 'nuxt', 'dist', path)
+		full_path = os.path.join(os.getcwd(), 'nuxt', 'dist', path)
 	except FileNotFoundError:
-		full_path = os.path.join('..', os.getcwd(), 'nuxt', 'dist')
+		full_path = os.path.join(os.getcwd(), 'nuxt', 'dist')
 
 	if os.path.isdir(full_path):
 		full_path = os.path.join(full_path, 'index.html')
 
 	if not os.path.isfile(full_path):
 		return FileResponse(
-			os.path.join('..', os.getcwd(), 'nuxt', 'dist', '404.html')
+			os.path.join(os.getcwd(), 'nuxt', 'dist', 'index.html')
 		)
 
 	return FileResponse(full_path)

@@ -6,6 +6,8 @@ VIDEO_DIR = os.path.join('..', os.getcwd(), 'videos')
 
 
 def encode_video(video_id):
+	cwd = os.getcwd()
+
 	path = os.path.join(VIDEO_DIR, video_id, 'frames')
 	if os.path.exists(path):
 		os.chdir(path)
@@ -28,6 +30,7 @@ def encode_video(video_id):
 			'yuv420p',
 			'../video.mp4'
 		], check=True)
+		os.chdir(cwd)
 
 		rmtree(path)
 
