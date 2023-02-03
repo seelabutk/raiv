@@ -1,5 +1,5 @@
 export default class Action {
-  constructor(target, event, visible) {
+  constructor(target, event, visible, copy) {
     if (target instanceof Element) {
       const boundingRect = target.getBoundingClientRect()
       const boundingBox = [
@@ -14,7 +14,7 @@ export default class Action {
       this.boundingBox = []
     }
 
-    this.action = 'click'
+    this.action = copy !== undefined ? copy.action : 'click'
     this.children = []
     if (event !== undefined) {
       this.clickPosition = [event.clientX, event.clientY]
@@ -31,7 +31,9 @@ export default class Action {
     this.useSiblings = false
     this.visible = visible
 
-    this._findSiblings()
+    if (this.visible) {
+      this._findSiblings()
+    }
   }
 
   _findSiblings() {
@@ -81,7 +83,9 @@ export default class Action {
       const parent = searchResult[0]
 
       for (let index = 0; index < this.siblings.length; index++) {
-        parent.children.push(new Action(this.siblings[index], undefined, false))
+        parent.children.push(
+          new Action(this.siblings[index], undefined, false, this)
+        )
       }
     } else {
       for (let index = 0; index < this.siblings.length; index++) {
