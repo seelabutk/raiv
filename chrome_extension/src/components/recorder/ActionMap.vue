@@ -1,7 +1,7 @@
 <template>
   <div>
     <ul>
-      <li v-for="(action, index) in actions" :key="action.target">
+      <li v-for="(action, index) in visibleActions" :key="action.target">
         <span v-if="isElement(action.target)">
           {{ index + 1 }}. {{ action.target.tagName.toLowerCase() }}
           <span v-if="action.target.id !== ''">#{{ action.target.id }}</span>
@@ -26,6 +26,12 @@
         </select>
 
         <span>Siblings: {{ action.siblings.length }}</span>
+
+        <input
+          v-model="action.useSiblings"
+          type="checkbox"
+          @change="action.toggleSiblings(props.store.actionMap.value)"
+        />
       </li>
     </ul>
 
@@ -75,6 +81,10 @@ const actions = computed(() => {
   }
 
   return _actions
+})
+
+const visibleActions = computed(() => {
+  return actions.value.filter((action) => action.visible)
 })
 
 function capture() {

@@ -27,7 +27,7 @@ export default class ActionMap {
         target = target.parentElement
       }
 
-      node.children[index] = new Action(target)
+      node.children[index] = new Action(target, undefined, childObj.visible)
       node.children[index].action = childObj.action
       node.children[index].originalTarget = originalTarget
       node.children[index].boundingBox = childObj.boundingBox
@@ -80,7 +80,7 @@ export default class ActionMap {
   }
 
   add(target, event) {
-    const action = new Action(target, event)
+    const action = new Action(target, event, true)
 
     if (this.lastAction === null) {
       this.children.push(action)
