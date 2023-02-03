@@ -1,7 +1,7 @@
 <template>
   <div>
     <ul>
-      <li v-for="(action, index) in actions" :key="action.target">
+      <li v-for="(action, index) in visibleActions" :key="action.target">
         <span v-if="isElement(action.target)">
           {{ index + 1 }}. {{ action.target.tagName.toLowerCase() }}
           <span v-if="action.target.id !== ''">#{{ action.target.id }}</span>
@@ -10,11 +10,28 @@
           </span>
         </span>
 
+        <button
+          v-if="
+            isElement(action.target) && isElement(action.target.parentElement)
+          "
+          @click="useParent(action)"
+        >
+          Use Parent Element
+        </button>
+
         <select v-model="action.action" @change="changeAction(action)">
           <option value="click">Click</option>
           <option value="hover">Hover</option>
           <option value="switch">Switch</option>
         </select>
+
+        <span>Siblings: {{ action.siblings.length }}</span>
+
+        <input
+          v-model="action.useSiblings"
+          type="checkbox"
+          @change="action.toggleSiblings(props.store.actionMap.value)"
+        />
       </li>
     </ul>
 
@@ -66,6 +83,18 @@ const actions = computed(() => {
   return _actions
 })
 
+const visibleActions = computed(() => {
+  return actions.value.filter((action) => action.visible)
+})
+
+function capture() {
+  props.store.actionMap.value.capture(
+    props.store.server.value,
+    props.store.videoName.value
+  )
+  props.store.reset()
+}
+
 function changeAction(action) {
   if (action.action === 'switch') {
     console.log('do something here')
@@ -82,12 +111,9 @@ function isElement(element) {
   return element instanceof Element
 }
 
-function capture() {
-  props.store.actionMap.value.capture(
-    props.store.server.value,
-    props.store.videoName.value
-  )
-  props.store.reset()
+function useParent(action) {
+  action.useParent(props.store.actionMap.value.lastAction)
+  props.store.save()
 }
 
 onMounted(() => {
