@@ -40,8 +40,6 @@ function unhighlight(node) {
 }
 
 function onClick(event) {
-  event.preventDefault() // NOTE: This may be a terrible idea. Will this work with menus?
-
   const raivWidget = document.querySelector('#raiv')
   const target = event.target
 
