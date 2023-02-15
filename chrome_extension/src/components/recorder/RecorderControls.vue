@@ -31,28 +31,15 @@ const recordPauseIcon = computed(() =>
     : 'fa-solid fa-circle'
 )
 
-function unhighlight(node) {
-  node.target.classList.remove('raiv-selected')
-
-  node.children.forEach((child) => {
-    unhighlight(child)
-  })
-}
-
 function onClick(event) {
   const raivWidget = document.querySelector('#raiv')
   const target = event.target
 
   if (!raivWidget.contains(target)) {
-    if (props.store.actionMap.value.find(target) === null) {
-      target.classList.add('raiv-selected')
-      props.store.actionMap.value.add(target, event)
-      props.store.save()
-    } else {
-      const deleted = props.store.actionMap.value.remove(target)
-      props.store.save()
-      unhighlight(deleted[0])
-    }
+    target.classList.add('raiv-selected')
+
+    props.store.actionMap.value.add(target, event)
+    props.store.save()
   }
 }
 

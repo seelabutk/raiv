@@ -45,8 +45,7 @@ export default class Store {
     localStorage.setItem(
       'store',
       JSON.stringify({
-        actions: this.actionMap.value.children,
-        lastAction: this.actionMap.value.lastAction,
+        actions: this.actionMap.value.root.children,
         paused: this.paused.value,
         recording: this.recording.value,
         server: this.server.value,

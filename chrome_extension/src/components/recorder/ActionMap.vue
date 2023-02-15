@@ -74,7 +74,7 @@ const props = defineProps({
 })
 
 const actions = computed(() => {
-  const root = props.store.actionMap.value
+  const root = props.store.actionMap.value.root
   const _actions = [...root.children]
   for (let index = 0; index < _actions.length; index++) {
     _actions.push(..._actions[index].children)
