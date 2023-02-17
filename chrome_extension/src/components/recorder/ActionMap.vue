@@ -10,15 +10,6 @@
           </span>
         </span>
 
-        <button
-          v-if="
-            isElement(action.target) && isElement(action.target.parentElement)
-          "
-          @click="useParent(action)"
-        >
-          Use Parent Element
-        </button>
-
         <select v-model="action.action" @change="changeAction(action)">
           <option value="click">Click</option>
           <option value="hover">Hover</option>
@@ -109,11 +100,6 @@ function getClasses(element) {
 
 function isElement(element) {
   return element instanceof Element
-}
-
-function useParent(action) {
-  action.useParent(props.store.actionMap.value.lastAction)
-  props.store.save()
 }
 
 onMounted(() => {

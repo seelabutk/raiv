@@ -3,7 +3,7 @@ import Action from '@/store/Action'
 
 export default class ActionMap {
   constructor() {
-    this.root = new Action(null)
+    this.root = new Action()
     this.leaves = [this.root]
     this.height = window.innerHeight
     this.width = window.innerWidth
@@ -24,22 +24,15 @@ export default class ActionMap {
 
     for (let index = 0; index < node.children.length; index++) {
       const childObj = node.children[index]
-      const originalTarget = document.elementFromPoint(
-        ...childObj.clickPosition
-      )
+      const target = document.elementFromPoint(...childObj.clickPosition)
 
-      let target = originalTarget
-      for (let count = 0; count < childObj.parentCount; count++) {
-        target = target.parentElement
-      }
-
-      node.children[index] = new Action(target, undefined, childObj.visible)
+      node.children[index] = new Action(node, target, {
+        visible: childObj.visible,
+      })
       node.children[index].action = childObj.action
-      node.children[index].originalTarget = originalTarget
       node.children[index].boundingBox = childObj.boundingBox
       node.children[index].children = childObj.children
       node.children[index].clickPosition = childObj.clickPosition
-      node.children[index].parentCount = childObj.parentCount
       node.children[index].scrollPosition = childObj.scrollPosition
 
       this._load(node.children[index])
@@ -54,7 +47,10 @@ export default class ActionMap {
 
   add(target, event) {
     for (let index = 0; index < this.leaves.length; index++) {
-      const action = new Action(target, event, true)
+      const action = new Action(this.leaves[index], target, {
+        event,
+        visible: true,
+      })
 
       this.leaves[index].children.push(action)
       this.leaves.splice(index, 1, action)
@@ -62,6 +58,9 @@ export default class ActionMap {
   }
 
   _assignActionPositions(node, position) {
+    // NOTE: This should probably be done in another way, but I need to ensure that
+    // the object isn't circular before sending to the service worker.
+    node.parent = undefined
     node.position = position++
 
     for (let index = 0; index < node.children.length; index++) {
@@ -91,7 +90,7 @@ export default class ActionMap {
     port.postMessage({
       serverLocation,
       videoName,
-      actionMap: this,
+      actionMap: this.root,
     })
 
     port.onMessage.addListener((message) => {

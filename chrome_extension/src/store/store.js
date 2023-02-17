@@ -44,13 +44,24 @@ export default class Store {
   save() {
     localStorage.setItem(
       'store',
-      JSON.stringify({
-        actions: this.actionMap.value.root.children,
-        paused: this.paused.value,
-        recording: this.recording.value,
-        server: this.server.value,
-        videoName: this.videoName.value,
-      })
+      JSON.stringify(
+        {
+          actions: this.actionMap.value.root.children,
+          paused: this.paused.value,
+          recording: this.recording.value,
+          server: this.server.value,
+          videoName: this.videoName.value,
+        },
+        (key, value) => {
+          // Ignoring the parent pointer is necessary to avoid a circular structure.
+          // The parent is recreated on load, so it doesn't need to be saved.
+          if (key === 'parent') {
+            return
+          }
+
+          return value
+        }
+      )
     )
   }
 
