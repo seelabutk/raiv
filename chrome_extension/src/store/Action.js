@@ -51,15 +51,16 @@ export default class Action {
     }
   }
 
-  async capture(port) {
+  async capture(port, height) {
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
+      window.scrollTo(0, this.scrollPosition)
       this.target = document.elementFromPoint(...this.clickPosition)
     }
 
     if (this.target instanceof Element) {
       if (this.action === 'click' || this.action === 'switch') {
-        this.target.click()
+        this.target.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       } else if (this.action === 'hover') {
         this.target.dispatchEvent(
           new MouseEvent('mouseover', { bubbles: true })
@@ -67,24 +68,36 @@ export default class Action {
       }
     }
 
-    // TODO: Would like to implement a better system for waiting on the screen capture
-    // Before the capture, we need to wait for the above action to render.
-    // After the capture, we need to wait for the service worker to finish taking the
-    // screenshot (this is easier to handle).
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    port.postMessage({ capture: true, position: this.position })
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    for (let scroll = 0; scroll < height; scroll += window.innerHeight) {
+      window.scrollTo(0, scroll)
+
+      // TODO: Would like to implement a better system for waiting for the above actions to render.
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      port.postMessage({
+        scroll,
+        capture: true,
+        lastFrame: scroll + window.innerHeight >= height,
+        position: this.position,
+      })
+      await new Promise((resolve) =>
+        port.onMessage.addListener((message) => {
+          if (message.captured) {
+            resolve()
+          }
+        })
+      )
+    }
 
     if (this.action === 'hover') {
       this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
     }
 
     for (let index = 0; index < this.children.length; index++) {
-      await this.children[index].capture(port)
+      await this.children[index].capture(port, height)
     }
 
     if (this.action === 'switch') {
-      this.target.click()
+      this.target.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     }
   }
 

@@ -1,6 +1,7 @@
 from base64 import b64decode
 import json
 import os
+import shutil
 from uuid import uuid4
 
 from fastapi import FastAPI, Header, HTTPException
@@ -8,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
-from .encoder import encode_video
+from .util import encode_video, merge_frames
 
 
 VIDEO_DIR = os.path.join(os.getcwd(), 'videos')
@@ -17,6 +18,7 @@ VIDEO_DIR = os.path.join(os.getcwd(), 'videos')
 class Frame(BaseModel):
 	frame: str
 	position: int
+	scrollPosition: int
 	video: str
 
 
@@ -48,14 +50,12 @@ async def frame__post(frame: Frame):
 		os.makedirs(frames_dir)
 
 	frame_data = b64decode(frame.frame.split(',')[1])
-	fpath = os.path.join(frames_dir, f'{str(frame.position).zfill(5)}.png')
+	fpath = os.path.join(
+		frames_dir,
+		f'{str(frame.position).zfill(5)}_{str(frame.scrollPosition).zfill(3)}.png'
+	)
 	with open(fpath, 'wb') as file:
 		file.write(frame_data)
-
-	if frame.position == 0:
-		fpath = os.path.join(path, 'first_frame.png')
-		with open(fpath, 'wb') as file:
-			file.write(frame_data)
 
 
 @app.post('/video/')
@@ -78,6 +78,14 @@ async def video__post(video: Video):
 @app.patch('/video/{video_id}/')
 async def video__patch(video_id, video: Video):
 	if video.complete:
+		merge_frames(video_id)
+
+		path = os.path.join(VIDEO_DIR, video_id)
+		shutil.copy(
+			os.path.join(path, 'frames', '00000.png'),
+			os.path.join(path, 'first_frame.png')
+		)
+
 		encode_video(video_id)
 
 	return video_id
