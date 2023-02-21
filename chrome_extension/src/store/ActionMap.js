@@ -3,37 +3,36 @@ import Action from '@/store/Action'
 
 export default class ActionMap {
   constructor() {
-    this.action = null
-    this.children = []
+    this.root = new Action()
+    this.leaves = [this.root]
     this.height = window.innerHeight
-    this.lastAction = null
-    this.originalTarget = null
-    this.parentCount = 0
-    this.position = null
-    this.siblings = []
-    this.target = null
     this.width = window.innerWidth
   }
 
+  // TODO: Determine if there's any way to do this in a robust way. The challenge is that
+  // document.elementFromPoint will fail if the clickPosition is only valid if prior actions
+  // have been taken.
   _load(node) {
+    // If this node has children, then it isn't a leaf so replace it in the leaf list
+    if (node.children.length > 0) {
+      const leafIndex = this.leaves.indexOf(node)
+
+      if (leafIndex !== -1) {
+        this.leaves.splice(leafIndex, 1, ...node.children)
+      }
+    }
+
     for (let index = 0; index < node.children.length; index++) {
       const childObj = node.children[index]
-      const originalTarget = document.elementFromPoint(
-        ...childObj.clickPosition
-      )
+      const target = document.elementFromPoint(...childObj.clickPosition)
 
-      let target = originalTarget
-      for (let count = 0; count < childObj.parentCount; count++) {
-        target = target.parentElement
-      }
-
-      node.children[index] = new Action(target, undefined, childObj.visible)
+      node.children[index] = new Action(node, target, {
+        visible: childObj.visible,
+      })
       node.children[index].action = childObj.action
-      node.children[index].originalTarget = originalTarget
       node.children[index].boundingBox = childObj.boundingBox
       node.children[index].children = childObj.children
       node.children[index].clickPosition = childObj.clickPosition
-      node.children[index].parentCount = childObj.parentCount
       node.children[index].scrollPosition = childObj.scrollPosition
 
       this._load(node.children[index])
@@ -41,80 +40,27 @@ export default class ActionMap {
   }
 
   load(storageObj) {
-    this.children = storageObj.actions
+    this.root.children = storageObj.actions
 
-    this._load(this)
-
-    if (storageObj.lastAction !== null) {
-      const lastActionTarget = document.elementFromPoint(
-        ...storageObj.lastAction.clickPosition
-      )
-      const searchResult = this.find(lastActionTarget)
-
-      this.lastAction = searchResult[0].children[searchResult[1]]
-    } else {
-      this.lastAction = null
-    }
-  }
-
-  // Returns the parent of action and its index in parent's children array for easy removal
-  _find(node, target) {
-    for (let index = 0; index < node.children.length; index++) {
-      const child = node.children[index]
-
-      if (child.target === target || child.originalTarget === target) {
-        return [node, index]
-      }
-
-      const result = this._find(child, target)
-      if (result !== null) {
-        return result
-      }
-    }
-
-    return null
-  }
-
-  find(target) {
-    return this._find(this, target)
+    this._load(this.root)
   }
 
   add(target, event) {
-    const action = new Action(target, event, true)
+    for (let index = 0; index < this.leaves.length; index++) {
+      const action = new Action(this.leaves[index], target, {
+        event,
+        visible: true,
+      })
 
-    if (this.lastAction === null) {
-      this.children.push(action)
-    } else {
-      this.lastAction.children.push(action)
+      this.leaves[index].children.push(action)
+      this.leaves.splice(index, 1, action)
     }
-
-    this.lastAction = action
-  }
-
-  remove(target) {
-    let removedAction = null
-    const searchResult = this._find(this, target)
-
-    if (searchResult !== null) {
-      const parent = searchResult[0]
-      const index = searchResult[1]
-
-      if (this.lastAction.target === target) {
-        // If the parent of the removed action is the root, then we want to set this.lastAction to null so that the next addAction call works.
-        if (parent !== this) {
-          this.lastAction = parent
-        } else {
-          this.lastAction = null
-        }
-      }
-
-      removedAction = parent.children.splice(index, 1)
-    }
-
-    return removedAction
   }
 
   _assignActionPositions(node, position) {
+    // NOTE: This should probably be done in another way, but I need to ensure that
+    // the object isn't circular before sending to the service worker.
+    node.parent = undefined
     node.position = position++
 
     for (let index = 0; index < node.children.length; index++) {
@@ -129,30 +75,22 @@ export default class ActionMap {
 
     widget.style.display = 'none'
 
-    // Capture the first frame
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    port.postMessage({ capture: true, position: this.position })
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    for (let index = 0; index < this.children.length; index++) {
-      await this.children[index].capture(port)
-    }
-
-    port.postMessage({ complete: true })
+    await this.root.capture(port)
 
     widget.style.display = 'block'
 
+    port.postMessage({ complete: true })
     port.disconnect()
   }
 
   async capture(serverLocation, videoName) {
-    this._assignActionPositions(this, 0)
+    this._assignActionPositions(this.root, 0)
 
     const port = chrome.runtime.connect({ name: 'raiv' })
     port.postMessage({
       serverLocation,
       videoName,
-      actionMap: this,
+      actionMap: this.root,
     })
 
     port.onMessage.addListener((message) => {

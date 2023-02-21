@@ -1,5 +1,9 @@
 export default class Action {
-  constructor(target, event, visible, copy) {
+  constructor(parent, target, options) {
+    if (options === undefined) {
+      options = {}
+    }
+
     if (target instanceof Element) {
       const boundingRect = target.getBoundingClientRect()
       const boundingBox = [
@@ -14,22 +18,21 @@ export default class Action {
       this.boundingBox = []
     }
 
-    this.action = copy !== undefined ? copy.action : 'click'
+    this.action = options.copy !== undefined ? options.copy.action : 'click'
     this.children = []
-    if (event !== undefined) {
-      this.clickPosition = [event.clientX, event.clientY]
+    if (options.event !== undefined) {
+      this.clickPosition = [options.event.clientX, options.event.clientY]
     } else {
       this.clickPosition = []
     }
-    this.originalTarget = target
-    this.parentCount = 0 // How many parentElements are we away from the original target?
+    this.parent = parent // removed at capture
     this.position = null // set at capture
     this.scrollPosition =
       document.documentElement.scrollTop || document.body.scrollTop
     this.siblings = []
     this.target = target
     this.useSiblings = false
-    this.visible = visible
+    this.visible = options.visible === true
 
     if (this.visible) {
       this._findSiblings()
@@ -49,6 +52,11 @@ export default class Action {
   }
 
   async capture(port) {
+    // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
+    if (this.clickPosition.length === 2) {
+      this.target = document.elementFromPoint(...this.clickPosition)
+    }
+
     if (this.target instanceof Element) {
       if (this.action === 'click' || this.action === 'switch') {
         this.target.click()
@@ -59,6 +67,10 @@ export default class Action {
       }
     }
 
+    // TODO: Would like to implement a better system for waiting on the screen capture
+    // Before the capture, we need to wait for the above action to render.
+    // After the capture, we need to wait for the service worker to finish taking the
+    // screenshot (this is easier to handle).
     await new Promise((resolve) => setTimeout(resolve, 500))
     port.postMessage({ capture: true, position: this.position })
     await new Promise((resolve) => setTimeout(resolve, 500))
@@ -76,34 +88,33 @@ export default class Action {
     }
   }
 
-  // actionMap is a placeholder until I've switched to using a hashtable for everything
   toggleSiblings(actionMap) {
-    if (this.useSiblings) {
-      const searchResult = actionMap.find(this.target)
-      const parent = searchResult[0]
+    const parent = this.parent
 
+    if (this.useSiblings) {
       for (let index = 0; index < this.siblings.length; index++) {
-        parent.children.push(
-          new Action(this.siblings[index], undefined, false, this)
-        )
+        const action = new Action(parent, this.siblings[index], {
+          copy: this,
+          visible: false,
+        })
+
+        parent.children.push(action)
+        if (actionMap.leaves.indexOf(this) !== -1) {
+          actionMap.leaves.push(action)
+        }
       }
     } else {
       for (let index = 0; index < this.siblings.length; index++) {
-        const searchResult = actionMap.find(this.siblings[index])
-        const parent = searchResult[0]
-        const siblingIndex = searchResult[1]
+        const siblingIndex = parent.children.findIndex(
+          (child) => child.target === this.siblings[index]
+        )
 
-        parent.children.splice(siblingIndex, 1)
+        const deleted = parent.children.splice(siblingIndex, 1)
+        const leafIndex = actionMap.leaves.indexOf(deleted[0])
+        if (leafIndex !== -1) {
+          actionMap.leaves.splice(leafIndex, 1)
+        }
       }
-    }
-  }
-
-  useParent() {
-    if (this.target.parentElement !== null) {
-      this.target = this.target.parentElement
-      this.parentCount++
-
-      this._findSiblings()
     }
   }
 }
