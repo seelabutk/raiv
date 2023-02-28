@@ -60,7 +60,15 @@ export default class Action {
 
     if (this.target instanceof Element) {
       if (this.action === 'click' || this.action === 'switch') {
-        this.target.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        this.target.dispatchEvent(
+          new MouseEvent('click', {
+            bubbles: true,
+            clientX:
+              this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+            clientY:
+              this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+          })
+        )
       } else if (this.action === 'hover') {
         this.target.dispatchEvent(
           new MouseEvent('mouseover', { bubbles: true })
@@ -126,7 +134,13 @@ export default class Action {
     }
 
     if (this.action === 'switch') {
-      this.target.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      this.target.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          clientX: this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+          clientY: this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+        })
+      )
     }
   }
 
