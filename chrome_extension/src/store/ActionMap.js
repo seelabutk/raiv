@@ -5,7 +5,7 @@ export default class ActionMap {
   constructor() {
     this.root = new Action()
     this.leaves = [this.root]
-    this.height = window.innerHeight
+    this.height = document.documentElement.scrollHeight
     this.width = window.innerWidth
   }
 
@@ -24,6 +24,8 @@ export default class ActionMap {
 
     for (let index = 0; index < node.children.length; index++) {
       const childObj = node.children[index]
+      window.scrollTo(0, childObj.scrollPosition)
+
       const target = document.elementFromPoint(...childObj.clickPosition)
 
       node.children[index] = new Action(node, target, {
@@ -43,6 +45,8 @@ export default class ActionMap {
     this.root.children = storageObj.actions
 
     this._load(this.root)
+
+    window.scrollTo(0, 0)
   }
 
   add(target, event) {
@@ -75,9 +79,10 @@ export default class ActionMap {
 
     widget.style.display = 'none'
 
-    await this.root.capture(port)
+    await this.root.capture(port, this.height)
 
     widget.style.display = 'block'
+    window.scrollTo(0, 0)
 
     port.postMessage({ complete: true })
     port.disconnect()

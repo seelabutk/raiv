@@ -29,14 +29,23 @@ chrome.runtime.onConnect.addListener((port) => {
           })
       } else if (message.capture) {
         chrome.tabs.captureVisibleTab({ format: 'png' }).then((image) => {
+          const request = {
+            frame: image,
+            position: message.position,
+            scrollPosition: message.scroll,
+            video: videoId,
+          }
+
+          if (message.scrollOffset) {
+            request.scrollOffset = message.scrollOffset
+          }
+
           fetch(`${serverLocation}frame/`, {
-            body: JSON.stringify({
-              frame: image,
-              position: message.position,
-              video: videoId,
-            }),
+            body: JSON.stringify(request),
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
+          }).then(() => {
+            port.postMessage({ captured: true })
           })
         })
       } else if (message.complete) {

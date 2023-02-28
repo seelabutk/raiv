@@ -51,15 +51,24 @@ export default class Action {
     }
   }
 
-  async capture(port) {
+  async capture(port, height) {
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
+      window.scrollTo(0, this.scrollPosition)
       this.target = document.elementFromPoint(...this.clickPosition)
     }
 
     if (this.target instanceof Element) {
       if (this.action === 'click' || this.action === 'switch') {
-        this.target.click()
+        this.target.dispatchEvent(
+          new MouseEvent('click', {
+            bubbles: true,
+            clientX:
+              this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+            clientY:
+              this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+          })
+        )
       } else if (this.action === 'hover') {
         this.target.dispatchEvent(
           new MouseEvent('mouseover', { bubbles: true })
@@ -67,24 +76,71 @@ export default class Action {
       }
     }
 
-    // TODO: Would like to implement a better system for waiting on the screen capture
-    // Before the capture, we need to wait for the above action to render.
-    // After the capture, we need to wait for the service worker to finish taking the
-    // screenshot (this is easier to handle).
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    port.postMessage({ capture: true, position: this.position })
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    let lastFrame = false
+    let scroll = 0
+    let scrollIndex = 0
+    let scrollOffset = 0 // scrollOffset corresponds to the starting Y position of the last image.
+    while (!lastFrame) {
+      if (scroll === height) {
+        break
+      }
+
+      if (scroll + window.innerHeight > height) {
+        lastFrame = true
+        scrollOffset = window.innerHeight - (height - scroll)
+
+        scroll = height - window.innerHeight // This ensures that tabs don't exceed to max height of the video.
+      }
+
+      window.scrollTo(0, scroll)
+
+      // TODO: Would like to implement a better system for waiting for the above actions to render.
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      if (lastFrame) {
+        // The final scrolled section of the page should not duplicate the previous section's portion
+        // of the visible tab captured.
+        port.postMessage({
+          scrollOffset,
+          capture: true,
+          lastFrame: true,
+          position: this.position,
+          scroll: scrollIndex++,
+        })
+      } else {
+        port.postMessage({
+          capture: true,
+          lastFrame: false,
+          position: this.position,
+          scroll: scrollIndex++,
+        })
+      }
+      await new Promise((resolve) =>
+        port.onMessage.addListener((message) => {
+          if (message.captured) {
+            resolve()
+          }
+        })
+      )
+
+      scroll += window.innerHeight
+    }
 
     if (this.action === 'hover') {
       this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
     }
 
     for (let index = 0; index < this.children.length; index++) {
-      await this.children[index].capture(port)
+      await this.children[index].capture(port, height)
     }
 
     if (this.action === 'switch') {
-      this.target.click()
+      this.target.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          clientX: this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+          clientY: this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+        })
+      )
     }
   }
 
