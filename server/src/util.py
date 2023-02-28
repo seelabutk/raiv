@@ -15,9 +15,10 @@ def merge_frames(video_id):
 	while True:
 		frame_pattern = str(index).zfill(5)
 		frame_set = glob(os.path.join(path, f'{frame_pattern}_*.png'))
-		print(frame_pattern, frame_set)
 		if not frame_set:
 			break
+
+		frame_set.sort()
 
 		subprocess.run([
 			'convert',

@@ -2,6 +2,7 @@ from base64 import b64decode
 import json
 import os
 import shutil
+import subprocess
 from uuid import uuid4
 
 from fastapi import FastAPI, Header, HTTPException
@@ -18,6 +19,7 @@ VIDEO_DIR = os.path.join(os.getcwd(), 'videos')
 class Frame(BaseModel):
 	frame: str
 	position: int
+	scrollOffset: int = 0
 	scrollPosition: int
 	video: str
 
@@ -56,6 +58,17 @@ async def frame__post(frame: Frame):
 	)
 	with open(fpath, 'wb') as file:
 		file.write(frame_data)
+
+	if frame.scrollOffset:
+		subprocess.run([
+			'convert',
+			fpath,
+			'-gravity',
+			'North',
+			'-chop',
+			f'0x{frame.scrollOffset}',
+			fpath,
+		], check=True)
 
 
 @app.post('/video/')

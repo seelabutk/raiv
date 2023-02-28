@@ -82,6 +82,7 @@ export default class ActionMap {
     await this.root.capture(port, this.height)
 
     widget.style.display = 'block'
+    window.scrollTo(0, 0)
 
     port.postMessage({ complete: true })
     port.disconnect()

@@ -68,17 +68,44 @@ export default class Action {
       }
     }
 
-    for (let scroll = 0; scroll < height; scroll += window.innerHeight) {
+    let lastFrame = false
+    let scroll = 0
+    let scrollIndex = 0
+    let scrollOffset = 0 // scrollOffset corresponds to the starting Y position of the last image.
+    while (!lastFrame) {
+      if (scroll === height) {
+        break
+      }
+
+      if (scroll + window.innerHeight > height) {
+        lastFrame = true
+        scrollOffset = window.innerHeight - (height - scroll)
+
+        scroll = height - window.innerHeight // This ensures that tabs don't exceed to max height of the video.
+      }
+
       window.scrollTo(0, scroll)
 
       // TODO: Would like to implement a better system for waiting for the above actions to render.
       await new Promise((resolve) => setTimeout(resolve, 500))
-      port.postMessage({
-        scroll,
-        capture: true,
-        lastFrame: scroll + window.innerHeight >= height,
-        position: this.position,
-      })
+      if (lastFrame) {
+        // The final scrolled section of the page should not duplicate the previous section's portion
+        // of the visible tab captured.
+        port.postMessage({
+          scrollOffset,
+          capture: true,
+          lastFrame: true,
+          position: this.position,
+          scroll: scrollIndex++,
+        })
+      } else {
+        port.postMessage({
+          capture: true,
+          lastFrame: false,
+          position: this.position,
+          scroll: scrollIndex++,
+        })
+      }
       await new Promise((resolve) =>
         port.onMessage.addListener((message) => {
           if (message.captured) {
@@ -86,6 +113,8 @@ export default class Action {
           }
         })
       )
+
+      scroll += window.innerHeight
     }
 
     if (this.action === 'hover') {
