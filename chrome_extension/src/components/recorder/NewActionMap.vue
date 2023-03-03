@@ -14,7 +14,7 @@
 
 <script setup>
 import * as d3 from 'd3'
-import { defineProps } from 'vue'
+import { defineProps, onMounted } from 'vue'
 
 const props = defineProps({
   actionMap: {
@@ -23,15 +23,63 @@ const props = defineProps({
   },
 })
 
-console.log(d3.hierarchy(props.actionMap.root))
+let dialog = null
+let svg = null
 
 function open() {
-  document.querySelector('.action-map-dialog').show()
+  dialog.show()
 }
 
 function close() {
-  document.querySelector('.action-map-dialog').close()
+  dialog.close()
 }
+
+function render() {
+  svg.textContent = ''
+
+  const tree = d3.hierarchy(props.actionMap.root)
+  d3.tree().nodeSize([32, 32])(tree)
+
+  svg
+    .append('g')
+    .attr('stroke', 'black')
+    .selectAll('path')
+    .data(tree.links())
+    .join('path')
+    .attr(
+      'd',
+      d3
+        .link(d3.curveBumpX)
+        .x((d) => d.x)
+        .y((d) => d.y)
+    )
+
+  const node = svg
+    .append('g')
+    .selectAll('a')
+    .data(tree.descendants())
+    .join('a')
+    .attr('transform', (d) => `translate(${d.x},${d.y})`)
+
+  node
+    .append('circle')
+    .attr('fill', 'black')
+    .attr('r', 8)
+    .style('cursor', 'pointer')
+
+  dialog.appendChild(svg.node())
+}
+
+onMounted(() => {
+  dialog = document.querySelector('.action-map-dialog')
+  svg = d3
+    .create('svg')
+    .attr('viewBox', [-200, -10, 400, 600])
+    .attr('height', '100%')
+    .attr('width', '100%')
+
+  render()
+})
 </script>
 
 <style scoped>
