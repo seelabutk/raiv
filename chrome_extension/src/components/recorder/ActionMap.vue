@@ -25,32 +25,6 @@
         />
       </li>
     </ul>
-
-    <div v-if="actions.length > 0">
-      <p>{{ actions.length + 1 }} frames will be captured.</p>
-
-      <label class="input">
-        Server Location
-        <input
-          :value="props.store.server.value"
-          @input="(event) => props.store.set('server', event.target.value)"
-          type="text"
-        />
-      </label>
-
-      <label class="input">
-        Video Name
-        <input
-          :value="props.store.videoName.value"
-          @input="(event) => props.store.set('videoName', event.target.value)"
-          type="text"
-        />
-      </label>
-
-      <button :disabled="props.store.recording.value" @click="capture">
-        Capture
-      </button>
-    </div>
   </div>
 </template>
 
@@ -77,14 +51,6 @@ const actions = computed(() => {
 const visibleActions = computed(() => {
   return actions.value.filter((action) => action.visible)
 })
-
-function capture() {
-  props.store.actionMap.value.capture(
-    props.store.server.value,
-    props.store.videoName.value
-  )
-  props.store.reset()
-}
 
 function changeAction(action) {
   if (action.action === 'switch') {

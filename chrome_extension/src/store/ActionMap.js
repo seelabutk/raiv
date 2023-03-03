@@ -3,6 +3,7 @@ import Action from '@/store/Action'
 
 export default class ActionMap {
   constructor() {
+    this.frameCount = 1
     this.root = new Action()
     this.leaves = [this.root]
     this.height = document.documentElement.scrollHeight
@@ -37,6 +38,7 @@ export default class ActionMap {
       node.children[index].clickPosition = childObj.clickPosition
       node.children[index].scrollPosition = childObj.scrollPosition
 
+      this.frameCount++
       this._load(node.children[index])
     }
   }
@@ -58,6 +60,8 @@ export default class ActionMap {
 
       this.leaves[index].children.push(action)
       this.leaves.splice(index, 1, action)
+
+      this.frameCount++
     }
   }
 

@@ -1,11 +1,16 @@
 import { createApp } from 'vue'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faCircle, faPause, faStop } from '@fortawesome/free-solid-svg-icons'
+import {
+  faCircle,
+  faPause,
+  faStop,
+  faXmark,
+} from '@fortawesome/free-solid-svg-icons'
 
 import App from '@/views/RecorderView'
 
-library.add(faCircle, faPause, faStop)
+library.add(faCircle, faPause, faStop, faXmark)
 
 const recorder = document.createElement('div')
 recorder.id = 'raiv'

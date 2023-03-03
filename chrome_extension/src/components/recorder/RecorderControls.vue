@@ -11,6 +11,34 @@
     >
       <font-awesome-icon icon="fa-solid fa-stop" />
     </button>
+
+    <ActionMap :action-map="actionMap" />
+
+    <div v-if="actionMap.frameCount > 1">
+      <p>{{ actionMap.frameCount }} frames will be captured.</p>
+
+      <label class="input">
+        Server Location
+        <input
+          :value="props.store.server.value"
+          @input="(event) => props.store.set('server', event.target.value)"
+          type="text"
+        />
+      </label>
+
+      <label class="input">
+        Video Name
+        <input
+          :value="props.store.videoName.value"
+          @input="(event) => props.store.set('videoName', event.target.value)"
+          type="text"
+        />
+      </label>
+
+      <button :disabled="props.store.recording.value" @click="capture">
+        Capture
+      </button>
+    </div>
   </div>
 </template>
 
@@ -18,12 +46,16 @@
 import { computed, defineProps, onMounted } from 'vue'
 import throttle from 'lodash.throttle'
 
+import ActionMap from '@/components/recorder/NewActionMap'
+
 const props = defineProps({
   store: {
     required: true,
     type: Object,
   },
 })
+
+const actionMap = computed(() => props.store.actionMap.value)
 
 const recordPauseIcon = computed(() =>
   props.store.recording.value && !props.store.paused.value
@@ -38,7 +70,7 @@ function onClick(event) {
   if (!raivWidget.contains(target)) {
     target.classList.add('raiv-selected')
 
-    props.store.actionMap.value.add(target, event)
+    actionMap.value.add(target, event)
     props.store.save()
   }
 }
@@ -98,6 +130,14 @@ function stopRecording() {
 
   props.store.set('recording', false)
   props.store.set('paused', false)
+}
+
+function capture() {
+  props.store.actionMap.value.capture(
+    props.store.server.value,
+    props.store.videoName.value
+  )
+  props.store.reset()
 }
 
 onMounted(() => {
