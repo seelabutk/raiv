@@ -1,4 +1,4 @@
-# raiv
+# RAIV Browser Extension
 
 ## Project setup
 ```
@@ -13,6 +13,11 @@ yarn serve
 ### Compiles and minifies for production
 ```
 yarn build
+```
+
+### Recompile for production when changes are detected
+```
+yarn build-watch
 ```
 
 ### Lints and fixes files
