@@ -48,7 +48,7 @@
 import { computed, defineProps, onMounted, ref } from 'vue'
 import throttle from 'lodash.throttle'
 
-import ActionMap from '@/components/recorder/NewActionMap'
+import ActionMap from '@/components/recorder/ActionMap'
 
 const props = defineProps({
   store: {

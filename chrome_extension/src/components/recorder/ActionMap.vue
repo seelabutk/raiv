@@ -1,89 +1,145 @@
 <template>
   <div>
-    <ul>
-      <li v-for="(action, index) in visibleActions" :key="action.target">
-        <span v-if="isElement(action.target)">
-          {{ index + 1 }}. {{ action.target.tagName.toLowerCase() }}
-          <span v-if="action.target.id !== ''">#{{ action.target.id }}</span>
-          <span v-if="getClasses(action.target).length > 0"
-            >.{{ getClasses(action.target).join('.') }}
-          </span>
-        </span>
+    <button
+      type="button"
+      :disabled="actionMap.value.frameCount < 2"
+      @click="open"
+    >
+      View Action Map
+    </button>
 
-        <select v-model="action.action" @change="changeAction(action)">
-          <option value="click">Click</option>
-          <option value="hover">Hover</option>
-          <option value="switch">Switch</option>
-        </select>
-
-        <span>Siblings: {{ action.siblings.length }}</span>
-
-        <input
-          v-model="action.useSiblings"
-          type="checkbox"
-          @change="action.toggleSiblings(props.store.actionMap.value)"
-        />
-      </li>
-    </ul>
+    <dialog class="action-map-dialog">
+      <button class="close-btn" type="button" @click="close">
+        <font-awesome-icon icon="fa-solid fa-xmark" class="fa-2x" />
+      </button>
+    </dialog>
   </div>
 </template>
 
 <script setup>
-import { computed, defineProps, onMounted } from 'vue'
+import * as d3 from 'd3'
+import { defineExpose, defineProps, onMounted } from 'vue'
 
 const props = defineProps({
-  store: {
+  actionMap: {
     required: true,
     type: Object,
   },
 })
 
-const actions = computed(() => {
-  const root = props.store.actionMap.value.root
-  const _actions = [...root.children]
-  for (let index = 0; index < _actions.length; index++) {
-    _actions.push(..._actions[index].children)
-  }
-
-  return _actions
-})
-
-const visibleActions = computed(() => {
-  return actions.value.filter((action) => action.visible)
-})
-
-function changeAction(action) {
-  if (action.action === 'switch') {
-    console.log('do something here')
-  }
+const options = {
+  dx: 32, // the distance between nodes on the x-axis
+  dy: 64, // the distance between nodes on the y-axis
+  height: 600, // the height of the svg
+  labelY: '0.32em', // this shifts the text label down
+  nodeRadius: 8, // the size of each node's circle tag
+  textOffset: 4, // the gap between the circle and text
+  width: 400, // the width of the svg
 }
 
-function getClasses(element) {
-  return [...element.classList].filter(
+let dialog = null
+let svg = null
+
+function open() {
+  dialog.show()
+}
+
+function close() {
+  dialog.close()
+}
+
+function label(d) {
+  if (d.data.target === undefined) {
+    return 'Root'
+  }
+
+  const target = d.data.target
+  let tagName = target.tagName.toLowerCase()
+  if (target.id !== '') {
+    tagName += `#${target.id}`
+  }
+
+  const classes = [...target.classList].filter(
     (className) => !className.startsWith('raiv')
   )
+  if (classes.length > 0) {
+    tagName += `.${classes.join('.')}`
+  }
+
+  return tagName
 }
 
-function isElement(element) {
-  return element instanceof Element
+function render() {
+  svg.selectAll('*').remove()
+
+  const tree = d3.hierarchy(props.actionMap.value.root)
+  d3.tree().nodeSize([options.dx, options.dy])(tree)
+
+  svg
+    .append('g')
+    .attr('stroke', 'black')
+    .selectAll('path')
+    .data(tree.links())
+    .join('path')
+    .attr(
+      'd',
+      d3
+        .link(d3.curveBumpX)
+        .x((d) => d.x)
+        .y((d) => d.y)
+    )
+
+  const node = svg
+    .append('g')
+    .selectAll('g')
+    .data(tree.descendants())
+    .join('g')
+    .attr('transform', (d) => `translate(${d.x},${d.y})`)
+    .style('cursor', 'pointer')
+
+  node.append('circle').attr('fill', 'black').attr('r', options.nodeRadius)
+
+  node
+    .append('text')
+    .text((d) => label(d))
+    .attr('x', options.nodeRadius + options.textOffset)
+    .attr('dy', options.labelY)
+
+  dialog.appendChild(svg.node())
 }
 
 onMounted(() => {
-  if (props.store.recording.value) {
-    for (let index = 0; index < actions.value.length; index++) {
-      actions.value[index].target.classList.add('raiv-selected')
-    }
-  }
+  dialog = document.querySelector('.action-map-dialog')
+  svg = d3
+    .create('svg')
+    .attr('viewBox', [
+      -options.width / 2,
+      -options.dy,
+      options.width,
+      options.height,
+    ])
+    .attr('height', `${options.height}px`)
+    .attr('width', `${options.width}px`)
+
+  render()
 })
+
+defineExpose({ render })
 </script>
 
 <style scoped>
-li select {
-  margin-left: 0.5em;
+.action-map-dialog {
+  height: fit-content;
+  position: fixed;
+  margin-right: 1em;
+  top: 1em;
+  width: fit-content;
+  z-index: 1001;
 }
 
-.input {
-  display: block;
-  margin-bottom: 1em;
+.close-btn {
+  position: absolute;
+  right: 0.5em;
+  top: 0.5em;
 }
 </style>
