@@ -12,10 +12,12 @@
       <font-awesome-icon icon="fa-solid fa-stop" />
     </button>
 
-    <ActionMap :action-map="actionMap" />
+    <ActionMap ref="actionMapComponent" :action-map="props.store.actionMap" />
 
-    <div v-if="actionMap.frameCount > 1">
-      <p>{{ actionMap.frameCount }} frames will be captured.</p>
+    <div v-if="props.store.actionMap.value.frameCount > 1">
+      <p>
+        {{ props.store.actionMap.value.frameCount }} frames will be captured.
+      </p>
 
       <label class="input">
         Server Location
@@ -43,7 +45,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps, onMounted } from 'vue'
+import { computed, defineProps, onMounted, ref } from 'vue'
 import throttle from 'lodash.throttle'
 
 import ActionMap from '@/components/recorder/NewActionMap'
@@ -55,7 +57,7 @@ const props = defineProps({
   },
 })
 
-const actionMap = computed(() => props.store.actionMap.value)
+const actionMapComponent = ref(null)
 
 const recordPauseIcon = computed(() =>
   props.store.recording.value && !props.store.paused.value
@@ -70,7 +72,8 @@ function onClick(event) {
   if (!raivWidget.contains(target)) {
     target.classList.add('raiv-selected')
 
-    actionMap.value.add(target, event)
+    props.store.actionMap.value.add(target, event)
+    actionMapComponent.value.render()
     props.store.save()
   }
 }

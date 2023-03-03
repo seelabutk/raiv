@@ -3,10 +3,11 @@ import Action from '@/store/Action'
 
 export default class ActionMap {
   constructor() {
-    this.frameCount = 1
     this.root = new Action()
-    this.leaves = [this.root]
+
+    this.frameCount = 1
     this.height = document.documentElement.scrollHeight
+    this.leaves = [this.root]
     this.width = window.innerWidth
   }
 
@@ -63,6 +64,10 @@ export default class ActionMap {
 
       this.frameCount++
     }
+  }
+
+  setRef(key, value) {
+    this[key].value = value
   }
 
   _assignActionPositions(node, position) {

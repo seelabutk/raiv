@@ -1,6 +1,10 @@
 <template>
   <div>
-    <button type="button" :disabled="actionMap.frameCount < 2" @click="open">
+    <button
+      type="button"
+      :disabled="actionMap.value.frameCount < 2"
+      @click="open"
+    >
       View Action Map
     </button>
 
@@ -14,7 +18,7 @@
 
 <script setup>
 import * as d3 from 'd3'
-import { defineProps, onMounted, watch } from 'vue'
+import { defineExpose, defineProps, onMounted } from 'vue'
 
 const props = defineProps({
   actionMap: {
@@ -66,10 +70,9 @@ function label(d) {
 }
 
 function render() {
-  console.log('render!')
-  svg.textContent = ''
+  svg.selectAll('*').remove()
 
-  const tree = d3.hierarchy(props.actionMap.root)
+  const tree = d3.hierarchy(props.actionMap.value.root)
   d3.tree().nodeSize([options.dx, options.dy])(tree)
 
   svg
@@ -121,7 +124,7 @@ onMounted(() => {
   render()
 })
 
-watch(props.actionMap, render)
+defineExpose({ render })
 </script>
 
 <style scoped>
