@@ -14,7 +14,7 @@
 
 <script setup>
 import * as d3 from 'd3'
-import { defineProps, onMounted } from 'vue'
+import { defineProps, onMounted, watch } from 'vue'
 
 const props = defineProps({
   actionMap: {
@@ -22,6 +22,16 @@ const props = defineProps({
     type: Object,
   },
 })
+
+const options = {
+  dx: 32, // the distance between nodes on the x-axis
+  dy: 64, // the distance between nodes on the y-axis
+  height: 600, // the height of the svg
+  labelY: '0.32em', // this shifts the text label down
+  nodeRadius: 8, // the size of each node's circle tag
+  textOffset: 4, // the gap between the circle and text
+  width: 400, // the width of the svg
+}
 
 let dialog = null
 let svg = null
@@ -34,11 +44,33 @@ function close() {
   dialog.close()
 }
 
+function label(d) {
+  if (d.data.target === undefined) {
+    return 'Root'
+  }
+
+  const target = d.data.target
+  let tagName = target.tagName.toLowerCase()
+  if (target.id !== '') {
+    tagName += `#${target.id}`
+  }
+
+  const classes = [...target.classList].filter(
+    (className) => !className.startsWith('raiv')
+  )
+  if (classes.length > 0) {
+    tagName += `.${classes.join('.')}`
+  }
+
+  return tagName
+}
+
 function render() {
+  console.log('render!')
   svg.textContent = ''
 
   const tree = d3.hierarchy(props.actionMap.root)
-  d3.tree().nodeSize([32, 32])(tree)
+  d3.tree().nodeSize([options.dx, options.dy])(tree)
 
   svg
     .append('g')
@@ -56,16 +88,19 @@ function render() {
 
   const node = svg
     .append('g')
-    .selectAll('a')
+    .selectAll('g')
     .data(tree.descendants())
-    .join('a')
+    .join('g')
     .attr('transform', (d) => `translate(${d.x},${d.y})`)
+    .style('cursor', 'pointer')
+
+  node.append('circle').attr('fill', 'black').attr('r', options.nodeRadius)
 
   node
-    .append('circle')
-    .attr('fill', 'black')
-    .attr('r', 8)
-    .style('cursor', 'pointer')
+    .append('text')
+    .text((d) => label(d))
+    .attr('x', options.nodeRadius + options.textOffset)
+    .attr('dy', options.labelY)
 
   dialog.appendChild(svg.node())
 }
@@ -74,21 +109,28 @@ onMounted(() => {
   dialog = document.querySelector('.action-map-dialog')
   svg = d3
     .create('svg')
-    .attr('viewBox', [-200, -10, 400, 600])
-    .attr('height', '100%')
-    .attr('width', '100%')
+    .attr('viewBox', [
+      -options.width / 2,
+      -options.dy,
+      options.width,
+      options.height,
+    ])
+    .attr('height', `${options.height}px`)
+    .attr('width', `${options.width}px`)
 
   render()
 })
+
+watch(props.actionMap, render)
 </script>
 
 <style scoped>
 .action-map-dialog {
-  height: 600px; /* TODO: fix */
+  height: fit-content;
   position: fixed;
   margin-right: 1em;
   top: 1em;
-  width: 400px; /* TODO: fix */
+  width: fit-content;
   z-index: 1001;
 }
 
