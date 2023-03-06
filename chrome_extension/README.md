@@ -2,7 +2,7 @@
 
 ## Project setup
 ```
-yarn install
+yarn install --frozen-lockfile
 ```
 
 ### Compile the unpacked extension for development with hot reloading
