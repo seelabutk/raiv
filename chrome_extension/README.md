@@ -5,19 +5,14 @@
 yarn install
 ```
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
-
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Recompile for production when changes are detected
+### Compile the unpacked extension for development with hot reloading
 ```
 yarn build-watch
+```
+
+### Compile the unpacked extension for production
+```
+yarn build
 ```
 
 ### Lints and fixes files
