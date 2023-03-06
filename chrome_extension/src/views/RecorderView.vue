@@ -22,6 +22,10 @@ const store = new Store()
   position: absolute;
   right: 1em;
   top: 1em;
+  z-index: 10000;
+
+  opacity: 0;
+  transition: opacity 0.45s ease-in-out;
 }
 
 .raiv-hovered {
