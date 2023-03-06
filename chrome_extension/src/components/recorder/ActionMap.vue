@@ -38,7 +38,14 @@ const options = {
 }
 
 let dialog = null
+let dragging = false
+const dragOrigin = {
+  x: 0,
+  y: 0,
+}
 let svg = null
+let viewBox = [-options.width / 2, -options.dy, options.width, options.height]
+let newViewBox = viewBox
 
 function open() {
   dialog.show()
@@ -55,10 +62,13 @@ function label(d) {
 
   const target = d.data.target
   let tagName = target.tagName.toLowerCase()
+
+  // Add the element's ID for easy identification
   if (target.id !== '') {
     tagName += `#${target.id}`
   }
 
+  // Add the element's classList for additional context
   const classes = [...target.classList].filter(
     (className) => !className.startsWith('raiv')
   )
@@ -69,12 +79,19 @@ function label(d) {
   return tagName
 }
 
+// Renders the action tree into an SVG
 function render() {
+  // Remove the old SVG
   svg.selectAll('*').remove()
 
+  // Recompute the layout for the new tree structure
   const tree = d3.hierarchy(props.actionMap.value.root)
   d3.tree().nodeSize([options.dx, options.dy])(tree)
 
+  // Resets the viewBox on a new render
+  svg.attr('viewBox', viewBox)
+
+  // Draw the links between nodes
   svg
     .append('g')
     .attr('stroke', 'black')
@@ -89,6 +106,7 @@ function render() {
         .y((d) => d.y)
     )
 
+  // Create the node containers
   const node = svg
     .append('g')
     .selectAll('g')
@@ -97,8 +115,10 @@ function render() {
     .attr('transform', (d) => `translate(${d.x},${d.y})`)
     .style('cursor', 'pointer')
 
+  // Draw the nodes inside their containers
   node.append('circle').attr('fill', 'black').attr('r', options.nodeRadius)
 
+  // Draw the labels
   node
     .append('text')
     .text((d) => label(d))
@@ -108,22 +128,64 @@ function render() {
   dialog.appendChild(svg.node())
 }
 
+// Panning initialization
+function onPointerDown(event) {
+  dragging = true
+
+  dragOrigin.x = event.clientX
+  dragOrigin.y = event.clientY
+
+  svg.style('cursor', 'grabbing')
+}
+
+// Panning handler
+function onPointerMove(event) {
+  if (!dragging) {
+    return
+  }
+
+  event.preventDefault()
+
+  svg.attr('viewBox', [
+    newViewBox[0] - (event.clientX - dragOrigin.x),
+    newViewBox[1] - (event.clientY - dragOrigin.y),
+    newViewBox[2],
+    newViewBox[3],
+  ])
+}
+
+// Panning clean up
+function onPointerUp() {
+  dragging = false
+
+  newViewBox = svg
+    .attr('viewBox')
+    .split(',')
+    .map((val) => Number(val))
+
+  svg.style('cursor', 'grab')
+}
+
 onMounted(() => {
   dialog = document.querySelector('.action-map-dialog')
   svg = d3
     .create('svg')
-    .attr('viewBox', [
-      -options.width / 2,
-      -options.dy,
-      options.width,
-      options.height,
-    ])
     .attr('height', `${options.height}px`)
     .attr('width', `${options.width}px`)
+    .style('cursor', 'grab')
+    .on('pointerdown', onPointerDown)
+    .on('pointerleave', onPointerUp)
+    .on('pointermove', onPointerMove)
+    .on('pointerup', onPointerUp)
 
   render()
 })
 
+// TODO: It would be nice to render only as needed without having parents
+// make this call, but reactivity is being lost in the properties of the
+// Object passed in. Even if reactivity can be properly established, this
+// render likely needs to be throttled to avoid many render calls when
+// performing an action that affects many nodes.
 defineExpose({ render })
 </script>
 
