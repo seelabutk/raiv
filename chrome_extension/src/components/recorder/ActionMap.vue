@@ -114,6 +114,20 @@ function render() {
     .join('g')
     .attr('transform', (d) => `translate(${d.x},${d.y})`)
     .style('cursor', 'pointer')
+    .on('pointerover', (_, d) => {
+      const target = d.data.target
+
+      if (target !== undefined) {
+        target.classList.add('raiv-selected')
+      }
+    })
+    .on('pointerleave', (_, d) => {
+      const target = d.data.target
+
+      if (target !== undefined) {
+        target.classList.remove('raiv-selected')
+      }
+    })
 
   // Draw the nodes inside their containers
   node.append('circle').attr('fill', 'black').attr('r', options.nodeRadius)
