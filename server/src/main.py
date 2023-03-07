@@ -14,6 +14,13 @@ from .util import encode_video, merge_frames
 
 
 VIDEO_DIR = os.path.join(os.getcwd(), 'videos')
+if not os.path.exists(VIDEO_DIR):
+	try:
+		os.mkdir(VIDEO_DIR, mode=0o744)
+	except FileExistsError:
+		pass
+	except FileNotFoundError:
+		raise HTTPException(status_code=404, detail='Videos directory not found and can not be created.')
 
 
 class Frame(BaseModel):
