@@ -228,8 +228,8 @@ then
     yarn install --frozen-lockfile
 
     cd $PROJECT_HOME/server
-    debug $PIPENV_BIN --bare --no-site-packages sync --clerar --dev --keep-outdated
-    $PIPENV_BIN --bare --no-site-packages sync --clerar --dev --keep-outdated
+    debug $PIPENV_BIN --bare --no-site-packages sync --clear --dev --keep-outdated
+    $PIPENV_BIN --bare --no-site-packages sync --clear --dev --keep-outdated
 
     cd $PROJECT_HOME/server/nuxt
     yarn install --frozen-lockfile
