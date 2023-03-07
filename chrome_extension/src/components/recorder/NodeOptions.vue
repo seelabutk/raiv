@@ -63,7 +63,7 @@ defineExpose({ open })
   margin: 0;
   position: fixed;
   width: fit-content;
-  z-index: 1002;
+  z-index: 10002;
 }
 
 .close-btn {

@@ -20,7 +20,6 @@ const store = new Store()
   position: absolute;
   right: 1em;
   top: 1em;
-  z-index: 1000;
 }
 
 .raiv-hovered {

@@ -226,7 +226,7 @@ defineExpose({ render })
   margin-right: 1em;
   top: 1em;
   width: fit-content;
-  z-index: 1001;
+  z-index: 10001;
 }
 
 .close-btn {
