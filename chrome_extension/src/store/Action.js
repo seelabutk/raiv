@@ -25,7 +25,8 @@ export default class Action {
     } else {
       this.clickPosition = []
     }
-    this.parent = parent // removed at capture
+    this.frameCount = 1 // the number of frames this Action and its children represent
+    this.parent = parent // removed at capture to avoid circular JSON
     this.position = null // set at capture
     this.scrollPosition =
       document.documentElement.scrollTop || document.body.scrollTop
@@ -37,6 +38,17 @@ export default class Action {
     if (this.visible) {
       this._findSiblings()
     }
+  }
+
+  delete() {
+    // Don't delete the root node
+    if (this.parent === undefined) {
+      return
+    }
+
+    const index = this.parent.children.indexOf(this)
+
+    this.parent.children.splice(index, 1)
   }
 
   _findSiblings() {

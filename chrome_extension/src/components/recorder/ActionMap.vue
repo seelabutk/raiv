@@ -2,7 +2,7 @@
   <div>
     <button
       type="button"
-      :disabled="actionMap.value.frameCount < 2"
+      :disabled="props.store.actionMap.value.frameCount < 2"
       @click="open"
     >
       View Action Map
@@ -12,20 +12,32 @@
       <button class="close-btn" type="button" @click="close">
         <font-awesome-icon icon="fa-solid fa-xmark" class="fa-2x" />
       </button>
+
+      <NodeOptions
+        ref="nodeOptions"
+        :store="props.store"
+        :action="currentAction"
+        @render="render"
+      />
     </dialog>
   </div>
 </template>
 
 <script setup>
 import * as d3 from 'd3'
-import { defineExpose, defineProps, onMounted } from 'vue'
+import { defineExpose, defineProps, onMounted, ref } from 'vue'
+
+import NodeOptions from '@/components/recorder/NodeOptions'
 
 const props = defineProps({
-  actionMap: {
+  store: {
     required: true,
     type: Object,
   },
 })
+
+let currentAction = ref(props.store.actionMap.value.root)
+const nodeOptions = ref(null)
 
 const options = {
   dx: 32, // the distance between nodes on the x-axis
@@ -37,13 +49,13 @@ const options = {
   width: 400, // the width of the svg
 }
 
-let dialog = null
+let dialog
 let dragging = false
 const dragOrigin = {
   x: 0,
   y: 0,
 }
-let svg = null
+let svg
 let viewBox = [-options.width / 2, -options.dy, options.width, options.height]
 let newViewBox = viewBox
 
@@ -85,7 +97,7 @@ function render() {
   svg.selectAll('*').remove()
 
   // Recompute the layout for the new tree structure
-  const tree = d3.hierarchy(props.actionMap.value.root)
+  const tree = d3.hierarchy(props.store.actionMap.value.root)
   d3.tree().nodeSize([options.dx, options.dy])(tree)
 
   // Resets the viewBox on a new render
@@ -113,7 +125,7 @@ function render() {
     .data(tree.descendants())
     .join('g')
     .attr('transform', (d) => `translate(${d.x},${d.y})`)
-    .style('cursor', 'pointer')
+    .style('cursor', (d) => (d.data.target !== undefined ? 'pointer' : 'unset'))
     .on('pointerover', (_, d) => {
       const target = d.data.target
 
@@ -127,6 +139,10 @@ function render() {
       if (target !== undefined) {
         target.classList.remove('raiv-selected')
       }
+    })
+    .on('click', (event, d) => {
+      currentAction.value = d.data
+      nodeOptions.value.open(event)
     })
 
   // Draw the nodes inside their containers

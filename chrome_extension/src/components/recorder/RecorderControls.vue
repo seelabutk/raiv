@@ -12,7 +12,7 @@
       <font-awesome-icon icon="fa-solid fa-stop" />
     </button>
 
-    <ActionMap ref="actionMapComponent" :action-map="props.store.actionMap" />
+    <ActionMap ref="actionMapComponent" :store="props.store" />
 
     <div v-if="props.store.actionMap.value.frameCount > 1">
       <p>

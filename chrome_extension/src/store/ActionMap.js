@@ -60,14 +60,16 @@ export default class ActionMap {
       })
 
       this.leaves[index].children.push(action)
+      this.leaves[index].frameCount++
+
       this.leaves.splice(index, 1, action)
 
       this.frameCount++
     }
   }
 
-  setRef(key, value) {
-    this[key].value = value
+  set(key, value) {
+    this[key] = value
   }
 
   _assignActionPositions(node, position) {
