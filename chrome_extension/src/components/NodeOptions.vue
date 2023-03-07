@@ -39,12 +39,7 @@ function close() {
 }
 
 function deleteAction() {
-  const frameCount = props.store.actionMap.value.frameCount
-  const deletedFrames = props.action.frameCount
-
   props.action.delete()
-  props.store.actionMap.value.set('frameCount', frameCount - deletedFrames)
-
   emit('render')
 
   props.store.save()
@@ -62,6 +57,7 @@ defineExpose({ open })
 .node-options-dialog {
   height: fit-content;
   margin: 0;
+  padding-top: 4em;
   position: fixed;
   width: fit-content;
   z-index: 10002;

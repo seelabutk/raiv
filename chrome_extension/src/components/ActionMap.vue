@@ -2,7 +2,7 @@
   <div>
     <button
       type="button"
-      :disabled="props.store.actionMap.value.frameCount < 2"
+      :disabled="props.store.actionMap.value.root.frameCount < 2"
       @click="open"
     >
       View Action Map

@@ -49,6 +49,7 @@ export default class Action {
     const index = this.parent.children.indexOf(this)
 
     this.parent.children.splice(index, 1)
+    this.parent.frameCount -= this.frameCount
   }
 
   _findSiblings() {

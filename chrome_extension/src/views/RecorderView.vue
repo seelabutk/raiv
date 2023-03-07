@@ -22,6 +22,10 @@ const store = new Store()
   top: 1em;
 }
 
+#raiv button {
+  cursor: pointer;
+}
+
 .raiv-hovered {
   border: 2px solid #0000ff;
 }

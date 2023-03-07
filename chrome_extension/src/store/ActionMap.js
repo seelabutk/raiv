@@ -5,7 +5,6 @@ export default class ActionMap {
   constructor() {
     this.root = new Action()
 
-    this.frameCount = 1
     this.height = document.documentElement.scrollHeight
     this.leaves = [this.root]
     this.width = window.innerWidth
@@ -39,8 +38,8 @@ export default class ActionMap {
       node.children[index].clickPosition = childObj.clickPosition
       node.children[index].scrollPosition = childObj.scrollPosition
 
-      this.frameCount++
       this._load(node.children[index])
+      node.frameCount += node.children[index].frameCount
     }
   }
 
@@ -62,14 +61,14 @@ export default class ActionMap {
       this.leaves[index].children.push(action)
       this.leaves[index].frameCount++
 
+      let parent = this.leaves[index].parent
+      while (parent !== undefined) {
+        parent.frameCount++
+        parent = parent.parent
+      }
+
       this.leaves.splice(index, 1, action)
-
-      this.frameCount++
     }
-  }
-
-  set(key, value) {
-    this[key] = value
   }
 
   _assignActionPositions(node, position) {
