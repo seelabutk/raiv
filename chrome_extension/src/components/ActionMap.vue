@@ -27,7 +27,7 @@
 import * as d3 from 'd3'
 import { defineExpose, defineProps, onMounted, ref } from 'vue'
 
-import NodeOptions from '@/components/recorder/NodeOptions'
+import NodeOptions from '@/components/NodeOptions'
 
 const props = defineProps({
   store: {

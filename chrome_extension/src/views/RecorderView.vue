@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import RecorderControls from '@/components/recorder/RecorderControls'
+import RecorderControls from '@/components/RecorderControls'
 import Store from '@/store/store'
 
 const store = new Store()
