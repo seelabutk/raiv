@@ -48,6 +48,7 @@ function deleteAction() {
   emit('render')
 
   props.store.save()
+  close()
 }
 
 onMounted(() => {
