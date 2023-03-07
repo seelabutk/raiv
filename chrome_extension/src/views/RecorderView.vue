@@ -1,13 +1,11 @@
 <template>
   <div>
     <RecorderControls :store="store" />
-    <ActionMap :store="store" />
   </div>
 </template>
 
 <script setup>
-import ActionMap from '@/components/recorder/ActionMap'
-import RecorderControls from '@/components/recorder/RecorderControls'
+import RecorderControls from '@/components/RecorderControls'
 import Store from '@/store/store'
 
 const store = new Store()
@@ -26,6 +24,10 @@ const store = new Store()
 
   opacity: 0;
   transition: opacity 0.45s ease-in-out;
+}
+
+#raiv button {
+  cursor: pointer;
 }
 
 .raiv-hovered {

@@ -4,8 +4,9 @@ import Action from '@/store/Action'
 export default class ActionMap {
   constructor() {
     this.root = new Action()
-    this.leaves = [this.root]
+
     this.height = document.documentElement.scrollHeight
+    this.leaves = [this.root]
     this.width = window.innerWidth
   }
 
@@ -38,6 +39,7 @@ export default class ActionMap {
       node.children[index].scrollPosition = childObj.scrollPosition
 
       this._load(node.children[index])
+      node.frameCount += node.children[index].frameCount
     }
   }
 
@@ -57,6 +59,14 @@ export default class ActionMap {
       })
 
       this.leaves[index].children.push(action)
+      this.leaves[index].frameCount++
+
+      let parent = this.leaves[index].parent
+      while (parent !== undefined) {
+        parent.frameCount++
+        parent = parent.parent
+      }
+
       this.leaves.splice(index, 1, action)
     }
   }

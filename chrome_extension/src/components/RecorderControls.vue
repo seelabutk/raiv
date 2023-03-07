@@ -1,22 +1,64 @@
 <template>
   <div class="controls">
-    <button type="button" @click="recordPause">
-      <font-awesome-icon :icon="recordPauseIcon" />
-    </button>
+    <div class="recording-controls">
+      <button type="button" @click="recordPause">
+        <font-awesome-icon :icon="recordPauseIcon" />
+      </button>
 
-    <button
-      type="button"
-      :disabled="!props.store.recording.value"
-      @click="stopRecording"
+      <button
+        type="button"
+        :disabled="!props.store.recording.value"
+        @click="stopRecording"
+      >
+        <font-awesome-icon icon="fa-solid fa-stop" />
+      </button>
+    </div>
+
+    <ActionMap ref="actionMapComponent" :store="props.store" />
+
+    <div
+      v-if="props.store.actionMap.value.root.frameCount > 1"
+      class="capture-settings"
     >
-      <font-awesome-icon icon="fa-solid fa-stop" />
-    </button>
+      <p>
+        {{ props.store.actionMap.value.root.frameCount }} frames will be
+        captured.
+      </p>
+
+      <label class="input">
+        Server Location
+        <input
+          type="text"
+          :value="props.store.server.value"
+          @input="(event) => props.store.set('server', event.target.value)"
+        />
+      </label>
+
+      <label class="input">
+        Video Name
+        <input
+          type="text"
+          :value="props.store.videoName.value"
+          @input="(event) => props.store.set('videoName', event.target.value)"
+        />
+      </label>
+
+      <button
+        type="button"
+        :disabled="props.store.recording.value"
+        @click="capture"
+      >
+        Capture
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, defineProps, onMounted } from 'vue'
+import { computed, defineProps, onMounted, ref } from 'vue'
 import throttle from 'lodash.throttle'
+
+import ActionMap from '@/components/ActionMap'
 
 const props = defineProps({
   store: {
@@ -24,6 +66,8 @@ const props = defineProps({
     type: Object,
   },
 })
+
+const actionMapComponent = ref(null)
 
 const recordPauseIcon = computed(() =>
   props.store.recording.value && !props.store.paused.value
@@ -39,6 +83,7 @@ function onClick(event) {
     target.classList.add('raiv-selected')
 
     props.store.actionMap.value.add(target, event)
+    actionMapComponent.value.render()
     props.store.save()
   }
 }
@@ -100,6 +145,14 @@ function stopRecording() {
   props.store.set('paused', false)
 }
 
+function capture() {
+  props.store.actionMap.value.capture(
+    props.store.server.value,
+    props.store.videoName.value
+  )
+  props.store.reset()
+}
+
 onMounted(() => {
   if (props.store.recording.value && !props.store.paused.value) {
     document.addEventListener('click', onClick, true)
@@ -110,15 +163,26 @@ onMounted(() => {
 
 <style scoped>
 button {
-  cursor: pointer;
   font-size: 1.5em;
-  height: 1.75em;
   outline: 0;
   padding: 0.25em;
+}
+
+.recording-controls {
+  margin-bottom: 2em;
+}
+
+.recording-controls button {
+  height: 1.75em;
   width: 1.75em;
 }
 
-button:not(:last-child) {
+.recording-controls button:not(:last-child) {
   margin-right: 1em;
+}
+
+.capture-settings label {
+  display: block;
+  margin-bottom: 1em;
 }
 </style>
