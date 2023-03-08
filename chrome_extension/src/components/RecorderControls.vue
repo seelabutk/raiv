@@ -25,23 +25,48 @@
         captured.
       </p>
 
-      <label class="input">
-        Server Location
-        <input
-          type="text"
-          :value="props.store.server.value"
-          @input="(event) => props.store.set('server', event.target.value)"
-        />
-      </label>
+      <div>
+        <label>Server Location</label>
 
-      <label class="input">
-        Video Name
+        <select
+          :value="props.store.serverScheme.value"
+          @change="
+            (event) => props.store.set('serverScheme', event.target.value)
+          "
+        >
+          <option>http</option>
+          <option>https</option>
+        </select>
+
+        <span>://</span>
+
         <input
           type="text"
-          :value="props.store.videoName.value"
-          @input="(event) => props.store.set('videoName', event.target.value)"
+          :value="props.store.serverAddress.value"
+          @input="
+            (event) => props.store.set('serverAddress', event.target.value)
+          "
         />
-      </label>
+
+        <span>:</span>
+
+        <input
+          type="text"
+          :value="props.store.serverPort.value"
+          @input="(event) => props.store.set('serverPort', event.target.value)"
+        />
+      </div>
+
+      <div>
+        <label class="input">
+          Video Name
+          <input
+            type="text"
+            :value="props.store.videoName.value"
+            @input="(event) => props.store.set('videoName', event.target.value)"
+          />
+        </label>
+      </div>
 
       <button
         type="button"
@@ -146,8 +171,10 @@ function stopRecording() {
 }
 
 function capture() {
+  const serverLocation = `${props.store.serverScheme.value}://${props.store.serverAddress.value}:${props.store.serverPort.value}`
+
   props.store.actionMap.value.capture(
-    props.store.server.value,
+    serverLocation,
     props.store.videoName.value
   )
   props.store.reset()
@@ -181,8 +208,11 @@ button {
   margin-right: 1em;
 }
 
-.capture-settings label {
-  display: block;
+.capture-settings div {
   margin-bottom: 1em;
+}
+
+.capture-settings label {
+  margin-right: 0.25em;
 }
 </style>
