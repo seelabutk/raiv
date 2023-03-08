@@ -19,8 +19,11 @@ if not os.path.exists(VIDEO_DIR):
 		os.mkdir(VIDEO_DIR, mode=0o744)
 	except FileExistsError:
 		pass
-	except FileNotFoundError:
-		raise HTTPException(status_code=404, detail='Videos directory not found and can not be created.')
+	except FileNotFoundError as exc:
+		raise HTTPException(
+			status_code=404,
+			detail='Videos directory not found and can not be created.'
+		) from exc
 
 
 class Frame(BaseModel):
@@ -197,8 +200,12 @@ async def nuxt(path):
 		full_path = os.path.join(full_path, 'index.html')
 
 	if not os.path.isfile(full_path):
-		return FileResponse(
-			os.path.join(os.getcwd(), 'nuxt', 'dist', 'index.html')
-		)
+		fallback = os.path.join(os.getcwd(), 'nuxt', 'dist', 'index.html')
+
+		if not os.path.isfile(fallback):
+			# TODO: This is specific to nginx. Is there a generic way to handle this?
+			return Response(headers={'X-Accel-Redirect': f'/nuxt/{path}'})
+
+		return FileResponse(os.path.join(fallback))
 
 	return FileResponse(full_path)

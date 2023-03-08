@@ -7,7 +7,7 @@ set -e
 set -u
 
 # Settings
-SERVER_PORT=8088
+SERVER_PORT=3355
 
 ## Logging defaults
 LOGGING__DEBUG=false
@@ -249,6 +249,10 @@ then
 		exit
 	fi
 fi
+
+# Start nginx before launching any windows
+debug "Starting nginx"
+sudo nginx -c $PROJECT_HOME/server/nginx.conf
 
 # Time for tmux
 tmux new-session -d -c "$PROJECT_HOME" -s $SESSION_NAME -n shell
