@@ -252,7 +252,7 @@ fi
 
 # Start nginx before launching any windows
 debug "Starting nginx"
-sudo nginx -c $PROJECT_HOME/server/nginx.conf
+sudo nginx -c $PROJECT_HOME/nginx.conf
 
 # Time for tmux
 tmux new-session -d -c "$PROJECT_HOME" -s $SESSION_NAME -n shell
