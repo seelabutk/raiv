@@ -7,7 +7,7 @@ set -e
 set -u
 
 # Settings
-SERVER_PORT=3355
+SERVER_PORT=8088
 
 ## Logging defaults
 LOGGING__DEBUG=false
@@ -224,7 +224,7 @@ fi
 
 if $UPDATE_PACKAGES
 then
-    cd $PROJECT_HOME/chrome_extension
+    cd $PROJECT_HOME/browser_extension
     yarn install --frozen-lockfile
 
     cd $PROJECT_HOME/server
@@ -250,18 +250,14 @@ then
 	fi
 fi
 
-# Start nginx before launching any windows
-debug "Starting nginx"
-sudo nginx -c $PROJECT_HOME/nginx.conf
-
 # Time for tmux
 tmux new-session -d -c "$PROJECT_HOME" -s $SESSION_NAME -n shell
 
-debug "Starting chrome extension nuxt build watche process"
-tmux__new_window chrome "$PROJECT_HOME/chrome_extension" yarn build-watch
+debug "Starting browser extension nuxt build watch process"
+tmux__new_window extension "$PROJECT_HOME/browser_extension" yarn build-watch
 
 debug "Starting \"server\" nuxt dev server"
-tmux__new_window server_nuxt "$PROJECT_HOME/server/nuxt" yarn dev
+tmux__new_window server_nuxt "$PROJECT_HOME/server/nuxt" yarn watch
 
 debug "Starting server"
 tmux__new_window server "$PROJECT_HOME/server" $PIPENV_BIN run uvicorn src.main:app --reload --port $SERVER_PORT

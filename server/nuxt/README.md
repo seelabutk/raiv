@@ -6,37 +6,20 @@ Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introdu
 
 Make sure to install the dependencies:
 
-```bash
-# yarn
-yarn install
-
-# npm
-npm install
-
-# pnpm
-pnpm install --shamefully-hoist
+```
+yarn install --frozen-lockfile
 ```
 
-## Development Server
+## Build
 
-Start the development server on http://localhost:3000
+Build the application:
 
-```bash
-npm run dev
+```
+yarn build
 ```
 
-## Production
+Rebuild the application when changes are detected:
 
-Build the application for production:
-
-```bash
-npm run build
 ```
-
-Locally preview production build:
-
-```bash
-npm run preview
+yarn watch
 ```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.

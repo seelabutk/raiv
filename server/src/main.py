@@ -53,6 +53,7 @@ app.add_middleware(
 # Recording endpoints
 @app.post('/frame/')
 async def frame__post(frame: Frame):
+	""" Adds a frame to a video and prepares the frame for encoding. """
 	path = os.path.join(VIDEO_DIR, frame.video)
 	if not frame.video or not os.path.exists(path):
 		raise HTTPException(status_code=404)
@@ -83,6 +84,7 @@ async def frame__post(frame: Frame):
 
 @app.post('/video/')
 async def video__post(video: Video):
+	""" Creates a new video with no associated frames. """
 	uuid = uuid4().hex
 
 	path = os.path.join(VIDEO_DIR, uuid)
@@ -100,6 +102,7 @@ async def video__post(video: Video):
 
 @app.patch('/video/{video_id}/')
 async def video__patch(video_id, video: Video):
+	""" Encode the video once the front-end is done sending frames. """
 	if video.complete:
 		merge_frames(video_id)
 
@@ -117,6 +120,7 @@ async def video__patch(video_id, video: Video):
 # Player endpoints
 @app.get('/video/')
 async def video__get__list():
+	""" Retrieve the list of available videos for the gallery. """
 	video_list = os.listdir(VIDEO_DIR)
 
 	objects = []
@@ -139,6 +143,7 @@ async def video__get__list():
 
 
 def _get_video_file(video_id, filename):
+	""" Gets the path to a file within a video's directory. """
 	path = os.path.join(VIDEO_DIR, video_id, filename)
 
 	if not os.path.exists(path):
@@ -149,16 +154,19 @@ def _get_video_file(video_id, filename):
 
 @app.get('/video/{video_id}/action-map/')
 async def action_map__get__detail(video_id):
+	""" Retrieve the action map for a video. """
 	return FileResponse(_get_video_file(video_id, 'action_map.json'))
 
 
 @app.get('/video/{video_id}/preview/')
 async def preview__get__detail(video_id):
+	""" Retrieve the preview frame for a video for the gallery. """
 	return FileResponse(_get_video_file(video_id, 'first_frame.png'))
 
 
 @app.get('/video/{video_id}/video/')
 async def video__get__detail(video_id, range: str = Header(None)):  # pylint: disable=redefined-builtin # noqa: E501
+	""" Stream the video file back to the client. """
 	if not range:
 		raise HTTPException(status_code=404, detail='Video range not specified')
 
@@ -191,6 +199,7 @@ async def video__get__detail(video_id, range: str = Header(None)):  # pylint: di
 
 @app.get('/{path:path}')
 async def nuxt(path):
+	""" All other requests should be forwarded to Nuxt. """
 	try:
 		full_path = os.path.join(os.getcwd(), 'nuxt', 'dist', path)
 	except FileNotFoundError:
@@ -200,12 +209,6 @@ async def nuxt(path):
 		full_path = os.path.join(full_path, 'index.html')
 
 	if not os.path.isfile(full_path):
-		fallback = os.path.join(os.getcwd(), 'nuxt', 'dist', 'index.html')
-
-		if not os.path.isfile(fallback):
-			# TODO: This is specific to nginx. Is there a generic way to handle this?
-			return Response(headers={'X-Accel-Redirect': f'/nuxt/{path}'})
-
-		return FileResponse(os.path.join(fallback))
+		return FileResponse(os.path.join(os.getcwd(), 'nuxt', 'dist', 'index.html'))
 
 	return FileResponse(full_path)
