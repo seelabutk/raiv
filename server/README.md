@@ -19,8 +19,8 @@ pipenv sync -d
 ## Build the front-end
 ```
 cd nuxt
-yarn install
-yarn build
+yarn install --frozen-lockfile
+yarn watch
 ```
 
 ## Run the server
