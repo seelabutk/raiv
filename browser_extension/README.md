@@ -1,5 +1,8 @@
 # RAIV Browser Extension
 
+Currently, the `main` branch builds the extension for Chrome and the
+`firefox` branch builds for Firefox.
+
 ## Project setup
 ```
 yarn install --frozen-lockfile

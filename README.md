@@ -10,8 +10,18 @@
 ## Browser extension setup
 
 ```
-cd chrome_extension
+cd browser_extension
 yarn install --frozen-lockfile
+
+yarn build-watch
+```
+
+## Playback setup
+```
+cd nuxt
+yarn install --frozen-lockfile
+
+yarn watch
 ```
 
 ## Server setup
@@ -21,12 +31,10 @@ cd server
 pipenv --python /path/to/python3.11
 pipenv sync -d
 
-cd nuxt
-yarn install --frozen-lockfile
+pipenv run uvicorn src.main:app --reload --port PORT
 ```
 
 ## start.sh
 
-Once the above commands have been run, `start.sh` will automatically
-launch each of the necessary services to run RAIV in a separate tmux
-window.
+Alternatively, you can run `start.sh` which should initialize each
+component of the project and run each one in a separate tmux window.
