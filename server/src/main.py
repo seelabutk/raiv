@@ -209,12 +209,6 @@ async def nuxt(path):
 		full_path = os.path.join(full_path, 'index.html')
 
 	if not os.path.isfile(full_path):
-		fallback = os.path.join(os.getcwd(), 'nuxt', 'dist', 'index.html')
-
-		if not os.path.isfile(fallback):
-			# TODO: This is specific to nginx. Is there a generic way to handle this?
-			return Response(headers={'X-Accel-Redirect': f'/nuxt/{path}'})
-
-		return FileResponse(os.path.join(fallback))
+		return FileResponse(os.path.join(os.getcwd(), 'nuxt', 'dist', 'index.html'))
 
 	return FileResponse(full_path)
