@@ -7,6 +7,8 @@ VIDEO_DIR = os.path.join('..', os.getcwd(), 'videos')
 
 
 def merge_frames(video_id):
+	""" Stitch together multiple screen captures into a single frame for handling
+	vertical scrolling. """
 	path = os.path.join(VIDEO_DIR, video_id, 'frames')
 	if not os.path.exists(path):
 		return
@@ -34,6 +36,7 @@ def merge_frames(video_id):
 
 
 def encode_video(video_id):
+	""" Creates an mp4 from the frames sent to the server. """
 	cwd = os.getcwd()
 
 	path = os.path.join(VIDEO_DIR, video_id, 'frames')
