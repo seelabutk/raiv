@@ -18,7 +18,6 @@ export default class Action {
       this.boundingBox = []
     }
 
-    this.action = options.copy !== undefined ? options.copy.action : 'click'
     this.children = []
     if (options.event !== undefined) {
       this.clickPosition = [options.event.clientX, options.event.clientY]
@@ -32,6 +31,7 @@ export default class Action {
       document.documentElement.scrollTop || document.body.scrollTop
     this.siblings = []
     this.target = target
+    this.type = options.type
     this.useSiblings = false
     this.visible = options.visible === true
 
@@ -72,7 +72,7 @@ export default class Action {
     }
 
     if (this.target instanceof Element) {
-      if (this.action === 'click' || this.action === 'switch') {
+      if (this.type === 'click' || this.type === 'switch') {
         this.target.dispatchEvent(
           new MouseEvent('click', {
             bubbles: true,
@@ -82,7 +82,7 @@ export default class Action {
               this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
           })
         )
-      } else if (this.action === 'hover') {
+      } else if (this.type === 'hover') {
         this.target.dispatchEvent(
           new MouseEvent('mouseover', { bubbles: true })
         )
@@ -138,7 +138,7 @@ export default class Action {
       scroll += window.innerHeight
     }
 
-    if (this.action === 'hover') {
+    if (this.type === 'hover') {
       this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
     }
 
@@ -146,7 +146,7 @@ export default class Action {
       await this.children[index].capture(port, height)
     }
 
-    if (this.action === 'switch') {
+    if (this.type === 'switch') {
       this.target.dispatchEvent(
         new MouseEvent('click', {
           bubbles: true,

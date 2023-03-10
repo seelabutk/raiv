@@ -24,6 +24,7 @@
 </template>
 
 <script setup>
+/* global chrome */
 import * as d3 from 'd3'
 import { defineExpose, defineProps, onMounted, ref } from 'vue'
 
@@ -43,8 +44,9 @@ const options = {
   dx: 32, // the distance between nodes on the x-axis
   dy: 64, // the distance between nodes on the y-axis
   height: 600, // the height of the svg
+  iconSize: 20,
   labelY: '0.32em', // this shifts the text label down
-  nodeRadius: 8, // the size of each node's circle tag
+  nodeRadius: 16, // the size of each node's circle tag
   textOffset: 4, // the gap between the circle and text
   width: 400, // the width of the svg
 }
@@ -146,7 +148,28 @@ function render() {
     })
 
   // Draw the nodes inside their containers
-  node.append('circle').attr('fill', 'black').attr('r', options.nodeRadius)
+  node
+    .append('circle')
+    .attr('r', options.nodeRadius)
+    .attr('fill', 'white')
+    .attr('stroke', 'black')
+
+  // Draw the fa icons inside of the circles
+  node
+    .append('image')
+    .attr('href', (d) => {
+      const type = d.data.type
+
+      if (type === 'click') {
+        return chrome.runtime.getURL('/icons/hand-pointer-solid.svg')
+      } else if (type === 'hover') {
+        return chrome.runtime.getURL('/icons/arrow-pointer-solid.svg')
+      }
+    })
+    .attr('height', options.iconSize)
+    .attr('width', options.iconSize)
+    .attr('x', -options.iconSize / 2)
+    .attr('y', -options.iconSize / 2)
 
   // Draw the labels
   node

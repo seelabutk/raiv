@@ -14,7 +14,13 @@
       </button>
     </div>
 
-    <ActionMap ref="actionMapComponent" :store="props.store" />
+    <div>
+      <InteractionToolbar :store="props.store" />
+    </div>
+
+    <div>
+      <ActionMap ref="actionMapComponent" :store="props.store" />
+    </div>
 
     <div
       v-if="props.store.actionMap.value.root.frameCount > 1"
@@ -84,6 +90,7 @@ import { computed, defineProps, onMounted, ref } from 'vue'
 import throttle from 'lodash.throttle'
 
 import ActionMap from '@/components/ActionMap'
+import InteractionToolbar from '@/components/InteractionToolbar'
 
 const props = defineProps({
   store: {
@@ -195,7 +202,7 @@ button {
   padding: 0.25em;
 }
 
-.recording-controls {
+div:not(:last-child) {
   margin-bottom: 2em;
 }
 
