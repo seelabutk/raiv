@@ -31,7 +31,7 @@ export default class Action {
       document.documentElement.scrollTop || document.body.scrollTop
     this.siblings = []
     this.target = target
-    this.type = options.type !== undefined ? options.type : 'click'
+    this.type = options.type
     this.useSiblings = false
     this.visible = options.visible === true
 

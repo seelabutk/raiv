@@ -7,10 +7,14 @@
 		"service_worker": "/background.js"
 	},
 	"action": {
-		"default_icon": "/video-solid.svg"
+		"default_icon": "/icons/video-solid.svg"
 	},
 	"permissions": [
 		"activeTab",
 		"scripting"
-	]
+	],
+	"web_accessible_resources": [{
+		"matches": ["<all_urls>"],
+		"resources": ["/icons/*.svg"]
+	}]
 }
