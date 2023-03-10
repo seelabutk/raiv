@@ -6,8 +6,18 @@ export default class ActionMap {
     this.root = new Action()
 
     this.height = document.documentElement.scrollHeight
+    this.interactionType = 'click'
     this.leaves = [this.root]
     this.width = window.innerWidth
+  }
+
+  reset() {
+    this.root = new Action()
+    this.leaves = [this.root]
+  }
+
+  set(key, value) {
+    this[key] = value
   }
 
   // TODO: Determine if there's any way to do this in a robust way. The challenge is that
@@ -32,11 +42,11 @@ export default class ActionMap {
       node.children[index] = new Action(node, target, {
         visible: childObj.visible,
       })
-      node.children[index].action = childObj.action
       node.children[index].boundingBox = childObj.boundingBox
       node.children[index].children = childObj.children
       node.children[index].clickPosition = childObj.clickPosition
       node.children[index].scrollPosition = childObj.scrollPosition
+      node.children[index].type = childObj.type
 
       this._load(node.children[index])
       node.frameCount += node.children[index].frameCount
@@ -55,6 +65,7 @@ export default class ActionMap {
     for (let index = 0; index < this.leaves.length; index++) {
       const action = new Action(this.leaves[index], target, {
         event,
+        type: this.interactionType,
         visible: true,
       })
 

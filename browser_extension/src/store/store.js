@@ -30,7 +30,8 @@ export default class Store {
   }
 
   reset() {
-    this.actionMap.value = new ActionMap()
+    this.actionMap.value.reset()
+
     this.paused.value = false
     this.recording.value = false
     // NOTE: this.serverX and this.videoName are intentionally omitted. Presumably, someone capturing
