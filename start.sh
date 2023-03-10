@@ -44,8 +44,8 @@ usage() {
 	usage+=', setup tmux\nto control the background services and attach to'
 	usage+=' that tmux session.\n'
 	usage+='\nOptions:\n'
-    usage+='  --kill-session          Kill existing tmux session.\n'
-    usage+='  -u, --update-packages   Update yarn packages.\n'
+	usage+='  --kill-session          Kill existing tmux session.\n'
+	usage+='  -u, --update-packages   Update yarn packages.\n'
 	usage+='  -h, --help              Display this message and exit.\n'
 	usage+='  -s, --silent            Suppress error messages.\n'
 	usage+='  -v, --verbose           Enable verbose logging.\n\n'
@@ -176,17 +176,17 @@ unset GETOPTIONS
 while true
 do
 	case "$1" in
-    	--kill-session)
+		--kill-session)
 			KILL_LAST_SESSION=true
 			shift
 			continue
 			;;
 
-        -u|--update-packages)
-            UPDATE_PACKAGES=true
-            shift
-            continue
-            ;;
+		-u|--update-packages)
+			UPDATE_PACKAGES=true
+			shift
+			continue
+			;;
 
 		-h|--help)
 			usage
@@ -224,17 +224,17 @@ fi
 
 if $UPDATE_PACKAGES
 then
-    cd $PROJECT_HOME/browser_extension
-    yarn install --frozen-lockfile
+	cd $PROJECT_HOME/browser_extension
+	yarn install --frozen-lockfile
 
-    cd $PROJECT_HOME/server
-    debug $PIPENV_BIN --bare --no-site-packages sync --clear --dev --keep-outdated
-    $PIPENV_BIN --bare --no-site-packages sync --clear --dev --keep-outdated
+	cd $PROJECT_HOME/server
+	debug $PIPENV_BIN --bare --no-site-packages sync --clear --dev --keep-outdated
+	$PIPENV_BIN --bare --no-site-packages sync --clear --dev --keep-outdated
 
-    cd $PROJECT_HOME/server/nuxt
-    yarn install --frozen-lockfile
+	cd $PROJECT_HOME/server/nuxt
+	yarn install --frozen-lockfile
 
-    cd $PROJECT_HOME
+	cd $PROJECT_HOME
 fi
 
 # Exit if the session already exists
