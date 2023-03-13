@@ -61,24 +61,45 @@ export default class ActionMap {
     window.scrollTo(0, 0)
   }
 
+  _add(leafIdx, target, event, type, replace) {
+    const leaf = this.leaves[leafIdx]
+    let parent
+    if (replace) {
+      // The new node will be a child of leaf
+      parent = leaf
+    } else {
+      // The new node will be a sibling of leaf
+      parent = leaf.parent
+    }
+
+    const action = new Action(parent, target, {
+      event,
+      type,
+      visible: true,
+    })
+
+    parent.children.push(action)
+
+    while (parent !== undefined) {
+      parent.frameCount++
+      parent = parent.parent
+    }
+
+    if (replace) {
+      this.leaves.splice(leafIdx, 1, action)
+    } else {
+      this.leaves.splice(leafIdx + 1, 0, action)
+    }
+  }
+
   add(target, event) {
     for (let index = 0; index < this.leaves.length; index++) {
-      const action = new Action(this.leaves[index], target, {
-        event,
-        type: this.interactionType,
-        visible: true,
-      })
+      this._add(index, target, event, this.interactionType, true)
 
-      this.leaves[index].children.push(action)
-      this.leaves[index].frameCount++
-
-      let parent = this.leaves[index].parent
-      while (parent !== undefined) {
-        parent.frameCount++
-        parent = parent.parent
+      if (this.interactionType === 'switch') {
+        this._add(index, target, event, 'switch-off', false)
+        index++ // The new node will increase the length of the leaf list by 1
       }
-
-      this.leaves.splice(index, 1, action)
     }
   }
 

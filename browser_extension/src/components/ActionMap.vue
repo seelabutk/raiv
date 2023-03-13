@@ -164,6 +164,10 @@ function render() {
         return chrome.runtime.getURL('/icons/hand-pointer-solid.svg')
       } else if (type === 'hover') {
         return chrome.runtime.getURL('/icons/arrow-pointer-solid.svg')
+      } else if (type === 'switch') {
+        return chrome.runtime.getURL('/icons/toggle-on-solid.svg')
+      } else if (type === 'switch-off') {
+        return chrome.runtime.getURL('/icons/toggle-off-solid.svg')
       }
     })
     .attr('height', options.iconSize)
