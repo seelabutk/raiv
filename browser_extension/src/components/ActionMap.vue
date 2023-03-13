@@ -41,10 +41,10 @@ let currentAction = ref(props.store.actionMap.value.root)
 const nodeOptions = ref(null)
 
 const options = {
-  dx: 32, // the distance between nodes on the x-axis
+  dx: 64, // the distance between nodes on the x-axis
   dy: 64, // the distance between nodes on the y-axis
   height: 600, // the height of the svg
-  iconSize: 20,
+  iconSize: 20, // the height/width of the icon
   labelY: '0.32em', // this shifts the text label down
   nodeRadius: 16, // the size of each node's circle tag
   textOffset: 4, // the gap between the circle and text
@@ -109,6 +109,7 @@ function render() {
   svg
     .append('g')
     .attr('stroke', 'black')
+    .attr('fill', 'white')
     .selectAll('path')
     .data(tree.links())
     .join('path')
