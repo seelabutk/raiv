@@ -128,6 +128,8 @@ export default class ActionMap {
 
     port.postMessage({ complete: true })
     port.disconnect()
+
+    this.reset()
   }
 
   async capture(serverLocation, videoName) {

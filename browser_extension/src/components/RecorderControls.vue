@@ -185,7 +185,6 @@ function capture() {
     serverLocation,
     props.store.videoName.value
   )
-  props.store.reset()
 }
 
 onMounted(() => {
