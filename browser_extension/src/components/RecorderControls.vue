@@ -111,7 +111,8 @@ function onClick(event) {
   const raivWidget = document.querySelector('#raiv')
   const target = event.target
 
-  if (!raivWidget.contains(target)) {
+  // TODO: Is there a better way to determine if an event has bubbled besides pointerId?
+  if (!raivWidget.contains(target) && event.pointerId !== -1) {
     target.classList.add('raiv-selected')
 
     props.store.actionMap.value.add(target, event)
