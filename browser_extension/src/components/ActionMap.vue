@@ -144,8 +144,10 @@ function render() {
       }
     })
     .on('click', (event, d) => {
-      currentAction.value = d.data
-      nodeOptions.value.open(event)
+      if (d.data.parent !== undefined) {
+        currentAction.value = d.data
+        nodeOptions.value.open(event)
+      }
     })
 
   // Draw the nodes inside their containers
