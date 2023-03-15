@@ -199,7 +199,7 @@ onMounted(() => {
 button {
   font-size: 1.5em;
   outline: 0;
-  padding: 0.25em;
+  padding: 0 0.25em;
 }
 
 div:not(:last-child) {
