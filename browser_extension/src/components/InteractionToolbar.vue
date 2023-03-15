@@ -1,16 +1,20 @@
 <template>
-  <label>
-    Interaction type:
+  <div>
+    <label>
+      Interaction type:
 
-    <select
-      :value="actionMap.interactionType"
-      @change="(event) => actionMap.set('interactionType', event.target.value)"
-    >
-      <option value="click">Click</option>
-      <option value="hover">Hover</option>
-      <option value="switch">Switch</option>
-    </select>
-  </label>
+      <select
+        :value="actionMap.interactionType"
+        @change="
+          (event) => actionMap.set('interactionType', event.target.value)
+        "
+      >
+        <option value="click">Click</option>
+        <option value="hover">Hover</option>
+        <option value="switch">Switch</option>
+      </select>
+    </label>
+  </div>
 </template>
 
 <script setup>

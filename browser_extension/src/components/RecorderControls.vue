@@ -14,13 +14,13 @@
       </button>
     </div>
 
-    <div>
-      <InteractionToolbar :store="props.store" />
-    </div>
+    <InteractionToolbar v-if="!props.store.recording" :store="props.store" />
 
-    <div>
-      <ActionMap ref="actionMapComponent" :store="props.store" />
-    </div>
+    <ActionMap
+      ref="actionMapComponent"
+      v-if="!props.store.recording"
+      :store="props.store"
+    />
 
     <div
       v-if="props.store.actionMap.value.root.frameCount > 1"
