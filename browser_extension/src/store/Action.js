@@ -72,7 +72,7 @@ export default class Action {
     }
 
     if (this.target instanceof Element) {
-      if (this.type === 'click' || this.type === 'switch') {
+      if (this.type === 'click' || this.type === 'toggle') {
         this.target.dispatchEvent(
           new MouseEvent('click', {
             bubbles: true,
@@ -146,7 +146,7 @@ export default class Action {
       await this.children[index].capture(port, height)
     }
 
-    if (this.type === 'switch') {
+    if (this.type === 'toggle') {
       this.target.dispatchEvent(
         new MouseEvent('click', {
           bubbles: true,

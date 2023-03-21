@@ -12,68 +12,130 @@ import videojs from 'video.js'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
+let activeAction
 const fps = 30
-let player = null
+let player
 const route = useRoute()
 const videoId = ref(route.params.id)
 
 function seekToFrame(frame) {
-  if (player !== null) {
+  if (player !== undefined) {
     player.currentTime(frame / fps)
   }
 }
 
-function addActionElements(node, parent) {
-  node.active = false
-
-  if (parent !== undefined) {
-    node.parent = parent
+function findAction(event, action, checkedNodes) {
+  if (
+    action.boundingBox.length === 4 &&
+    event.clientX >= action.boundingBox[0] &&
+    event.clientY >= action.boundingBox[1] &&
+    event.clientX <= action.boundingBox[2] &&
+    event.clientY <= action.boundingBox[3]
+  ) {
+    return action
   }
 
-  if (node.boundingBox !== undefined) {
-    const div = document.createElement('div')
+  checkedNodes.push(action)
 
-    if (node.action === 'click') {
-      div.style.cursor = 'pointer'
+  // Don't descend into toggle branches if the toggle hasn't been clicked!
+  if (action.type !== 'toggle' || action === activeAction) {
+    for (let index = 0; index < action.children.length; index++) {
+      const child = action.children[index]
+      if (checkedNodes.includes(child)) {
+        continue
+      }
 
-      div.addEventListener('click', () => {
-        seekToFrame(node.position + 1)
-      })
-    } else if (node.action === 'hover') {
-      div.addEventListener('mouseenter', () => {
-        node.active = true
-        seekToFrame(node.position + 1)
-      })
+      const newAction = findAction(event, child, checkedNodes)
 
-      div.addEventListener('mouseleave', () => {
-        node.active = false
-        seekToFrame(node.parent.position + 1)
-      })
-    } else if (node.action === 'switch') {
-      div.style.cursor = 'pointer'
+      if (newAction !== undefined) {
+        return newAction
+      }
+    }
+  }
 
-      div.addEventListener('click', () => {
-        if (node.active) {
-          node.active = false
-          seekToFrame(node.parent.position + 1)
-        } else {
-          node.active = true
-          seekToFrame(node.position + 1)
-        }
-      })
+  // if this action isn't the root, we can check its ancestors for matches
+  if (action.parent !== undefined && !checkedNodes.includes(action.parent)) {
+    return findAction(event, action.parent, checkedNodes)
+  }
+}
+
+// returns a list of indices to navigate from a parent to a child
+function getIndexPath(parent, target) {
+  if (parent === target) {
+    return []
+  }
+
+  for (let index = 0; index < parent.children.length; index++) {
+    const child = parent.children[index]
+
+    if (child === target) {
+      return [index]
     }
 
+    // If the target is a descendant of this child, then add the current index to the path.
+    const result = getIndexPath(child, target)
+    if (result.length > 0) {
+      return [index].concat(result)
+    }
+  }
+
+  return []
+}
+
+function onClick(event) {
+  const checkedNodes = []
+  let newAction = findAction(event, activeAction, checkedNodes)
+
+  if (newAction !== undefined) {
+    if (newAction.type === 'toggle' || newAction.type === 'toggle-off') {
+      const indexPath = getIndexPath(newAction, activeAction)
+
+      if (newAction === activeAction || indexPath.length > 0) {
+        // Toggles need to be switched to their sibling state!
+        let childIndex = newAction.parent.children.indexOf(newAction)
+        if (newAction.type === 'toggle') {
+          childIndex++
+        } else if (newAction.type === 'toggle-off') {
+          childIndex--
+        }
+
+        newAction = newAction.parent.children[childIndex]
+      }
+
+      for (let index = 0; index < indexPath.length; index++) {
+        newAction = newAction.children[indexPath[index]]
+      }
+    }
+
+    activeAction = newAction
+    seekToFrame(activeAction.position + 1)
+  }
+}
+
+function addActionElements(action, parent) {
+  if (parent !== undefined) {
+    action.parent = parent
+  } else {
+    activeAction = action
+  }
+
+  if (
+    action.boundingBox.length === 4 &&
+    (action.type === 'click' || action.type === 'toggle')
+  ) {
+    const div = document.createElement('div')
+    div.style.cursor = 'pointer'
     div.style.position = 'absolute'
-    div.style.left = `${node.boundingBox[0]}px`
-    div.style.top = `${node.boundingBox[1]}px`
-    div.style.height = `${node.boundingBox[3] - node.boundingBox[1]}px`
-    div.style.width = `${node.boundingBox[2] - node.boundingBox[0]}px`
+    div.style.left = `${action.boundingBox[0]}px`
+    div.style.top = `${action.boundingBox[1]}px`
+    div.style.height = `${action.boundingBox[3] - action.boundingBox[1]}px`
+    div.style.width = `${action.boundingBox[2] - action.boundingBox[0]}px`
 
     document.body.appendChild(div)
   }
 
-  for (let index = 0; index < node.children.length; index++) {
-    addActionElements(node.children[index], node)
+  for (let index = 0; index < action.children.length; index++) {
+    addActionElements(action.children[index], action)
   }
 }
 
@@ -99,6 +161,9 @@ onMounted(() => {
       })
 
       addActionElements(actionMap)
+
+      document.addEventListener('click', onClick)
+      // TODO: hover event here as well!
     })
 })
 </script>
