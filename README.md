@@ -16,15 +16,7 @@ yarn install --frozen-lockfile
 yarn build-watch
 ```
 
-## Playback setup
-```
-cd nuxt
-yarn install --frozen-lockfile
-
-yarn watch
-```
-
-## Server setup
+## Recording/playback server setup
 
 ```
 cd server
@@ -32,6 +24,15 @@ pipenv --python /path/to/python3.11
 pipenv sync -d
 
 pipenv run uvicorn src.main:app --reload --port PORT
+```
+
+## Playback client setup
+
+```
+cd server/client
+yarn install --frozen-lockfile
+
+yarn build-watch
 ```
 
 ## start.sh
