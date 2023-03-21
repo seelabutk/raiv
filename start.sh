@@ -253,11 +253,11 @@ fi
 # Time for tmux
 tmux new-session -d -c "$PROJECT_HOME" -s $SESSION_NAME -n shell
 
-debug "Starting browser extension nuxt build watch process"
+debug "Starting browser extension build watch process"
 tmux__new_window extension "$PROJECT_HOME/browser_extension" yarn build-watch
 
-debug "Starting \"server\" nuxt dev server"
-tmux__new_window server_nuxt "$PROJECT_HOME/server/nuxt" yarn watch
+debug "Starting playback client build watch process"
+tmux__new_window client "$PROJECT_HOME/server/client" yarn build-watch
 
 debug "Starting server"
 tmux__new_window server "$PROJECT_HOME/server" $PIPENV_BIN run uvicorn src.main:app --reload --port $SERVER_PORT

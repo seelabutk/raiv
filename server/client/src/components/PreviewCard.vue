@@ -1,12 +1,14 @@
 <template>
-  <NuxtLink :to="`/player/${props.videoId}/`">
+  <router-link :to="`/player/${props.videoId}/`">
     <h2>{{ props.name }}</h2>
 
     <img :src="`/video/${props.videoId}/preview/`" />
-  </NuxtLink>
+  </router-link>
 </template>
 
 <script setup>
+import { defineProps } from 'vue'
+
 const props = defineProps({
   videoId: {
     required: true,

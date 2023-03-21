@@ -1,7 +1,7 @@
 <template>
-  <NuxtPage />
+  <router-view />
 </template>
 
 <script setup>
-import '~/assets/css/reset.css'
+import '@/assets/reset.css'
 </script>

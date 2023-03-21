@@ -15,7 +15,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import PreviewCard from '~/components/PreviewCard'
+import PreviewCard from '@/components/PreviewCard'
 
 const videos = ref([])
 

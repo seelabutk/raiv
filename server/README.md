@@ -16,11 +16,12 @@ pipenv --python /path/to/python3.11
 pipenv sync -d
 ```
 
-## Build the front-end
+## Build the playback client
 ```
-cd nuxt
+cd client
 yarn install --frozen-lockfile
-yarn watch
+
+yarn build-watch
 ```
 
 ## Run the server

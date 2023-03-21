@@ -14,7 +14,10 @@
       </button>
     </div>
 
-    <InteractionToolbar v-if="!props.store.recording" :store="props.store" />
+    <InteractionToolbar
+      :hidden="!props.store.recording.value"
+      :store="props.store"
+    />
 
     <ActionMap
       ref="actionMapComponent"
