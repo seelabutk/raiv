@@ -96,8 +96,8 @@ export default class ActionMap {
     for (let index = 0; index < this.leaves.length; index++) {
       this._add(index, target, event, this.interactionType, true)
 
-      if (this.interactionType === 'switch') {
-        this._add(index, target, event, 'switch-off', false)
+      if (this.interactionType === 'toggle') {
+        this._add(index, target, event, 'toggle-off', false)
         index++ // The new node will increase the length of the leaf list by 1
       }
     }

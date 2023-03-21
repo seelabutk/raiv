@@ -37,8 +37,8 @@ function findAction(event, action, checkedNodes) {
 
   checkedNodes.push(action)
 
-  // Don't descend into switch branches if the switch hasn't been clicked!
-  if (action.type !== 'switch' || action === activeAction) {
+  // Don't descend into toggle branches if the toggle hasn't been clicked!
+  if (action.type !== 'toggle' || action === activeAction) {
     for (let index = 0; index < action.children.length; index++) {
       const child = action.children[index]
       if (checkedNodes.includes(child)) {
@@ -87,15 +87,15 @@ function onClick(event) {
   let newAction = findAction(event, activeAction, checkedNodes)
 
   if (newAction !== undefined) {
-    if (newAction.type === 'switch' || newAction.type === 'switch-off') {
+    if (newAction.type === 'toggle' || newAction.type === 'toggle-off') {
       const indexPath = getIndexPath(newAction, activeAction)
 
       if (newAction === activeAction || indexPath.length > 0) {
         // Toggles need to be switched to their sibling state!
         let childIndex = newAction.parent.children.indexOf(newAction)
-        if (newAction.type === 'switch') {
+        if (newAction.type === 'toggle') {
           childIndex++
-        } else if (newAction.type === 'switch-off') {
+        } else if (newAction.type === 'toggle-off') {
           childIndex--
         }
 
@@ -121,7 +121,7 @@ function addActionElements(action, parent) {
 
   if (
     action.boundingBox.length === 4 &&
-    (action.type === 'click' || action.type === 'switch')
+    (action.type === 'click' || action.type === 'toggle')
   ) {
     const div = document.createElement('div')
     div.style.cursor = 'pointer'

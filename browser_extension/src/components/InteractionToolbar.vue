@@ -11,7 +11,7 @@
       >
         <option value="click">Click</option>
         <option value="hover">Hover</option>
-        <option value="switch">Switch</option>
+        <option value="toggle">Toggle</option>
       </select>
     </label>
   </div>
