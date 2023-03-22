@@ -25,6 +25,7 @@ export default class Action {
       this.clickPosition = []
     }
     this.frameCount = 1 // the number of frames this Action and its children represent
+    this.manualCapture = false // this forces the Action capture to be confirmed by the user, useful if the user needs to position an element before capture
     this.parent = parent // removed at capture to avoid circular JSON
     this.position = null // set at capture
     this.scrollPosition =

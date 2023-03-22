@@ -14,12 +14,25 @@
         @change="
           (event) => {
             props.action.set('waitTime', event.target.value)
+            props.store.save()
           }
         "
       />
     </label>
 
-    <button type="button" @click="deleteAction">Delete</button>
+    <label>
+      Manual capture:
+
+      <input
+        :checked="props.action.manualCapture"
+        type="checkbox"
+        @input="toggleManualCapture"
+      />
+    </label>
+
+    <div>
+      <button type="button" @click="deleteAction">Delete</button>
+    </div>
   </dialog>
 </template>
 
@@ -51,6 +64,11 @@ function open(event) {
 
 function close() {
   dialog.close()
+}
+
+function toggleManualCapture() {
+  props.action.set('manualCapture', !props.action.manualCapture)
+  props.store.save()
 }
 
 function deleteAction() {

@@ -45,6 +45,7 @@ export default class ActionMap {
       node.children[index].boundingBox = childObj.boundingBox
       node.children[index].children = childObj.children
       node.children[index].clickPosition = childObj.clickPosition
+      node.children[index].manualCapture = childObj.manualCapture
       node.children[index].scrollPosition = childObj.scrollPosition
       node.children[index].type = childObj.type
       node.children[index].waitTime = childObj.waitTime
