@@ -47,6 +47,7 @@ export default class ActionMap {
       node.children[index].clickPosition = childObj.clickPosition
       node.children[index].scrollPosition = childObj.scrollPosition
       node.children[index].type = childObj.type
+      node.children[index].waitTime = childObj.waitTime
 
       this._load(node.children[index])
       node.frameCount += node.children[index].frameCount
