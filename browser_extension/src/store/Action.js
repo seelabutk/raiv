@@ -34,10 +34,15 @@ export default class Action {
     this.type = options.type
     this.useSiblings = false
     this.visible = options.visible === true
+    this.waitTime = 500 // milliseconds before capture occurs, cannot be below 500ms in Chrome
 
     if (this.visible) {
       this._findSiblings()
     }
+  }
+
+  set(key, value) {
+    this[key] = value
   }
 
   delete() {
@@ -108,7 +113,7 @@ export default class Action {
       window.scrollTo(0, scroll)
 
       // TODO: Would like to implement a better system for waiting for the above actions to render.
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, this.waitTime))
       if (lastFrame) {
         // The final scrolled section of the page should not duplicate the previous section's portion
         // of the visible tab captured.

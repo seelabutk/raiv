@@ -4,6 +4,21 @@
       <font-awesome-icon icon="fa-solid fa-xmark" class="fa-2x" />
     </button>
 
+    <label>
+      Wait time (ms) before capture:
+
+      <input
+        :value="props.action.waitTime"
+        min="500"
+        type="number"
+        @change="
+          (event) => {
+            props.action.set('waitTime', event.target.value)
+          }
+        "
+      />
+    </label>
+
     <button type="button" @click="deleteAction">Delete</button>
   </dialog>
 </template>
