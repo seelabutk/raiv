@@ -21,7 +21,7 @@
 
     <ActionMap
       ref="actionMapComponent"
-      v-if="!props.store.recording"
+      :hidden="props.store.actionMap.value.root.frameCount <= 1"
       :store="props.store"
     />
 
