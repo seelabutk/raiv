@@ -119,13 +119,13 @@ export default class ActionMap {
   }
 
   async _capture(port) {
-    const widget = document.querySelector('#raiv')
+    const controlPanel = document.querySelector('#raiv .controls')
 
-    widget.style.display = 'none'
+    controlPanel.style.display = 'none'
 
     await this.root.capture(port, this.height)
 
-    widget.style.display = 'block'
+    controlPanel.style.display = 'block'
     window.scrollTo(0, 0)
 
     port.postMessage({ complete: true })

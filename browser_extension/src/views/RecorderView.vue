@@ -1,10 +1,12 @@
 <template>
   <div>
     <RecorderControls :store="store" />
+    <ConfirmCapture />
   </div>
 </template>
 
 <script setup>
+import ConfirmCapture from '@/components/ConfirmCapture'
 import RecorderControls from '@/components/RecorderControls'
 import Store from '@/store/store'
 
@@ -13,10 +15,6 @@ const store = new Store()
 
 <style>
 #raiv {
-  background: white;
-  border: 1px solid black;
-  border-radius: 4px;
-  padding: 1em;
   position: absolute;
   right: 1em;
   top: 1em;

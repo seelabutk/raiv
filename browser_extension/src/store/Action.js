@@ -70,6 +70,21 @@ export default class Action {
     }
   }
 
+  _openConfirmCapture(resolve) {
+    const captureElement = document.querySelector('.confirm-capture-dialog')
+    captureElement.show()
+
+    const confirmButton = captureElement.querySelector('.confirm-btn')
+    confirmButton.addEventListener(
+      'click',
+      () => {
+        resolve()
+        captureElement.close()
+      },
+      { once: true }
+    )
+  }
+
   async capture(port, height) {
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
@@ -93,6 +108,12 @@ export default class Action {
           new MouseEvent('mouseover', { bubbles: true })
         )
       }
+    }
+
+    if (this.manualCapture) {
+      await new Promise((resolve) => {
+        this._openConfirmCapture(resolve)
+      })
     }
 
     let lastFrame = false

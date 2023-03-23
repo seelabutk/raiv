@@ -209,6 +209,13 @@ div:not(:last-child) {
   margin-bottom: 2em;
 }
 
+.controls {
+  background: white;
+  border: 1px solid black;
+  border-radius: 4px;
+  padding: 1em;
+}
+
 .recording-controls button {
   height: 1.75em;
   width: 1.75em;
