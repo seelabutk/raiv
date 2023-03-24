@@ -45,8 +45,10 @@ export default class ActionMap {
       node.children[index].boundingBox = childObj.boundingBox
       node.children[index].children = childObj.children
       node.children[index].clickPosition = childObj.clickPosition
+      node.children[index].manualCapture = childObj.manualCapture
       node.children[index].scrollPosition = childObj.scrollPosition
       node.children[index].type = childObj.type
+      node.children[index].waitTime = childObj.waitTime
 
       this._load(node.children[index])
       node.frameCount += node.children[index].frameCount
@@ -117,13 +119,13 @@ export default class ActionMap {
   }
 
   async _capture(port) {
-    const widget = document.querySelector('#raiv')
+    const controlPanel = document.querySelector('#raiv .controls')
 
-    widget.style.display = 'none'
+    controlPanel.style.display = 'none'
 
     await this.root.capture(port, this.height)
 
-    widget.style.display = 'block'
+    controlPanel.style.display = 'block'
     window.scrollTo(0, 0)
 
     port.postMessage({ complete: true })
