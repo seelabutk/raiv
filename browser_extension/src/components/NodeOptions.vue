@@ -30,6 +30,50 @@
       />
     </label>
 
+    <div v-if="isCanvas">
+      <p>
+        The targeted element is a canvas. If there are interactions inside the
+        canvas you want to capture then this tool can repeat this Action
+        throughout the canvas. Choose the number of rows and columns of repeated
+        Actions to perform on this canvas.
+      </p>
+
+      <label>
+        Rows
+        <input
+          :value="props.action.canvasRanges[0]"
+          min="1"
+          type="number"
+          @change="
+            (event) => {
+              props.action.set('canvasRanges', [
+                event.target.value,
+                props.action.canvasRanges[1],
+              ])
+              props.store.save()
+            }
+          "
+        />
+      </label>
+      <label>
+        Columns
+        <input
+          :value="props.action.canvasRanges[1]"
+          min="1"
+          type="number"
+          @change="
+            (event) => {
+              props.action.set('canvasRanges', [
+                props.action.canvasRanges[0],
+                event.target.value,
+              ])
+              props.store.save()
+            }
+          "
+        />
+      </label>
+    </div>
+
     <div>
       <button type="button" @click="deleteAction">Delete</button>
     </div>
@@ -37,7 +81,13 @@
 </template>
 
 <script setup>
-import { defineEmits, defineExpose, defineProps, onMounted } from 'vue'
+import {
+  computed,
+  defineEmits,
+  defineExpose,
+  defineProps,
+  onMounted,
+} from 'vue'
 
 const emit = defineEmits(['render'])
 
@@ -52,6 +102,12 @@ const props = defineProps({
     type: Object,
   },
 })
+
+const isCanvas = computed(
+  () =>
+    props.action.target &&
+    props.action.target.tagName.toLowerCase() === 'canvas'
+)
 
 let dialog
 

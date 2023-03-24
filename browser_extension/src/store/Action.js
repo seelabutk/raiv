@@ -18,6 +18,7 @@ export default class Action {
       this.boundingBox = []
     }
 
+    this.canvasRanges = [1, 1] // the number of rows and columns to treat a canvas as when repeating an Action over it
     this.children = []
     if (options.event !== undefined) {
       this.clickPosition = [options.event.clientX, options.event.clientY]
