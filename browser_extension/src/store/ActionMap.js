@@ -43,8 +43,11 @@ export default class ActionMap {
         visible: childObj.visible,
       })
       node.children[index].boundingBox = childObj.boundingBox
+      node.children[index].canvasRanges = childObj.canvasRanges
       node.children[index].children = childObj.children
       node.children[index].clickPosition = childObj.clickPosition
+      node.children[index].frameCount =
+        childObj.canvasRanges[0] * childObj.canvasRanges[1]
       node.children[index].manualCapture = childObj.manualCapture
       node.children[index].scrollPosition = childObj.scrollPosition
       node.children[index].type = childObj.type
@@ -105,17 +108,70 @@ export default class ActionMap {
     }
   }
 
-  _assignActionPositions(node, position) {
+  _prepareActions(action, position) {
+    const parent = action.parent
+
     // NOTE: This should probably be done in another way, but I need to ensure that
     // the object isn't circular before sending to the service worker.
-    node.parent = undefined
-    node.position = position++
+    action.parent = undefined
+    // Each Action needs to have a frame position assigned to it so we can seek properly
+    // during playback.
+    action.position = position++
 
-    for (let index = 0; index < node.children.length; index++) {
-      position = this._assignActionPositions(node.children[index], position)
+    // If this Action is on a canvas and should be repeated, then add Actions to the tree.
+    const newActions = []
+    const [rows, columns] = action.canvasRanges
+    if (rows * columns > 1) {
+      const [left, top, right, bottom] = action.boundingBox
+      const height = bottom - top
+      const width = right - left
+
+      const actionHeight = height / rows
+      const actionWidth = width / columns
+
+      for (let row = 0; row < rows; row++) {
+        for (let column = 0; column < columns; column++) {
+          const newBoundingBox = [
+            left + actionWidth * column,
+            top + actionHeight * row,
+            left + actionWidth * (column + 1),
+            top + actionHeight * (row + 1),
+          ]
+          const newClickPosition = [
+            left + actionWidth * (column + 0.5),
+            top + actionHeight * (row + 0.5),
+          ]
+
+          if (row === 0 && column === 0) {
+            action.boundingBox = newBoundingBox
+            action.clickPosition = newClickPosition
+          } else {
+            const newAction = new Action(parent, action.target, {
+              type: action.type,
+            })
+
+            newAction.boundingBox = newBoundingBox
+            newAction.clickPosition = newClickPosition
+            newAction.parent = undefined
+            newAction.position = position++
+
+            newActions.push(newAction)
+          }
+        }
+      }
+
+      const oldIndex = parent.children.indexOf(action)
+      parent.children.splice(oldIndex + 1, 0, ...newActions)
     }
 
-    return position
+    for (let index = 0; index < action.children.length; index++) {
+      const retValues = this._prepareActions(action.children[index], position)
+
+      position = retValues[0]
+      index += retValues[1]
+    }
+
+    return [position, newActions.length]
   }
 
   async _capture(port) {
@@ -135,7 +191,7 @@ export default class ActionMap {
   }
 
   async capture(serverLocation, videoName) {
-    this._assignActionPositions(this.root, 0)
+    this._prepareActions(this.root, 0)
 
     const port = chrome.runtime.connect({ name: 'raiv' })
     port.postMessage({

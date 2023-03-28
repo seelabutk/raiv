@@ -18,6 +18,7 @@ export default class Action {
       this.boundingBox = []
     }
 
+    this.canvasRanges = [1, 1] // the number of rows and columns to treat a canvas as when repeating an Action over it
     this.children = []
     if (options.event !== undefined) {
       this.clickPosition = [options.event.clientX, options.event.clientY]
@@ -43,19 +44,38 @@ export default class Action {
   }
 
   set(key, value) {
+    if (key === 'canvasRanges') {
+      const oldCanvasFrames = this.canvasRanges[0] * this.canvasRanges[1]
+      const newCanvasFrames = value[0] * value[1]
+      const diff = newCanvasFrames - oldCanvasFrames
+
+      this.frameCount += diff
+      let parent = this.parent
+      while (parent !== undefined) {
+        parent.frameCount += diff
+        parent = parent.parent
+      }
+    }
+
     this[key] = value
   }
 
   delete() {
+    let parent = this.parent
+
     // Don't delete the root node
-    if (this.parent === undefined) {
+    if (parent === undefined) {
       return
     }
 
-    const index = this.parent.children.indexOf(this)
+    const index = parent.children.indexOf(this)
 
-    this.parent.children.splice(index, 1)
-    this.parent.frameCount -= this.frameCount
+    parent.children.splice(index, 1)
+
+    while (parent !== undefined) {
+      parent.frameCount -= this.frameCount
+      parent = parent.parent
+    }
   }
 
   _findSiblings() {
@@ -105,7 +125,13 @@ export default class Action {
         )
       } else if (this.type === 'hover') {
         this.target.dispatchEvent(
-          new MouseEvent('mouseover', { bubbles: true })
+          new MouseEvent('mousemove', {
+            bubbles: true,
+            clientX:
+              this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+            clientY:
+              this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+          })
         )
       }
     }
