@@ -7,6 +7,7 @@
 </template>
 
 <script setup>
+import throttle from 'lodash.throttle'
 import 'video.js/dist/video-js.css'
 import videojs from 'video.js'
 import { onMounted, ref } from 'vue'
@@ -112,6 +113,17 @@ function onClick(event) {
   }
 }
 
+function onHover(event) {
+  const checkedNodes = []
+  const newAction = findAction(event, activeAction, checkedNodes)
+
+  if (newAction !== undefined) {
+    activeAction = newAction
+    seekToFrame(activeAction.position + 1)
+  }
+}
+const throttledHover = throttle(onHover, 100)
+
 function addActionElements(action, parent) {
   if (parent !== undefined) {
     action.parent = parent
@@ -163,7 +175,7 @@ onMounted(() => {
       addActionElements(actionMap)
 
       document.addEventListener('click', onClick)
-      // TODO: hover event here as well!
+      document.addEventListener('mousemove', throttledHover)
     })
 })
 </script>
