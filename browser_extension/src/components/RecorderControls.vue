@@ -1,89 +1,99 @@
 <template>
-  <div class="controls">
-    <div class="recording-controls">
-      <button type="button" @click="recordPause">
-        <font-awesome-icon :icon="recordPauseIcon" />
-      </button>
-
-      <button
-        type="button"
-        :disabled="!props.store.recording.value"
-        @click="stopRecording"
-      >
-        <font-awesome-icon icon="fa-solid fa-stop" />
-      </button>
+  <div class="control-container" v-drag="'#controls-handle'">
+    <div id="controls-handle" class="handle">
+      <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
     </div>
 
-    <InteractionToolbar
-      :hidden="!props.store.recording.value"
-      :store="props.store"
-    />
+    <div class="controls">
+      <div class="recording-controls">
+        <button type="button" @click="recordPause">
+          <font-awesome-icon :icon="recordPauseIcon" />
+        </button>
 
-    <ActionMap
-      ref="actionMapComponent"
-      :hidden="props.store.actionMap.value.root.frameCount <= 1"
-      :store="props.store"
-    />
-
-    <div
-      v-if="props.store.actionMap.value.root.frameCount > 1"
-      class="capture-settings"
-    >
-      <p>
-        {{ props.store.actionMap.value.root.frameCount }} frames will be
-        captured.
-      </p>
-
-      <div>
-        <label>Server Location</label>
-
-        <select
-          :value="props.store.serverScheme.value"
-          @change="
-            (event) => props.store.set('serverScheme', event.target.value)
-          "
+        <button
+          type="button"
+          :disabled="!props.store.recording.value"
+          @click="stopRecording"
         >
-          <option>http</option>
-          <option>https</option>
-        </select>
-
-        <span>://</span>
-
-        <input
-          type="text"
-          :value="props.store.serverAddress.value"
-          @input="
-            (event) => props.store.set('serverAddress', event.target.value)
-          "
-        />
-
-        <span>:</span>
-
-        <input
-          type="text"
-          :value="props.store.serverPort.value"
-          @input="(event) => props.store.set('serverPort', event.target.value)"
-        />
+          <font-awesome-icon icon="fa-solid fa-stop" />
+        </button>
       </div>
 
-      <div>
-        <label class="input">
-          Video Name
+      <InteractionToolbar
+        :hidden="!props.store.recording.value"
+        :store="props.store"
+      />
+
+      <ActionMap
+        ref="actionMapComponent"
+        :hidden="props.store.actionMap.value.root.frameCount <= 1"
+        :store="props.store"
+      />
+
+      <div
+        v-if="props.store.actionMap.value.root.frameCount > 1"
+        class="capture-settings"
+      >
+        <p>
+          {{ props.store.actionMap.value.root.frameCount }} frames will be
+          captured.
+        </p>
+
+        <div>
+          <label>Server Location</label>
+
+          <select
+            :value="props.store.serverScheme.value"
+            @change="
+              (event) => props.store.set('serverScheme', event.target.value)
+            "
+          >
+            <option>http</option>
+            <option>https</option>
+          </select>
+
+          <span>://</span>
+
           <input
             type="text"
-            :value="props.store.videoName.value"
-            @input="(event) => props.store.set('videoName', event.target.value)"
+            :value="props.store.serverAddress.value"
+            @input="
+              (event) => props.store.set('serverAddress', event.target.value)
+            "
           />
-        </label>
-      </div>
 
-      <button
-        type="button"
-        :disabled="props.store.recording.value"
-        @click="capture"
-      >
-        Capture
-      </button>
+          <span>:</span>
+
+          <input
+            type="text"
+            :value="props.store.serverPort.value"
+            @input="
+              (event) => props.store.set('serverPort', event.target.value)
+            "
+          />
+        </div>
+
+        <div>
+          <label class="input">
+            Video Name
+            <input
+              type="text"
+              :value="props.store.videoName.value"
+              @input="
+                (event) => props.store.set('videoName', event.target.value)
+              "
+            />
+          </label>
+        </div>
+
+        <button
+          type="button"
+          :disabled="props.store.recording.value"
+          @click="capture"
+        >
+          Capture
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -124,19 +134,19 @@ function onClick(event) {
   }
 }
 
-let hoveredElement = null
+let hoveredElement
 function onMousemove(event) {
   const raivWidget = document.querySelector('#raiv')
   const target = event.target
 
   if (raivWidget.contains(target)) {
-    if (hoveredElement !== null) {
+    if (hoveredElement !== undefined) {
       hoveredElement.classList.remove('raiv-hovered')
     }
 
-    hoveredElement = null
+    hoveredElement = undefined
   } else if (hoveredElement !== target) {
-    if (hoveredElement !== null) {
+    if (hoveredElement !== undefined) {
       hoveredElement.classList.remove('raiv-hovered')
     }
     target.classList.add('raiv-hovered')
@@ -170,7 +180,7 @@ function stopRecording() {
   document.removeEventListener('click', onClick, true)
   document.removeEventListener('mousemove', throttledMousemove, true)
 
-  if (hoveredElement !== null) {
+  if (hoveredElement !== undefined) {
     hoveredElement.classList.remove('raiv-hovered')
   }
   document.querySelectorAll('.raiv-selected').forEach((element) => {
@@ -205,15 +215,18 @@ button {
   padding: 0 0.25em;
 }
 
-div:not(:last-child) {
-  margin-bottom: 2em;
-}
-
-.controls {
+.control-container {
   background: white;
   border: 1px solid black;
   border-radius: 4px;
+}
+
+.controls {
   padding: 1em;
+}
+
+.controls div:not(:first-child) {
+  margin-top: 2em;
 }
 
 .recording-controls button {

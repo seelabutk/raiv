@@ -3,14 +3,16 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faCircle,
+  faGrip,
   faPause,
   faStop,
   faXmark,
 } from '@fortawesome/free-solid-svg-icons'
+import drag from 'v-drag'
 
 import App from '@/views/RecorderView'
 
-library.add(faCircle, faPause, faStop, faXmark)
+library.add(faCircle, faGrip, faPause, faStop, faXmark)
 
 function toggleUI() {
   const raiv = document.getElementById('raiv')
@@ -46,6 +48,7 @@ function toggleUI() {
 
   const app = createApp(App)
   app.component('font-awesome-icon', FontAwesomeIcon)
+  app.use(drag)
   app.mount('#raiv')
   recorder.style.opacity = 100
 }

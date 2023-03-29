@@ -8,10 +8,14 @@
       View Action Map
     </button>
 
-    <dialog class="action-map-dialog">
-      <button class="close-btn" type="button" @click="close">
-        <font-awesome-icon icon="fa-solid fa-xmark" class="fa-2x" />
-      </button>
+    <dialog class="action-map-dialog" v-drag="'#action-map-handle'">
+      <div id="action-map-handle" class="handle">
+        <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
+
+        <button class="close-btn" type="button" @click="close">
+          <font-awesome-icon icon="fa-solid fa-xmark" class="fa-lg" />
+        </button>
+      </div>
 
       <NodeOptions
         ref="nodeOptions"
@@ -146,7 +150,7 @@ function render() {
     .on('click', (event, d) => {
       if (d.data.parent !== undefined) {
         currentAction.value = d.data
-        nodeOptions.value.open(event)
+        nodeOptions.value.open()
       }
     })
 
@@ -251,17 +255,8 @@ defineExpose({ render })
 
 <style scoped>
 .action-map-dialog {
-  height: fit-content;
-  position: fixed;
-  margin-right: 1em;
+  right: 1em;
   top: 1em;
-  width: fit-content;
   z-index: 10001;
-}
-
-.close-btn {
-  position: absolute;
-  right: 0.5em;
-  top: 0.5em;
 }
 </style>

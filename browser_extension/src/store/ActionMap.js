@@ -175,13 +175,13 @@ export default class ActionMap {
   }
 
   async _capture(port) {
-    const controlPanel = document.querySelector('#raiv .controls')
+    const controlPanel = document.querySelector('#raiv .control-container')
 
-    controlPanel.style.display = 'none'
+    controlPanel.style.opacity = 0
 
     await this.root.capture(port, this.height)
 
-    controlPanel.style.display = 'block'
+    controlPanel.style.opacity = 1
     window.scrollTo(0, 0)
 
     port.postMessage({ complete: true })

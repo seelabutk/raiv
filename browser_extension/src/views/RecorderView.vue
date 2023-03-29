@@ -28,6 +28,33 @@ const store = new Store()
   cursor: pointer;
 }
 
+#raiv dialog {
+  border: 1px solid black;
+  border-radius: 4px;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  height: fit-content;
+  width: fit-content;
+}
+
+#raiv .handle {
+  align-items: center;
+  border-bottom: 1px solid black;
+  box-sizing: border-box;
+  display: flex;
+  height: 3em;
+  padding-left: 1em;
+  width: 100%;
+}
+
+#raiv .handle .close-btn {
+  align-items: center;
+  display: flex;
+  margin-right: 0.5em;
+  margin-left: auto;
+}
+
 .raiv-hovered {
   border: 2px solid #0000ff;
 }
