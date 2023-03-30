@@ -46,13 +46,13 @@ const nodeOptions = ref(null)
 
 const options = {
   dx: 64, // the distance between nodes on the x-axis
-  dy: 64, // the distance between nodes on the y-axis
+  dy: 128, // the distance between nodes on the y-axis
   height: 600, // the height of the svg
   iconSize: 20, // the height/width of the icon
   labelY: '0.32em', // this shifts the text label down
   nodeRadius: 16, // the size of each node's circle tag
   textOffset: 4, // the gap between the circle and text
-  width: 400, // the width of the svg
+  width: 600, // the width of the svg
 }
 
 let dialog
@@ -62,7 +62,7 @@ const dragOrigin = {
   y: 0,
 }
 let svg
-let viewBox = [-options.width / 2, -options.dy, options.width, options.height]
+let viewBox = [-options.dx, -options.height / 2, options.width, options.height]
 let newViewBox = viewBox
 
 function open() {
@@ -121,8 +121,8 @@ function render() {
       'd',
       d3
         .link(d3.curveBumpX)
-        .x((d) => d.x)
-        .y((d) => d.y)
+        .x((d) => d.y)
+        .y((d) => d.x)
     )
 
   // Create the node containers
