@@ -125,6 +125,16 @@ export default class Action {
         )
       } else if (this.type === 'hover') {
         this.target.dispatchEvent(
+          new MouseEvent('mouseover', {
+            bubbles: true,
+            clientX:
+              this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+            clientY:
+              this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+          })
+        )
+
+        this.target.dispatchEvent(
           new MouseEvent('mousemove', {
             bubbles: true,
             clientX:
