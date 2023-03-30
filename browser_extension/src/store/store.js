@@ -41,7 +41,7 @@ export default class Store {
   }
 
   load() {
-    const storageString = localStorage.getItem('store')
+    const storageString = localStorage.getItem('raiv-store')
     if (storageString !== null) {
       const storageObj = JSON.parse(storageString)
 
@@ -58,7 +58,7 @@ export default class Store {
 
   save() {
     localStorage.setItem(
-      'store',
+      'raiv-store',
       JSON.stringify(
         {
           actions: this.actionMap.value.root.children,
