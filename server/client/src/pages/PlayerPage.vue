@@ -39,18 +39,24 @@ function findAction(event, action, checkedNodes) {
   checkedNodes.push(action)
 
   // Don't descend into toggle branches if the toggle hasn't been clicked!
-  if (action.type !== 'toggle' || action === activeAction) {
-    for (let index = 0; index < action.children.length; index++) {
-      const child = action.children[index]
-      if (checkedNodes.includes(child)) {
-        continue
-      }
+  if (
+    action.type === 'toggle' &&
+    action !== activeAction &&
+    getIndexPath(action, activeAction).length === 0
+  ) {
+    return
+  }
 
-      const newAction = findAction(event, child, checkedNodes)
+  for (let index = 0; index < action.children.length; index++) {
+    const child = action.children[index]
+    if (checkedNodes.includes(child)) {
+      continue
+    }
 
-      if (newAction !== undefined) {
-        return newAction
-      }
+    const newAction = findAction(event, child, checkedNodes)
+
+    if (newAction !== undefined) {
+      return newAction
     }
   }
 
@@ -87,38 +93,41 @@ function onClick(event) {
   const checkedNodes = []
   let newAction = findAction(event, activeAction, checkedNodes)
 
-  if (newAction !== undefined) {
-    if (newAction.type === 'toggle' || newAction.type === 'toggle-off') {
-      const indexPath = getIndexPath(newAction, activeAction)
+  if (newAction === undefined) {
+    return
+  }
 
-      if (newAction === activeAction || indexPath.length > 0) {
-        // Toggles need to be switched to their sibling state!
-        let childIndex = newAction.parent.children.indexOf(newAction)
-        if (newAction.type === 'toggle') {
-          childIndex++
-        } else if (newAction.type === 'toggle-off') {
-          childIndex--
-        }
+  if (!['click', 'toggle', 'toggle-off'].includes(newAction.type)) {
+    return
+  }
 
-        newAction = newAction.parent.children[childIndex]
-      }
+  if (newAction.type === 'toggle' || newAction.type === 'toggle-off') {
+    const indexPath = getIndexPath(newAction, activeAction)
 
-      for (let index = 0; index < indexPath.length; index++) {
-        newAction = newAction.children[indexPath[index]]
+    if (newAction === activeAction || indexPath.length > 0) {
+      // Toggles need to be switched to their sibling state!
+      if (newAction.type === 'toggle') {
+        newAction = newAction.parent
+      } else if (newAction.type === 'toggle-off') {
+        const childIndex = newAction.parent.children.indexOf(newAction)
+        newAction = newAction.parent.children[childIndex - 1]
       }
     }
-
-    activeAction = newAction
-    seekToFrame(activeAction.position + 1)
   }
+
+  activeAction = newAction
+  seekToFrame(activeAction.position + 1)
 }
 
 function onHover(event) {
   const checkedNodes = []
   const newAction = findAction(event, activeAction, checkedNodes)
 
-  if (newAction !== undefined) {
+  if (newAction !== undefined && newAction.type === 'hover') {
     activeAction = newAction
+    seekToFrame(activeAction.position + 1)
+  } else if (activeAction.type === 'hover') {
+    activeAction = activeAction.parent
     seekToFrame(activeAction.position + 1)
   }
 }
