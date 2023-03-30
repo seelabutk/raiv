@@ -8,6 +8,7 @@
         :key="video.id"
         :video-id="video.id"
         :name="video.name"
+        @delete="deleteCard(video)"
       ></PreviewCard>
     </ul>
   </div>
@@ -19,6 +20,14 @@ import PreviewCard from '@/components/PreviewCard'
 
 const videos = ref([])
 
+function deleteCard(video) {
+  const index = videos.value.indexOf(video)
+
+  if (index >= 0) {
+    videos.value.splice(index, 1)
+  }
+}
+
 onMounted(() => {
   fetch('/video/')
     .then((response) => response.json())
@@ -29,7 +38,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
+h1 {
+  font-size: 1.25em;
+  padding: 2em;
+}
+
 ul {
   display: flex;
+  flex-wrap: wrap;
 }
 </style>

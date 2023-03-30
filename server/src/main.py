@@ -1,7 +1,7 @@
 from base64 import b64decode
 import json
 import os
-import shutil
+from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
 
@@ -107,7 +107,7 @@ async def video__patch(video_id, video: Video):
 		merge_frames(video_id)
 
 		path = os.path.join(VIDEO_DIR, video_id)
-		shutil.copy(
+		copy(
 			os.path.join(path, 'frames', '00000.png'),
 			os.path.join(path, 'first_frame.png')
 		)
@@ -140,6 +140,15 @@ async def video__get__list():
 				})
 
 	return objects
+
+
+@app.delete('/video/{video_id}/')
+async def video__delete(video_id):
+	""" Deletes a video from the server. """
+	path = os.path.join(VIDEO_DIR, video_id)
+
+	if os.path.exists(path):
+		rmtree(path)
 
 
 def _get_video_file(video_id, filename):
