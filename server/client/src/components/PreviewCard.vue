@@ -43,10 +43,11 @@ function deleteVideo() {
 a {
   border: 1px solid black;
   border-radius: 4px;
-  display: block;
+  display: flex;
+  flex-direction: column;
   margin: 1em;
-  max-height: 300px;
-  max-width: 300px;
+  height: 300px;
+  width: 300px;
   padding: 1em;
   position: relative;
 }
@@ -56,14 +57,18 @@ h2 {
   text-align: center;
 }
 
+img {
+  overflow: hidden;
+}
+
 button {
   background: red;
   border-radius: 4px;
-  bottom: 0;
+  bottom: 0.5em;
   color: white;
   cursor: pointer;
   padding: 0.5em;
   position: absolute;
-  right: 0;
+  right: 0.5em;
 }
 </style>
