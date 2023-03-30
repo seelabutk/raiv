@@ -131,8 +131,15 @@ function render() {
     .selectAll('g')
     .data(tree.descendants())
     .join('g')
-    .attr('transform', (d) => `translate(${d.x},${d.y})`)
-    .style('cursor', (d) => (d.data.target !== undefined ? 'pointer' : 'unset'))
+    .attr('transform', (d) => `translate(${d.y},${d.x})`)
+    .style('stroke', (d) => {
+      if (props.store.actionMap.value.parentActions.includes(d.data)) {
+        return 'green'
+      }
+
+      return 'black'
+    })
+    .style('cursor', 'pointer')
     .on('pointerover', (_, d) => {
       const target = d.data.target
 
@@ -153,13 +160,23 @@ function render() {
         nodeOptions.value.open()
       }
     })
+    .on('contextmenu', function (event, d) {
+      event.preventDefault()
+
+      const parentActions = props.store.actionMap.value.parentActions
+      const index = parentActions.indexOf(d.data)
+
+      if (index === -1) {
+        d3.select(this).style('stroke', 'green')
+        props.store.actionMap.value.addParent(d.data)
+      } else if (parentActions.length > 1) {
+        d3.select(this).style('stroke', 'black')
+        props.store.actionMap.value.removeParent(index)
+      }
+    })
 
   // Draw the nodes inside their containers
-  node
-    .append('circle')
-    .attr('r', options.nodeRadius)
-    .attr('fill', 'white')
-    .attr('stroke', 'black')
+  node.append('circle').attr('r', options.nodeRadius).attr('fill', 'white')
 
   // Draw the fa icons inside of the circles
   node

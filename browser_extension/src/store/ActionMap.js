@@ -7,41 +7,38 @@ export default class ActionMap {
 
     this.height = document.documentElement.scrollHeight
     this.interactionType = 'click'
-    this.leaves = [this.root]
+    this.parentActions = [this.root] // A list of actions which any new Action should be added to.
     this.width = window.innerWidth
   }
 
   reset() {
     this.root = new Action()
-    this.leaves = [this.root]
+    this.parentActions = [this.root]
   }
 
   set(key, value) {
     this[key] = value
   }
 
+  addParent(action) {
+    this.parentActions.push(action)
+  }
+
+  removeParent(index) {
+    this.parentActions.splice(index, 1)
+  }
+
   // TODO: Determine if there's any way to do this in a robust way. The challenge is that
   // document.elementFromPoint will fail if the clickPosition is only valid if prior actions
   // have been taken.
   _load(node) {
-    // If this node has children, then it isn't a leaf so replace it in the leaf list
-    if (node.children.length > 0) {
-      const leafIndex = this.leaves.indexOf(node)
-
-      if (leafIndex !== -1) {
-        this.leaves.splice(leafIndex, 1, ...node.children)
-      }
-    }
-
     for (let index = 0; index < node.children.length; index++) {
       const childObj = node.children[index]
       window.scrollTo(0, childObj.scrollPosition)
 
       const target = document.elementFromPoint(...childObj.clickPosition)
 
-      node.children[index] = new Action(node, target, {
-        visible: childObj.visible,
-      })
+      node.children[index] = new Action(node, target)
       node.children[index].boundingBox = childObj.boundingBox
       node.children[index].canvasRanges = childObj.canvasRanges
       node.children[index].children = childObj.children
@@ -66,21 +63,11 @@ export default class ActionMap {
     window.scrollTo(0, 0)
   }
 
-  _add(leafIdx, target, event, type, replace) {
-    const leaf = this.leaves[leafIdx]
-    let parent
-    if (replace) {
-      // The new node will be a child of leaf
-      parent = leaf
-    } else {
-      // The new node will be a sibling of leaf
-      parent = leaf.parent
-    }
-
+  _add(parentIdx, target, event, type) {
+    let parent = this.parentActions[parentIdx]
     const action = new Action(parent, target, {
       event,
       type,
-      visible: true,
     })
 
     parent.children.push(action)
@@ -89,21 +76,14 @@ export default class ActionMap {
       parent.frameCount++
       parent = parent.parent
     }
-
-    if (replace) {
-      this.leaves.splice(leafIdx, 1, action)
-    } else {
-      this.leaves.splice(leafIdx + 1, 0, action)
-    }
   }
 
   add(target, event) {
-    for (let index = 0; index < this.leaves.length; index++) {
-      this._add(index, target, event, this.interactionType, true)
+    for (let index = 0; index < this.parentActions.length; index++) {
+      this._add(index, target, event, this.interactionType)
 
       if (this.interactionType === 'toggle') {
-        this._add(index, target, event, 'toggle-off', false)
-        index++ // The new node will increase the length of the leaf list by 1
+        this._add(index, target, event, 'toggle-off')
       }
     }
   }
