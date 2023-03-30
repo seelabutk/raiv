@@ -84,7 +84,9 @@
       </div>
 
       <div>
-        <button type="button" @click="deleteAction">Delete</button>
+        <button class="delete-btn" type="button" @click="deleteAction">
+          Delete
+        </button>
       </div>
     </div>
   </dialog>
@@ -163,5 +165,10 @@ defineExpose({ open })
 
 .contents div:not(:first-child) {
   margin-top: 1em;
+}
+
+.delete-btn {
+  background: red;
+  color: white;
 }
 </style>
