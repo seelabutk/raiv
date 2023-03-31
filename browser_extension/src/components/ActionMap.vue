@@ -272,7 +272,7 @@ defineExpose({ render })
 
 <style scoped>
 .action-map-dialog {
-  right: 1em;
+  left: -10em;
   top: 1em;
   z-index: 10001;
 }
