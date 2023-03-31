@@ -25,7 +25,11 @@ function seekToFrame(frame) {
   }
 }
 
-function findAction(event, action, checkedNodes) {
+function findAction(event, action, checkParent) {
+  if (checkParent === undefined) {
+    checkParent = true
+  }
+
   if (
     action.boundingBox.length === 4 &&
     event.clientX >= action.boundingBox[0] &&
@@ -36,33 +40,29 @@ function findAction(event, action, checkedNodes) {
     return action
   }
 
-  checkedNodes.push(action)
-
-  // Don't descend into toggle branches if the toggle hasn't been clicked!
-  if (
-    action.type === 'toggle' &&
-    action !== activeAction &&
-    getIndexPath(action, activeAction).length === 0
-  ) {
-    return
-  }
-
   for (let index = 0; index < action.children.length; index++) {
     const child = action.children[index]
-    if (checkedNodes.includes(child)) {
-      continue
+    if (
+      child.boundingBox.length === 4 &&
+      event.clientX >= child.boundingBox[0] &&
+      event.clientY >= child.boundingBox[1] &&
+      event.clientX <= child.boundingBox[2] &&
+      event.clientY <= child.boundingBox[3]
+    ) {
+      return child
     }
 
-    const newAction = findAction(event, child, checkedNodes)
-
-    if (newAction !== undefined) {
-      return newAction
+    if (child.type === 'toggle-off') {
+      const result = findAction(event, child, false)
+      if (result !== undefined) {
+        return result
+      }
     }
   }
 
   // if this action isn't the root, we can check its ancestors for matches
-  if (action.parent !== undefined && !checkedNodes.includes(action.parent)) {
-    return findAction(event, action.parent, checkedNodes)
+  if (action.parent !== undefined && checkParent) {
+    return findAction(event, action.parent)
   }
 }
 
@@ -90,8 +90,7 @@ function getIndexPath(parent, target) {
 }
 
 function onClick(event) {
-  const checkedNodes = []
-  let newAction = findAction(event, activeAction, checkedNodes)
+  let newAction = findAction(event, activeAction)
 
   if (newAction === undefined) {
     return
@@ -106,11 +105,21 @@ function onClick(event) {
 
     if (newAction === activeAction || indexPath.length > 0) {
       // Toggles need to be switched to their sibling state!
+      let childIndex = newAction.parent.children.indexOf(newAction)
       if (newAction.type === 'toggle') {
-        newAction = newAction.parent
+        childIndex++
       } else if (newAction.type === 'toggle-off') {
-        const childIndex = newAction.parent.children.indexOf(newAction)
-        newAction = newAction.parent.children[childIndex - 1]
+        childIndex--
+      }
+
+      newAction = newAction.parent.children[childIndex]
+
+      if (newAction.type === 'toggle' || newAction.type === 'toggle-off') {
+        for (let index = 0; index < indexPath.length; index++) {
+          if (newAction.children[indexPath[index]] !== undefined) {
+            newAction = newAction.children[indexPath[index]]
+          }
+        }
       }
     }
   }
@@ -120,8 +129,7 @@ function onClick(event) {
 }
 
 function onHover(event) {
-  const checkedNodes = []
-  const newAction = findAction(event, activeAction, checkedNodes)
+  const newAction = findAction(event, activeAction)
 
   if (newAction !== undefined && newAction.type === 'hover') {
     activeAction = newAction
