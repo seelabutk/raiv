@@ -15,6 +15,7 @@ const store = new Store()
 
 <style>
 #raiv {
+  pointer-events: none; /* See note on next rule. */
   position: absolute;
   right: 1em;
   top: 1em;
@@ -22,6 +23,13 @@ const store = new Store()
 
   opacity: 0;
   transition: opacity 0.45s ease-in-out;
+}
+
+/* This is a hack. Basically, Vue will mount inside of a div and that
+ * div can't be made draggable with our current setup, so the root div
+ * will block elements that render underneath the original location. */
+#raiv > div * {
+  pointer-events: auto;
 }
 
 #raiv button {
