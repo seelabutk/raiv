@@ -7,7 +7,7 @@
 		"service_worker": "/background.js"
 	},
 	"action": {
-		"default_icon": "/icons/video-solid.svg"
+		"default_icon": "/icons/video-solid.png"
 	},
 	"permissions": [
 		"activeTab",
