@@ -48,7 +48,7 @@ def encode_video(video_id):
 		'ffmpeg',
 		'-y',
 		'-framerate',
-		'30',
+		'1',
 		'-i',
 		'%05d.png',
 		'-c:v',

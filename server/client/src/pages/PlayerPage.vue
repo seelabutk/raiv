@@ -14,7 +14,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 let activeAction
-const fps = 30
+const fps = 1
 let player
 const route = useRoute()
 const videoId = ref(route.params.id)
