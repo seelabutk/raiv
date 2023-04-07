@@ -25,6 +25,7 @@ export default class Action {
     } else {
       this.clickPosition = []
     }
+    this.disableSiblings = false // during playback, should performing this interaction prevent this Action's siblings from being available (eg because this Action closes a dialog)?
     this.frameCount = 1 // the number of frames this Action and its children represent
     this.manualCapture = false // this forces the Action capture to be confirmed by the user, useful if the user needs to position an element before capture
     this.parent = parent // removed at capture to avoid circular JSON

@@ -60,9 +60,13 @@ function findAction(event, action, checkParent) {
     }
   }
 
-  // if this action isn't the root, we can check its ancestors for matches
-  if (action.parent !== undefined && checkParent) {
-    return findAction(event, action.parent)
+  // if this Action has a valid ancestor, we can check it for matches
+  const ancestor =
+    action.disableSiblings && action.parent !== undefined
+      ? action.parent.parent
+      : action.parent
+  if (checkParent && ancestor !== undefined) {
+    return findAction(event, ancestor)
   }
 }
 

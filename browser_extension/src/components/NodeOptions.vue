@@ -39,6 +39,18 @@
         </label>
       </div>
 
+      <div>
+        <label>
+          Disables siblings:
+
+          <input
+            :checked="props.action.disableSiblings"
+            type="checkbox"
+            @input="toggleDisableSiblings"
+          />
+        </label>
+      </div>
+
       <div v-if="isCanvas">
         <p>
           The targeted element is a canvas. If there are interactions inside the
@@ -129,6 +141,11 @@ function open() {
 
 function close() {
   dialog.close()
+}
+
+function toggleDisableSiblings() {
+  props.action.set('disableSiblings', !props.action.disableSiblings)
+  props.store.save()
 }
 
 function toggleManualCapture() {
