@@ -129,7 +129,7 @@ function onClick(event) {
   }
 
   activeAction = newAction
-  seekToFrame(activeAction.position + 1)
+  seekToFrame(activeAction.position)
 }
 
 function onHover(event) {
@@ -137,10 +137,10 @@ function onHover(event) {
 
   if (newAction !== undefined && newAction.type === 'hover') {
     activeAction = newAction
-    seekToFrame(activeAction.position + 1)
+    seekToFrame(activeAction.position)
   } else if (activeAction.type === 'hover') {
     activeAction = activeAction.parent
-    seekToFrame(activeAction.position + 1)
+    seekToFrame(activeAction.position)
   }
 }
 const throttledHover = throttle(onHover, 100)
