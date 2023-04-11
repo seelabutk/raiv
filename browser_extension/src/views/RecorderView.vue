@@ -25,6 +25,10 @@ const store = new Store()
   transition: opacity 0.45s ease-in-out;
 }
 
+#raiv * {
+  color: black;
+}
+
 /* This is a hack. Basically, Vue will mount inside of a div and that
  * div can't be made draggable with our current setup, so the root div
  * will block elements that render underneath the original location. */
@@ -34,6 +38,13 @@ const store = new Store()
 
 #raiv button {
   cursor: pointer;
+  padding: 0.5em;
+  height: fit-content;
+  width: fit-content;
+}
+
+#raiv button:not(:disabled) {
+  border: 1px solid black;
 }
 
 #raiv dialog {
@@ -44,6 +55,11 @@ const store = new Store()
   position: absolute;
   height: fit-content;
   width: fit-content;
+}
+
+#raiv input,
+#raiv select {
+  width: unset;
 }
 
 #raiv .handle {
@@ -65,9 +81,5 @@ const store = new Store()
 
 .raiv-hovered {
   border: 2px solid #0000ff;
-}
-
-.raiv-selected {
-  border: 2px solid #00ff00 !important;
 }
 </style>

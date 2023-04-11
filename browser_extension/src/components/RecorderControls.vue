@@ -126,11 +126,15 @@ function onClick(event) {
 
   // TODO: Is there a better way to determine if an event has bubbled besides pointerId?
   if (!raivWidget.contains(target) && event.pointerId !== -1) {
-    target.classList.add('raiv-selected')
+    if (hoveredElement !== undefined) {
+      hoveredElement.classList.remove('raiv-hovered')
+    }
 
-    props.store.actionMap.value.add(target, event)
-    actionMapComponent.value.render()
-    props.store.save()
+    requestAnimationFrame(() => {
+      props.store.actionMap.value.add(target, event)
+      actionMapComponent.value.render()
+      props.store.save()
+    })
   }
 }
 
@@ -183,9 +187,6 @@ function stopRecording() {
   if (hoveredElement !== undefined) {
     hoveredElement.classList.remove('raiv-hovered')
   }
-  document.querySelectorAll('.raiv-selected').forEach((element) => {
-    element.classList.remove('raiv-selected')
-  })
 
   props.store.set('recording', false)
   props.store.set('paused', false)
