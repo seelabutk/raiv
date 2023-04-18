@@ -123,6 +123,13 @@ const recordPauseIcon = computed(() =>
 function onClick(event) {
   const raivWidget = document.querySelector('#raiv')
   const target = event.target
+  const boundingRect = target.getBoundingClientRect()
+  const boundingBox = [
+    boundingRect.left,
+    boundingRect.top,
+    boundingRect.right,
+    boundingRect.bottom,
+  ]
 
   // TODO: Is there a better way to determine if an event has bubbled besides pointerId?
   if (!raivWidget.contains(target) && event.pointerId !== -1) {
@@ -131,7 +138,7 @@ function onClick(event) {
     }
 
     requestAnimationFrame(() => {
-      props.store.actionMap.value.add(target, event)
+      props.store.actionMap.value.add(target, boundingBox, event)
       actionMapComponent.value.render()
       props.store.save()
     })

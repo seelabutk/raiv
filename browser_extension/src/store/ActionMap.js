@@ -63,9 +63,9 @@ export default class ActionMap {
     window.scrollTo(0, 0)
   }
 
-  _add(parentIdx, target, event, type) {
+  _add(parentIdx, target, boundingBox, event, type) {
     let parent = this.parentActions[parentIdx]
-    const action = new Action(parent, target, {
+    const action = new Action(parent, target, boundingBox, {
       event,
       type,
     })
@@ -78,12 +78,12 @@ export default class ActionMap {
     }
   }
 
-  add(target, event) {
+  add(target, boundingBox, event) {
     for (let index = 0; index < this.parentActions.length; index++) {
-      this._add(index, target, event, this.interactionType)
+      this._add(index, target, boundingBox, event, this.interactionType)
 
       if (this.interactionType === 'toggle') {
-        this._add(index, target, event, 'toggle-off')
+        this._add(index, target, boundingBox, event, 'toggle-off')
       }
     }
   }

@@ -1,23 +1,14 @@
 export default class Action {
-  constructor(parent, target, options) {
+  constructor(parent, target, boundingBox, options) {
+    if (boundingBox === undefined) {
+      boundingBox = []
+    }
+
     if (options === undefined) {
       options = {}
     }
 
-    if (target instanceof Element) {
-      const boundingRect = target.getBoundingClientRect()
-      const boundingBox = [
-        boundingRect.left,
-        boundingRect.top,
-        boundingRect.right,
-        boundingRect.bottom,
-      ]
-
-      this.boundingBox = boundingBox
-    } else {
-      this.boundingBox = []
-    }
-
+    this.boundingBox = boundingBox
     this.canvasRanges = [1, 1] // the number of rows and columns to treat a canvas as when repeating an Action over it
     this.children = []
     if (options.event !== undefined) {
