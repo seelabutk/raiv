@@ -5,6 +5,7 @@ import ActionMap from '@/store/ActionMap'
 export default class Store {
   constructor() {
     this.actionMap = ref(new ActionMap())
+    this.apiKey = ref('')
     this.paused = ref(false)
     this.recording = ref(false)
     this.serverAddress = ref('localhost')
@@ -16,6 +17,7 @@ export default class Store {
 
     watch(
       [
+        this.apiKey,
         this.paused,
         this.recording,
         this.serverAddress,
@@ -34,7 +36,7 @@ export default class Store {
 
     this.paused.value = false
     this.recording.value = false
-    // NOTE: this.serverX and this.videoName are intentionally omitted. Presumably, someone capturing
+    // NOTE: this.serverX, this.videoName, and this.apiKey are intentionally omitted. Presumably, someone capturing
     // multiple sessions would want to reuse these in most cases.
 
     this.save()
@@ -45,6 +47,7 @@ export default class Store {
     if (storageString !== null) {
       const storageObj = JSON.parse(storageString)
 
+      this.apiKey.value = storageObj.apiKey
       this.paused.value = storageObj.paused
       this.recording.value = storageObj.recording
       this.serverAddress.value = storageObj.serverAddress
@@ -62,6 +65,7 @@ export default class Store {
       JSON.stringify(
         {
           actions: this.actionMap.value.root.children,
+          apiKey: this.apiKey.value,
           paused: this.paused.value,
           recording: this.recording.value,
           serverAddress: this.serverAddress.value,

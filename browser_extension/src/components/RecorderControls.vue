@@ -86,6 +86,18 @@
           </label>
         </div>
 
+        <div class="api-key">
+          <label>
+            API Key
+            <input
+              class="api-key-input"
+              type="text"
+              :value="props.store.apiKey.value"
+              @input="(event) => props.store.set('apiKey', event.target.value)"
+            />
+          </label>
+        </div>
+
         <button
           type="button"
           :disabled="props.store.recording.value"
@@ -204,6 +216,7 @@ function capture() {
 
   props.store.actionMap.value.capture(
     serverLocation,
+    props.store.apiKey.value,
     props.store.videoName.value
   )
 }
@@ -252,5 +265,9 @@ button {
 
 .capture-settings label {
   margin-right: 0.25em;
+}
+
+.api-key-input {
+  width: 20em !important;
 }
 </style>

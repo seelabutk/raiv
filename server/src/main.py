@@ -5,15 +5,16 @@ from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
 from .util import encode_video, merge_frames
 
 
-VIDEO_DIR = os.path.join(os.getcwd(), 'videos')
+VIDEO_DIR = os.path.join(os.getcwd(), 'data')
 if not os.path.exists(VIDEO_DIR):
 	try:
 		os.mkdir(VIDEO_DIR, mode=0o744)
@@ -46,12 +47,25 @@ app.add_middleware(
 	allow_methods=['*'],
 	allow_origins=['*']
 )
-# TODO: CORS generally needs to be available since this server is going to be
-# public, but this needs more thought along with authentication
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+API_KEY_FILE = os.path.join(os.getcwd(), 'data', 'api_keys.json')
+api_keys = []
+if os.path.exists(API_KEY_FILE):
+	with open(API_KEY_FILE, encoding='utf-8') as f:
+		api_keys = json.load(f)
+
+
+def verify_token(token: str = Depends(oauth2_scheme)):
+	if token not in api_keys:
+		raise HTTPException(
+			detail='This endpoint requires a valid API Key.',
+			status_code=401
+		)
 
 
 # Recording endpoints
-@app.post('/frame/')
+@app.post('/frame/', dependencies=[Depends(verify_token)])
 async def frame__post(frame: Frame):
 	""" Adds a frame to a video and prepares the frame for encoding. """
 	path = os.path.join(VIDEO_DIR, frame.video)
@@ -82,7 +96,7 @@ async def frame__post(frame: Frame):
 		], check=True)
 
 
-@app.post('/video/')
+@app.post('/video/', dependencies=[Depends(verify_token)])
 async def video__post(video: Video):
 	""" Creates a new video with no associated frames. """
 	uuid = uuid4().hex
@@ -100,7 +114,7 @@ async def video__post(video: Video):
 	return uuid
 
 
-@app.patch('/video/{video_id}/')
+@app.patch('/video/{video_id}/', dependencies=[Depends(verify_token)])
 async def video__patch(video_id, video: Video):
 	""" Encode the video once the front-end is done sending frames. """
 	if video.complete:
@@ -118,7 +132,7 @@ async def video__patch(video_id, video: Video):
 
 
 # Player endpoints
-@app.get('/video/')
+@app.get('/video/', dependencies=[Depends(verify_token)])
 async def video__get__list():
 	""" Retrieve the list of available videos for the gallery. """
 	video_list = os.listdir(VIDEO_DIR)
@@ -142,7 +156,7 @@ async def video__get__list():
 	return objects
 
 
-@app.delete('/video/{video_id}/')
+@app.delete('/video/{video_id}/', dependencies=[Depends(verify_token)])
 async def video__delete(video_id):
 	""" Deletes a video from the server. """
 	path = os.path.join(VIDEO_DIR, video_id)

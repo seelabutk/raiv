@@ -156,7 +156,6 @@ export default class ActionMap {
 
   async _capture(port) {
     const controlPanel = document.querySelector('#raiv .control-container')
-
     controlPanel.style.opacity = 0
 
     await this.root.capture(port, this.height)
@@ -170,19 +169,20 @@ export default class ActionMap {
     this.reset()
   }
 
-  async capture(serverLocation, videoName) {
+  async capture(serverLocation, apiKey, videoName) {
     this._prepareActions(this.root, 0)
 
     const port = chrome.runtime.connect({ name: 'raiv' })
     port.postMessage({
       serverLocation,
+      apiKey,
       videoName,
       actionMap: this.root,
     })
 
-    port.onMessage.addListener((message) => {
+    port.onMessage.addListener(async (message) => {
       if (message.ready) {
-        this._capture(port)
+        await this._capture(port)
       }
     })
   }
