@@ -56,7 +56,7 @@ if os.path.exists(API_KEY_FILE):
 		api_keys = json.load(f)
 
 
-def verify_token(token: str = Depends(oauth2_scheme)):
+def validate_token(token: str = Depends(oauth2_scheme)):
 	if token not in api_keys:
 		raise HTTPException(
 			detail='This endpoint requires a valid API Key.',
@@ -64,13 +64,27 @@ def verify_token(token: str = Depends(oauth2_scheme)):
 		)
 
 
+def verify_token(video_id, token):
+	fpath = os.path.join(VIDEO_DIR, video_id, 'api_key.txt')
+	with open(fpath, 'r', encoding='utf-8') as file:
+		target = file.read().strip()
+
+		if target != token:
+			raise HTTPException(
+				detail='This endpoint requires a valid API Key.',
+				status_code=401
+			)
+
+
 # Recording endpoints
-@app.post('/frame/', dependencies=[Depends(verify_token)])
-async def frame__post(frame: Frame):
+@app.post('/frame/', dependencies=[Depends(validate_token)])
+async def frame__post(frame: Frame, token: str = Depends(oauth2_scheme)):
 	""" Adds a frame to a video and prepares the frame for encoding. """
 	path = os.path.join(VIDEO_DIR, frame.video)
 	if not frame.video or not os.path.exists(path):
 		raise HTTPException(status_code=404)
+
+	verify_token(frame.video, token)
 
 	frames_dir = os.path.join(path, 'frames')
 	if not os.path.exists(frames_dir):
@@ -96,27 +110,37 @@ async def frame__post(frame: Frame):
 		], check=True)
 
 
-@app.post('/video/', dependencies=[Depends(verify_token)])
-async def video__post(video: Video):
+@app.post('/video/', dependencies=[Depends(validate_token)])
+async def video__post(video: Video, token: str = Depends(oauth2_scheme)):
 	""" Creates a new video with no associated frames. """
 	uuid = uuid4().hex
 
 	path = os.path.join(VIDEO_DIR, uuid)
 	while os.path.exists(path):
 		uuid = uuid4().hex
-		path = os.path.join(VIDEO_DIR, uuid4)
+		path = os.path.join(VIDEO_DIR, uuid)
 
 	os.makedirs(path)
 	fpath = os.path.join(path, 'action_map.json')
 	with open(fpath, 'w', encoding='utf-8') as file:
 		json.dump(video.actionMap, file)
 
+	fpath = os.path.join(path, 'api_key.txt')
+	with open(fpath, 'w', encoding='utf-8') as file:
+		file.write(f'{token}\n')
+
 	return uuid
 
 
-@app.patch('/video/{video_id}/', dependencies=[Depends(verify_token)])
-async def video__patch(video_id, video: Video):
+@app.patch('/video/{video_id}/', dependencies=[Depends(validate_token)])
+async def video__patch(
+	video_id,
+	video: Video,
+	token: str = Depends(oauth2_scheme)
+):
 	""" Encode the video once the front-end is done sending frames. """
+	verify_token(video_id, token)
+
 	if video.complete:
 		merge_frames(video_id)
 
@@ -132,13 +156,19 @@ async def video__patch(video_id, video: Video):
 
 
 # Player endpoints
-@app.get('/video/', dependencies=[Depends(verify_token)])
-async def video__get__list():
+@app.get('/video/', dependencies=[Depends(validate_token)])
+async def video__get__list(token: str = Depends(oauth2_scheme)):
 	""" Retrieve the list of available videos for the gallery. """
 	video_list = os.listdir(VIDEO_DIR)
 
 	objects = []
 	for video_id in video_list:
+		try:
+			verify_token(video_id, token)
+		except (NotADirectoryError, HTTPException):
+			# TODO: HTTPException should probably be more specific
+			continue
+
 		path = os.path.join(VIDEO_DIR, video_id)
 		if os.path.isdir(path) and not os.path.exists(os.path.join(path, 'frames')):
 			with open(
@@ -156,9 +186,11 @@ async def video__get__list():
 	return objects
 
 
-@app.delete('/video/{video_id}/', dependencies=[Depends(verify_token)])
-async def video__delete(video_id):
+@app.delete('/video/{video_id}/', dependencies=[Depends(validate_token)])
+async def video__delete(video_id, token: str = Depends(oauth2_scheme)):
 	""" Deletes a video from the server. """
+	verify_token(video_id, token)
+
 	path = os.path.join(VIDEO_DIR, video_id)
 
 	if os.path.exists(path):

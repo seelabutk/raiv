@@ -9,6 +9,10 @@
       </label>
 
       <button @click="fetchVideos">Fetch Videos</button>
+
+      <span v-if="hasError" class="error">
+        {{ error }}
+      </span>
     </div>
 
     <ul>
@@ -25,11 +29,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import PreviewCard from '@/components/PreviewCard'
 
 const apiKey = ref('')
+const error = ref()
 const videos = ref([])
+
+const hasError = computed(() => error.value !== undefined)
 
 function deleteCard(video) {
   const index = videos.value.indexOf(video)
@@ -40,11 +47,19 @@ function deleteCard(video) {
 }
 
 function fetchVideos() {
-  fetch('/video/', { headers: { Authorization: `Bearer ${apiKey.value}` } })
-    .then((response) => response.json())
-    .then((data) => {
-      videos.value = data
+  fetch('/video/', {
+    headers: { Authorization: `Bearer ${apiKey.value}` },
+  }).then((response) => {
+    response.json().then((data) => {
+      if (response.status >= 200 && response.status <= 299) {
+        error.value = undefined
+        videos.value = data
+      } else {
+        error.value = data.detail
+        videos.value = []
+      }
     })
+  })
 }
 </script>
 
@@ -69,6 +84,12 @@ button {
 ul {
   display: flex;
   flex-wrap: wrap;
+}
+
+.error {
+  color: red;
+  font-style: italic;
+  margin-left: 0.25em;
 }
 
 .gallery {
