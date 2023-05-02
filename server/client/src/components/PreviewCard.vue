@@ -11,11 +11,15 @@
 import { defineEmits, defineProps } from 'vue'
 
 const props = defineProps({
-  videoId: {
+  apiKey: {
     required: true,
     type: String,
   },
   name: {
+    required: true,
+    type: String,
+  },
+  videoId: {
     required: true,
     type: String,
   },
@@ -32,6 +36,7 @@ function deleteVideo() {
   }
 
   fetch(`/video/${props.videoId}/`, {
+    headers: { Authorization: `Bearer ${props.apiKey}` },
     method: 'DELETE',
   })
 

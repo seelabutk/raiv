@@ -3,7 +3,7 @@ import os
 from shutil import rmtree
 import subprocess
 
-VIDEO_DIR = os.path.join('..', os.getcwd(), 'videos')
+VIDEO_DIR = os.path.join(os.getcwd(), 'data')
 
 
 def merge_frames(video_id):

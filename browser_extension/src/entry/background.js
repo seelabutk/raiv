@@ -1,6 +1,7 @@
 /* global chrome */
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === 'raiv') {
+    let apiKey = ''
     let serverLocation = ''
     let videoId = ''
 
@@ -9,6 +10,8 @@ chrome.runtime.onConnect.addListener((port) => {
         serverLocation = message.serverLocation.endsWith('/')
           ? message.serverLocation
           : `${message.serverLocation}/`
+
+        apiKey = message.apiKey
 
         fetch(`${serverLocation}video/`, {
           body: JSON.stringify({
@@ -19,14 +22,21 @@ chrome.runtime.onConnect.addListener((port) => {
               message.actionMap
             ),
           }),
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
           method: 'POST',
+        }).then((response) => {
+          if (response.status >= 200 && response.status <= 299) {
+            response.json().then((data) => {
+              videoId = data
+              port.postMessage({ ready: true })
+            })
+          } else {
+            port.postMessage({ failed: true })
+          }
         })
-          .then((response) => response.json())
-          .then((data) => {
-            videoId = data
-            port.postMessage({ ready: true })
-          })
       } else if (message.capture) {
         chrome.tabs.captureVisibleTab({ format: 'png' }).then((image) => {
           const request = {
@@ -42,7 +52,10 @@ chrome.runtime.onConnect.addListener((port) => {
 
           fetch(`${serverLocation}frame/`, {
             body: JSON.stringify(request),
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
             method: 'POST',
           }).then(() => {
             port.postMessage({ captured: true })
@@ -53,7 +66,10 @@ chrome.runtime.onConnect.addListener((port) => {
           body: JSON.stringify({
             complete: true,
           }),
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
           method: 'PATCH',
         })
       }
