@@ -231,7 +231,7 @@ then
 	debug $PIPENV_BIN --bare --no-site-packages sync --clear --dev --keep-outdated
 	$PIPENV_BIN --bare --no-site-packages sync --clear --dev --keep-outdated
 
-	cd $PROJECT_HOME/server/nuxt
+	cd $PROJECT_HOME/server/client
 	yarn install --frozen-lockfile
 
 	cd $PROJECT_HOME
