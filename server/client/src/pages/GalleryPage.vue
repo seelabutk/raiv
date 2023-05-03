@@ -2,24 +2,10 @@
   <div class="gallery">
     <h1>Gallery</h1>
 
-    <div>
-      <label>
-        Enter your API key to view your videos:
-        <input v-model="apiKey" />
-      </label>
-
-      <button @click="fetchVideos">Fetch Videos</button>
-
-      <span v-if="hasError" class="error">
-        {{ error }}
-      </span>
-    </div>
-
     <ul>
       <PreviewCard
         v-for="video in videos"
         :key="video.id"
-        :api-key="apiKey"
         :name="video.name"
         :video-id="video.id"
         @delete="deleteCard(video)"
@@ -29,14 +15,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import PreviewCard from '@/components/PreviewCard'
 
-const apiKey = ref('')
-const error = ref()
 const videos = ref([])
-
-const hasError = computed(() => error.value !== undefined)
 
 function deleteCard(video) {
   const index = videos.value.indexOf(video)
@@ -46,21 +28,13 @@ function deleteCard(video) {
   }
 }
 
-function fetchVideos() {
-  fetch('/video/', {
-    headers: { Authorization: `Bearer ${apiKey.value}` },
-  }).then((response) => {
-    response.json().then((data) => {
-      if (response.status >= 200 && response.status <= 299) {
-        error.value = undefined
-        videos.value = data
-      } else {
-        error.value = data.detail
-        videos.value = []
-      }
+onMounted(() => {
+  fetch('/video/')
+    .then((response) => response.json())
+    .then((data) => {
+      videos.value = data
     })
-  })
-}
+})
 </script>
 
 <style scoped>

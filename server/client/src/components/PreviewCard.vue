@@ -11,10 +11,6 @@
 import { defineEmits, defineProps } from 'vue'
 
 const props = defineProps({
-  apiKey: {
-    required: true,
-    type: String,
-  },
   name: {
     required: true,
     type: String,
@@ -30,17 +26,24 @@ const emit = defineEmits(['delete'])
 function deleteVideo() {
   event.preventDefault()
 
-  const confirmed = confirm(`Are you sure you wish to delete "${props.name}"?`)
-  if (!confirmed) {
+  const apiKey = prompt(
+    `To delete "${props.name}", please enter the API key used to generate it.`
+  )
+
+  if (!apiKey) {
     return
   }
 
   fetch(`/video/${props.videoId}/`, {
-    headers: { Authorization: `Bearer ${props.apiKey}` },
+    headers: { Authorization: `Bearer ${apiKey}` },
     method: 'DELETE',
+  }).then((response) => {
+    if (response.status >= 200 && response.status <= 299) {
+      emit('delete', props.videoId)
+    } else {
+      alert('Invalid API key.')
+    }
   })
-
-  emit('delete', props.videoId)
 }
 </script>
 

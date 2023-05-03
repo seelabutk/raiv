@@ -156,19 +156,13 @@ async def video__patch(
 
 
 # Player endpoints
-@app.get('/video/', dependencies=[Depends(validate_token)])
-async def video__get__list(token: str = Depends(oauth2_scheme)):
+@app.get('/video/')
+async def video__get__list():
 	""" Retrieve the list of available videos for the gallery. """
 	video_list = os.listdir(VIDEO_DIR)
 
 	objects = []
 	for video_id in video_list:
-		try:
-			verify_token(video_id, token)
-		except (NotADirectoryError, HTTPException):
-			# TODO: HTTPException should probably be more specific
-			continue
-
 		path = os.path.join(VIDEO_DIR, video_id)
 		if os.path.isdir(path) and not os.path.exists(os.path.join(path, 'frames')):
 			with open(
