@@ -10,11 +10,12 @@ import ConfirmCapture from '@/components/ConfirmCapture'
 import RecorderControls from '@/components/RecorderControls'
 import Store from '@/store/store'
 
-import '@/assets/reset.css'
 const store = new Store()
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '@/assets/reset.scss';
+
 #raiv-container {
   pointer-events: none; /* See note on next rule. */
   position: absolute;
@@ -42,6 +43,7 @@ const store = new Store()
   padding: 0.5em;
   height: fit-content;
   width: fit-content;
+  background: #d3d3d3;
 }
 
 #raiv-container:deep(button:not(:disabled)) {
@@ -61,6 +63,8 @@ const store = new Store()
 #raiv-container:deep(input),
 #raiv-container:deep(select) {
   width: unset;
+  border: 1px solid black;
+  background: white;
 }
 
 #raiv-container:deep(.handle) {
