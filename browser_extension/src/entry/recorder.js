@@ -7,12 +7,13 @@ import {
   faPause,
   faStop,
   faXmark,
+  faArrowRotateLeft,
 } from '@fortawesome/free-solid-svg-icons'
 import drag from 'v-drag'
 
 import App from '@/views/RecorderView'
 
-library.add(faCircle, faGrip, faPause, faStop, faXmark)
+library.add(faCircle, faGrip, faPause, faStop, faXmark, faArrowRotateLeft)
 
 function toggleUI() {
   const raiv = document.getElementById('raiv')

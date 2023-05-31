@@ -6,17 +6,31 @@
 
     <div class="controls">
       <div class="recording-controls">
-        <button type="button" @click="recordPause">
-          <font-awesome-icon :icon="recordPauseIcon" />
-        </button>
+        <Tooltip :text="recordPauseTooltipText" position="bottom">
+          <button type="button" @click="recordPause">
+            <font-awesome-icon :icon="recordPauseIcon" />
+          </button>
+        </Tooltip>
 
-        <button
-          type="button"
-          :disabled="!props.store.recording.value"
-          @click="stopRecording"
-        >
-          <font-awesome-icon icon="fa-solid fa-stop" />
-        </button>
+        <Tooltip text="Stop Recording" position="bottom">
+          <button
+            type="button"
+            :disabled="!props.store.recording.value"
+            @click="stopRecording"
+          >
+            <font-awesome-icon icon="fa-solid fa-stop" />
+          </button>
+        </Tooltip>
+
+        <Tooltip text="Reset Recording" position="bottom">
+          <button
+            type="button"
+            :hidden="props.store.actionMap.value.root.frameCount <= 1"
+            @click="resetRecording"
+          >
+            <font-awesome-icon icon="fa-solid fa-arrow-rotate-left" />
+          </button>
+        </Tooltip>
       </div>
 
       <InteractionToolbar
@@ -114,6 +128,7 @@
 import { computed, defineProps, onMounted, ref } from 'vue'
 import throttle from 'lodash.throttle'
 
+import Tooltip from '@/components/TooltipHelper'
 import ActionMap from '@/components/ActionMap'
 import InteractionToolbar from '@/components/InteractionToolbar'
 
@@ -130,6 +145,11 @@ const recordPauseIcon = computed(() =>
   props.store.recording.value && !props.store.paused.value
     ? 'fa-solid fa-pause'
     : 'fa-solid fa-circle'
+)
+const recordPauseTooltipText = computed(() =>
+  props.store.recording.value && !props.store.paused.value
+    ? 'Pause Recording'
+    : 'Start Recording'
 )
 
 function onClick(event) {
@@ -211,6 +231,11 @@ function stopRecording() {
   props.store.set('paused', false)
 }
 
+function resetRecording() {
+  stopRecording()
+  props.store.reset()
+}
+
 function capture() {
   const serverLocation = `${props.store.serverScheme.value}://${props.store.serverAddress.value}:${props.store.serverPort.value}`
 
@@ -249,6 +274,10 @@ button {
 
 .controls div:not(:first-child) {
   margin-top: 2em;
+}
+
+.controls .recording-controls div {
+  margin-top: 0;
 }
 
 .recording-controls button {
