@@ -244,6 +244,7 @@ button {
 
 .controls {
   padding: 1em;
+  overflow: visible;
 }
 
 .controls div:not(:first-child) {
