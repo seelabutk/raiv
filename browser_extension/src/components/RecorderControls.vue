@@ -7,18 +7,8 @@
     <div class="controls">
       <div class="recording-controls">
         <tippy :content="recordPauseTooltipText" content-class="tippy-tooltip">
-          <button type="button" @click="recordPause">
+          <button type="button" @click="recordToggle">
             <font-awesome-icon :icon="recordPauseIcon" />
-          </button>
-        </tippy>
-
-        <tippy content="Stop Recording">
-          <button
-            type="button"
-            :disabled="!props.store.recording.value"
-            @click="stopRecording"
-          >
-            <font-awesome-icon icon="fa-solid fa-stop" />
           </button>
         </tippy>
 
@@ -141,14 +131,10 @@ const props = defineProps({
 const actionMapComponent = ref(null)
 
 const recordPauseIcon = computed(() =>
-  props.store.recording.value && !props.store.paused.value
-    ? 'fa-solid fa-pause'
-    : 'fa-solid fa-circle'
+  props.store.recording.value ? 'fa-solid fa-pause' : 'fa-solid fa-circle'
 )
 const recordPauseTooltipText = computed(() =>
-  props.store.recording.value && !props.store.paused.value
-    ? 'Pause Recording'
-    : 'Start Recording'
+  props.store.recording.value ? 'Pause Recording' : 'Start Recording'
 )
 
 function onClick(event) {
@@ -198,23 +184,14 @@ function onMousemove(event) {
 }
 const throttledMousemove = throttle(onMousemove, 100)
 
-function recordPause() {
+function recordToggle() {
   if (!props.store.recording.value) {
-    props.store.reset()
     props.store.set('recording', true)
 
     document.addEventListener('click', onClick, true)
     document.addEventListener('mousemove', throttledMousemove, true)
-  } else if (!props.store.paused.value) {
-    props.store.set('paused', true)
-
-    document.removeEventListener('click', onClick, true)
-    document.removeEventListener('mousemove', throttledMousemove, true)
   } else {
-    props.store.set('paused', false)
-
-    document.addEventListener('click', onClick, true)
-    document.addEventListener('mousemove', throttledMousemove, true)
+    stopRecording()
   }
 }
 
@@ -227,7 +204,6 @@ function stopRecording() {
   }
 
   props.store.set('recording', false)
-  props.store.set('paused', false)
 }
 
 function resetRecording() {
@@ -246,7 +222,7 @@ function capture() {
 }
 
 onMounted(() => {
-  if (props.store.recording.value && !props.store.paused.value) {
+  if (props.store.recording.value) {
     document.addEventListener('click', onClick, true)
     document.addEventListener('mousemove', throttledMousemove, true)
   }
