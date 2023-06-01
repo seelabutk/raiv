@@ -12,7 +12,7 @@ export default class Store {
     this.serverPort = ref('80')
     this.serverScheme = ref('http')
     this.videoName = ref('')
-
+    this.recordingUrl = ref('')
     this.load()
 
     watch(
@@ -24,6 +24,7 @@ export default class Store {
         this.serverPort,
         this.serverScheme,
         this.videoName,
+        this.recordingUrl,
       ],
       () => {
         this.save()
@@ -54,8 +55,12 @@ export default class Store {
       this.serverPort.value = storageObj.serverPort
       this.serverScheme.value = storageObj.serverScheme
       this.videoName.value = storageObj.videoName
-
-      this.actionMap.value.load(storageObj)
+      this.recordingUrl.value = storageObj.recordingUrl
+      if (this.recordingUrl.value === location.href) {
+        this.actionMap.value.load(storageObj)
+      } else {
+        this.reset()
+      }
     }
   }
 
@@ -72,6 +77,7 @@ export default class Store {
           serverPort: this.serverPort.value,
           serverScheme: this.serverScheme.value,
           videoName: this.videoName.value,
+          recordingUrl: location.href,
         },
         (key, value) => {
           // Ignoring the parent pointer is necessary to avoid a circular structure.
