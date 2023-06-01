@@ -25,7 +25,22 @@ export default class ActionMap {
   }
 
   removeParent(index) {
-    this.parentActions.splice(index, 1)
+    return this.parentActions.splice(index, 1)
+  }
+
+  changeParent(action, parent) {
+    // remove action from old parent
+    action.delete()
+
+    // assign new parent to action
+    action.parent = parent
+
+    // add action to new parent
+    parent.children.push(action)
+    while (parent !== undefined) {
+      parent.frameCount++
+      parent = parent.parent
+    }
   }
 
   // TODO: Determine if there's any way to do this in a robust way. The challenge is that

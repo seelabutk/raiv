@@ -21,6 +21,7 @@
         ref="nodeOptions"
         :store="props.store"
         :action="currentAction"
+        :title="nodeTitle"
         @render="render"
       />
     </dialog>
@@ -43,6 +44,7 @@ const props = defineProps({
 
 let currentAction = ref(props.store.actionMap.value.root)
 const nodeOptions = ref(null)
+const nodeTitle = ref('Root')
 
 const options = {
   dx: 64, // the distance between nodes on the x-axis
@@ -74,7 +76,7 @@ function close() {
 }
 
 function label(d) {
-  if (d.data.target === undefined) {
+  if (d.data === undefined || d.data.target === undefined) {
     return 'Root'
   }
 
@@ -154,8 +156,14 @@ function render() {
         target.classList.remove('raiv-selected')
       }
     })
-    .on('click', (event, d) => {
-      if (d.data.parent !== undefined) {
+    .on('click', function (event, d) {
+      if (nodeOptions.value.isChangeParent && d.data !== currentAction.value) {
+        props.store.actionMap.value.changeParent(currentAction.value, d.data)
+        props.store.save()
+        nodeOptions.value.isChangeParent = false
+        render()
+      } else if (d.data.parent !== undefined) {
+        nodeTitle.value = label(d)
         currentAction.value = d.data
         nodeOptions.value.open()
       }
