@@ -10,6 +10,7 @@ import {
   faArrowRotateLeft,
 } from '@fortawesome/free-solid-svg-icons'
 import drag from 'v-drag'
+import VueTippy from 'vue-tippy'
 
 import App from '@/views/RecorderView'
 
@@ -50,6 +51,14 @@ function toggleUI() {
   const app = createApp(App)
   app.component('font-awesome-icon', FontAwesomeIcon)
   app.use(drag)
+  app.use(VueTippy, {
+    defaultProps: {
+      placement: 'bottom',
+      arrow: true,
+      inlinePositioning: true,
+      zIndex: 9999999,
+    },
+  })
   app.mount('#raiv')
   recorder.style.opacity = 100
 }

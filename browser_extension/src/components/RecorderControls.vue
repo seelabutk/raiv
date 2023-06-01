@@ -6,13 +6,13 @@
 
     <div class="controls">
       <div class="recording-controls">
-        <Tooltip :text="recordPauseTooltipText" position="bottom">
+        <tippy :content="recordPauseTooltipText" content-class="tippy-tooltip">
           <button type="button" @click="recordPause">
             <font-awesome-icon :icon="recordPauseIcon" />
           </button>
-        </Tooltip>
+        </tippy>
 
-        <Tooltip text="Stop Recording" position="bottom">
+        <tippy content="Stop Recording">
           <button
             type="button"
             :disabled="!props.store.recording.value"
@@ -20,9 +20,9 @@
           >
             <font-awesome-icon icon="fa-solid fa-stop" />
           </button>
-        </Tooltip>
+        </tippy>
 
-        <Tooltip text="Reset Recording" position="bottom">
+        <tippy content="Reset Recording">
           <button
             type="button"
             :hidden="props.store.actionMap.value.root.frameCount <= 1"
@@ -30,7 +30,7 @@
           >
             <font-awesome-icon icon="fa-solid fa-arrow-rotate-left" />
           </button>
-        </Tooltip>
+        </tippy>
       </div>
 
       <InteractionToolbar
@@ -127,8 +127,7 @@
 <script setup>
 import { computed, defineProps, onMounted, ref } from 'vue'
 import throttle from 'lodash.throttle'
-
-import Tooltip from '@/components/TooltipHelper'
+import 'tippy.js/dist/tippy.css'
 import ActionMap from '@/components/ActionMap'
 import InteractionToolbar from '@/components/InteractionToolbar'
 
@@ -278,6 +277,10 @@ button {
 
 .controls .recording-controls div {
   margin-top: 0;
+}
+
+.controls .recording-controls span {
+  margin-right: 1em;
 }
 
 .recording-controls button {
