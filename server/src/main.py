@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
-from .util import encode_video, merge_frames
+from .util import encode_video, merge_frames, scale_video
 
 
 VIDEO_DIR = os.path.join(os.getcwd(), 'data')
@@ -151,7 +151,7 @@ async def video__patch(
 		)
 
 		encode_video(video_id)
-
+		scale_video(video_id, video.actionMap['devicePixelRatio'])
 	return video_id
 
 

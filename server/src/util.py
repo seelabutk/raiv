@@ -67,6 +67,34 @@ def encode_video(video_id):
 
 	rmtree(path)
 
+def scale_video(video_id, devicePixelRatio):
+	""" Scales the video down to the devicePixelRatio. """
+	if devicePixelRatio == 1:
+		return
+
+	cwd = os.getcwd()
+	
+	path = os.path.join(VIDEO_DIR, video_id)
+	if not os.path.exists(path):
+		return
+
+	os.chdir(path)
+	#ffmpeg -i video.mp4 -vf scale="iw/2:-2" video.cpy.mp4
+	subprocess.run([
+		'ffmpeg',
+		'-y',
+		'-i',
+		'video.mp4',
+		'-vf',
+		f'scale=iw/{devicePixelRatio}:-2',
+		'video.tmp.mp4',
+	], check=True)
+	subprocess.run([
+		'mv',
+		'video.tmp.mp4',
+		'video.mp4',
+	], check=True)
+	os.chdir(cwd)
 
 if __name__ == '__main__':
 	for video in os.listdir(VIDEO_DIR):
