@@ -6,17 +6,21 @@
 
     <div class="controls">
       <div class="recording-controls">
-        <button type="button" @click="recordPause">
-          <font-awesome-icon :icon="recordPauseIcon" />
-        </button>
+        <tippy :content="recordPauseTooltipText" content-class="tippy-tooltip">
+          <button type="button" @click="recordToggle">
+            <font-awesome-icon :icon="recordPauseIcon" />
+          </button>
+        </tippy>
 
-        <button
-          type="button"
-          :disabled="!props.store.recording.value"
-          @click="stopRecording"
-        >
-          <font-awesome-icon icon="fa-solid fa-stop" />
-        </button>
+        <tippy content="Reset Recording">
+          <button
+            type="button"
+            :hidden="props.store.actionMap.value.root.frameCount <= 1"
+            @click="resetRecording"
+          >
+            <font-awesome-icon icon="fa-solid fa-arrow-rotate-left" />
+          </button>
+        </tippy>
       </div>
 
       <InteractionToolbar
@@ -113,7 +117,7 @@
 <script setup>
 import { computed, defineProps, onMounted, ref } from 'vue'
 import throttle from 'lodash.throttle'
-
+import 'tippy.js/dist/tippy.css'
 import ActionMap from '@/components/ActionMap'
 import InteractionToolbar from '@/components/InteractionToolbar'
 
@@ -127,9 +131,10 @@ const props = defineProps({
 const actionMapComponent = ref(null)
 
 const recordPauseIcon = computed(() =>
-  props.store.recording.value && !props.store.paused.value
-    ? 'fa-solid fa-pause'
-    : 'fa-solid fa-circle'
+  props.store.recording.value ? 'fa-solid fa-pause' : 'fa-solid fa-circle'
+)
+const recordPauseTooltipText = computed(() =>
+  props.store.recording.value ? 'Pause Recording' : 'Start Recording'
 )
 
 function onClick(event) {
@@ -179,23 +184,14 @@ function onMousemove(event) {
 }
 const throttledMousemove = throttle(onMousemove, 100)
 
-function recordPause() {
+function recordToggle() {
   if (!props.store.recording.value) {
-    props.store.reset()
     props.store.set('recording', true)
 
     document.addEventListener('click', onClick, true)
     document.addEventListener('mousemove', throttledMousemove, true)
-  } else if (!props.store.paused.value) {
-    props.store.set('paused', true)
-
-    document.removeEventListener('click', onClick, true)
-    document.removeEventListener('mousemove', throttledMousemove, true)
   } else {
-    props.store.set('paused', false)
-
-    document.addEventListener('click', onClick, true)
-    document.addEventListener('mousemove', throttledMousemove, true)
+    stopRecording()
   }
 }
 
@@ -208,7 +204,11 @@ function stopRecording() {
   }
 
   props.store.set('recording', false)
-  props.store.set('paused', false)
+}
+
+function resetRecording() {
+  stopRecording()
+  props.store.reset()
 }
 
 function capture() {
@@ -222,7 +222,7 @@ function capture() {
 }
 
 onMounted(() => {
-  if (props.store.recording.value && !props.store.paused.value) {
+  if (props.store.recording.value) {
     document.addEventListener('click', onClick, true)
     document.addEventListener('mousemove', throttledMousemove, true)
   }
@@ -249,6 +249,14 @@ button {
 
 .controls div:not(:first-child) {
   margin-top: 2em;
+}
+
+.controls .recording-controls div {
+  margin-top: 0;
+}
+
+.controls .recording-controls span {
+  margin-right: 1em;
 }
 
 .recording-controls button {
