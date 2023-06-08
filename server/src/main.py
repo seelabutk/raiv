@@ -140,8 +140,10 @@ async def video__patch(
 ):
 	""" Encode the video once the front-end is done sending frames. """
 	verify_token(video_id, token)
+	
 
 	if video.complete:
+		# merge frames from scroll if necessary
 		merge_frames(video_id)
 
 		path = os.path.join(VIDEO_DIR, video_id)
@@ -149,9 +151,15 @@ async def video__patch(
 			os.path.join(path, 'frames', '00000.png'),
 			os.path.join(path, 'first_frame.png')
 		)
-
+		
+		# encode the frames into a video
 		encode_video(video_id)
-		scale_video(video_id, video.actionMap['devicePixelRatio'])
+
+		# scale the video if necessary
+		with open(_get_video_file(video_id, 'action_map.json')) as file:
+			data = json.load(file)
+			devicePixelRatio = data.get('devicePixelRatio', 1)
+		scale_video(video_id, devicePixelRatio)
 	return video_id
 
 

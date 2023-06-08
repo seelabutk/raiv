@@ -164,8 +164,6 @@ export default class ActionMap {
 
     port.postMessage({
       complete: true,
-      actionMap: this.root,
-      devicePixelRatio: window.devicePixelRatio,
     })
     port.disconnect()
 
