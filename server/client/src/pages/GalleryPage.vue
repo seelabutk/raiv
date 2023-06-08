@@ -22,7 +22,7 @@
         :key="video.id"
         :name="video.name"
         :video-id="video.id"
-        :metadata="video.meta"
+        :metadata="video.metadata"
         @delete="deleteCard(video)"
       ></PreviewCard>
     </ul>
@@ -54,16 +54,13 @@ onMounted(() => {
   fetch('/video/')
     .then((response) => response.json())
     .then((data) => {
-      data.sort(() => Math.random() - 0.5)
-      console.log(data)
       data.sort(function (a, b) {
-        return a.meta.created < b.meta.created
+        return a.metadata.created < b.metadata.created
           ? 1
-          : a.meta.created > b.meta.created
+          : a.metadata.created > b.metadata.created
           ? -1
           : 0
       })
-      console.log(data)
       videos.value = data
     })
 })

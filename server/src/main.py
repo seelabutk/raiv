@@ -1,11 +1,10 @@
 from base64 import b64decode
 import json
-import logging
 import os
 from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,8 +12,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
-from .util import encode_video, merge_frames
-logger = logging.getLogger(__name__)
+from .util import encode_video, merge_frames, zipfiles
 
 VIDEO_DIR = os.path.join(os.getcwd(), 'data')
 if not os.path.exists(VIDEO_DIR):
@@ -52,15 +50,11 @@ app.add_middleware(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 API_KEY_FILE = os.path.join(os.getcwd(), 'data', 'api_keys.json')
-print(API_KEY_FILE, flush=True)
 api_keys = []
 if os.path.exists(API_KEY_FILE):
     print('Loading API keys...', flush=True)
     with open(API_KEY_FILE, encoding='utf-8') as f:
         api_keys = json.load(f)
-logger.info(f'Loaded {len(api_keys)} API keys.')
-print(api_keys, flush=True)
-
 
 def validate_token(token: str = Depends(oauth2_scheme)):
     if token not in api_keys:
@@ -130,18 +124,18 @@ async def video__post(video: Video, token: str = Depends(oauth2_scheme)):
     fpath = os.path.join(path, 'action_map.json')
     with open(fpath, 'w', encoding='utf-8') as file:
         json.dump(video.actionMap, file)
+    _update_metadata(uuid, {
+            'complete': video.complete,
+            'id': uuid,
+            'created': datetime.now().isoformat(),
+            'updated': datetime.now().isoformat(),
+            'size': 0
+    })
 
     fpath = os.path.join(path, 'api_key.txt')
     with open(fpath, 'w', encoding='utf-8') as file:
         file.write(f'{token}\n')
 
-    fpath = os.path.join(path, 'meta.json')
-    with open(fpath, 'w', encoding='utf-8') as file:
-        json.dump({
-            'complete': video.complete,
-            'id': uuid,
-            'created': datetime.now().isoformat()
-        }, file)
     return uuid
 
 
@@ -163,7 +157,12 @@ async def video__patch(
             os.path.join(path, 'first_frame.png')
         )
 
-        encode_video(video_id)
+        video_stat = encode_video(video_id)
+        _update_metadata(video_id, {
+            'complete': video.complete,
+            'updated': datetime.now().isoformat(),
+            'size': video_stat.st_size
+        })
 
     return video_id
 
@@ -179,22 +178,13 @@ async def video__get__list():
         path = os.path.join(VIDEO_DIR, video_id)
         if os.path.isdir(path) and not os.path.exists(os.path.join(path, 'frames')):
             with open(
-                os.path.join(path, 'action_map.json'),
-                'r',
-                encoding='utf-8'
-            ) as action_file, \
-                open(
-                os.path.join(path, 'meta.json'),
-                'r',
-                encoding='utf-8'
-            ) as meta_file:
-                name = json.load(action_file).get('name', 'Unnamed Video')
-                meta = json.load(meta_file)
-
+                os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
+            ) as action_file:
+                actionMap = json.load(action_file)
                 objects.append({
                     'id': video_id,
-                    'name': name,
-                    'meta': meta,
+                    'name': actionMap.get('name', 'Unnamed Video'),
+                    'metadata': actionMap.get('metadata', {}),
                 })
 
     return objects
@@ -220,6 +210,22 @@ def _get_video_file(video_id, filename):
 
     return path
 
+def _update_metadata(video_id, data):
+    """ Updates the metadata file for a video. """
+    path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
+
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail='File not found')
+
+    with open(path, 'r', encoding='utf-8') as file:
+        actionMap = json.load(file)
+    
+    if 'metadata' not in actionMap:
+        actionMap['metadata'] = {}
+    actionMap['metadata'].update(data)
+
+    with open(path, 'w', encoding='utf-8') as file:
+        json.dump(actionMap, file)
 
 @app.get('/video/{video_id}/meta/')
 async def metadata__get__detail(video_id):
@@ -241,8 +247,11 @@ async def preview__get__detail(video_id):
 
 @app.get('/video/{video_id}/download/')
 async def archive__get_download(video_id):
-    """ Retrieve the preview frame for a video for the gallery. """
-    return FileResponse(_get_video_file(video_id, 'first_frame.png'))
+    """ Retrieve a zipfile of the RAIV archive. """
+    return zipfiles([
+        _get_video_file(video_id, 'video.mp4'),
+        _get_video_file(video_id, 'action_map.json'),
+    ])
 
 
 @app.get('/video/{video_id}/video/')
