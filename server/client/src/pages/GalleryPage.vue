@@ -91,10 +91,7 @@ nav {
 
 .nav--searchbar-input {
   padding: 0;
-  /* margin-left: auto; */
-  /* margin-right: 1em; */
-  /* outline: solid 1px; */
-  /* border-radius: 4px; */
+  padding-top: 5px;
 }
 
 button {
