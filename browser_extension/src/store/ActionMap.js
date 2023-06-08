@@ -4,6 +4,7 @@ import Action from '@/store/Action'
 export default class ActionMap {
   constructor() {
     this.root = new Action()
+
     this.height = document.documentElement.scrollHeight
     this.interactionType = 'click'
     this.parentActions = [this.root] // A list of actions which any new Action should be added to.
@@ -162,9 +163,7 @@ export default class ActionMap {
     controlPanel.style.opacity = 1
     window.scrollTo(0, 0)
 
-    port.postMessage({
-      complete: true,
-    })
+    port.postMessage({ complete: true })
     port.disconnect()
 
     this.reset()
