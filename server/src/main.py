@@ -158,7 +158,8 @@ async def video__patch(
 		# scale the video if necessary
 		with open(_get_video_file(video_id, 'action_map.json')) as file:
 			data = json.load(file)
-			devicePixelRatio = data.get('devicePixelRatio', 1)
+			metadata = data.get('metadata', {})
+		devicePixelRatio = metadata.get('devicePixelRatio', 1)
 		scale_video(video_id, devicePixelRatio)
 	return video_id
 

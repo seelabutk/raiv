@@ -193,7 +193,9 @@ export default class ActionMap {
       apiKey,
       videoName,
       actionMap: this.root,
-      devicePixelRatio: window.devicePixelRatio,
+      metadata: {
+        devicePixelRatio: window.devicePixelRatio,
+      },
     })
 
     port.onMessage.addListener(async (message) => {
