@@ -1,9 +1,11 @@
 export default function getUserAgentInfo() {
   return {
-    userAgent: navigator.userAgent,
+    userAgent: window.navigator.userAgent,
     devicePixelRatio: window.devicePixelRatio,
     isHighDensity: isHighDensity(),
     isRetina: isRetina(),
+    availWidth: window.screen.availWidth,
+    availHeight: window.screen.availHeight,
   }
 }
 
