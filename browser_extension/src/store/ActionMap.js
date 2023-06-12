@@ -1,5 +1,6 @@
 /* global chrome */
 import Action from '@/store/Action'
+import getUserAgentInfo from '@/utils/getUserAgentInfo'
 
 export default class ActionMap {
   constructor() {
@@ -193,7 +194,7 @@ export default class ActionMap {
       apiKey,
       videoName,
       actionMap: this.root,
-      devicePixelRatio: window.devicePixelRatio,
+      metadata: getUserAgentInfo(),
     })
 
     port.onMessage.addListener(async (message) => {
