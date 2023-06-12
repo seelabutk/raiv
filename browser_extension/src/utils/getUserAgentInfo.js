@@ -9,6 +9,7 @@ export default function getUserAgentInfo() {
   }
 }
 
+// https://stackoverflow.com/questions/19689715/what-is-the-best-way-to-detect-retina-support-on-a-device-using-javascript
 function isHighDensity() {
   return (
     (window.matchMedia &&
