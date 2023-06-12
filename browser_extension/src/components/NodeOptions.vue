@@ -9,6 +9,7 @@
     </div>
 
     <div class="contents">
+      <h3>{{ props.title }}</h3>
       <div>
         <label>
           Wait time (ms) before capture:
@@ -95,9 +96,12 @@
         </label>
       </div>
 
-      <div>
+      <div class="node-options-actions">
         <button class="delete-btn" type="button" @click="deleteAction">
           Delete
+        </button>
+        <button class="change-parent" type="button" @click="changeParent">
+          {{ isChangeParentText }}
         </button>
       </div>
     </div>
@@ -106,6 +110,7 @@
 
 <script setup>
 import {
+  ref,
   computed,
   defineEmits,
   defineExpose,
@@ -125,6 +130,11 @@ const props = defineProps({
     required: true,
     type: Object,
   },
+
+  title: {
+    required: true,
+    type: String,
+  },
 })
 
 const isCanvas = computed(
@@ -133,13 +143,23 @@ const isCanvas = computed(
     props.action.target.tagName.toLowerCase() === 'canvas'
 )
 
+const isChangeParent = ref(false)
+const isChangeParentText = computed(() =>
+  isChangeParent.value ? 'Cancel Change' : 'Change Parent'
+)
+const changeParent = () => {
+  isChangeParent.value = !isChangeParent.value
+}
+
 let dialog
 
 function open() {
+  isChangeParent.value = false
   dialog.show()
 }
 
 function close() {
+  isChangeParent.value = false
   dialog.close()
 }
 
@@ -165,7 +185,7 @@ onMounted(() => {
   dialog = document.querySelector('.node-options-dialog')
 })
 
-defineExpose({ open })
+defineExpose({ open, isChangeParent })
 </script>
 
 <style scoped>
@@ -174,6 +194,10 @@ defineExpose({ open })
   top: 1em;
   width: 30em !important;
   z-index: 10002;
+}
+.node-options-actions {
+  display: flex;
+  justify-content: space-between;
 }
 
 .contents {
@@ -184,7 +208,7 @@ defineExpose({ open })
   margin-top: 1em;
 }
 
-.delete-btn {
+button .delete-btn {
   background: red;
   color: white;
 }
