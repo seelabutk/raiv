@@ -18,6 +18,7 @@ chrome.runtime.onConnect.addListener((port) => {
             actionMap: Object.assign(
               {
                 name: message.videoName,
+                devicePixelRatio: message.devicePixelRatio,
               },
               message.actionMap
             ),
