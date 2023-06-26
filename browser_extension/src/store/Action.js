@@ -1,3 +1,5 @@
+import domtoimage from 'dom-to-image-more'
+
 export default class Action {
   constructor(parent, target, boundingBox, options) {
     if (boundingBox === undefined) {
@@ -28,7 +30,7 @@ export default class Action {
     this.type = options.type
     this.useSiblings = false
     this.visible = options.visible === true
-    this.waitTime = 500 // milliseconds before capture occurs, cannot be below 500ms in Chrome
+    this.waitTime = 250 // milliseconds before capture occurs, cannot be below 500ms in Chrome
 
     if (this.visible) {
       this._findSiblings()
@@ -144,54 +146,27 @@ export default class Action {
       })
     }
 
-    let lastFrame = false
-    let scroll = 0
-    let scrollIndex = 0
-    let scrollOffset = 0 // scrollOffset corresponds to the starting Y position of the last image.
-    while (!lastFrame) {
-      if (scroll === height) {
-        break
-      }
+    await new Promise((resolve) => setTimeout(resolve, this.waitTime))
+    domtoimage.toPng(document.body).then((dataUrl) => {
+      console.log('image captured', this.position)
+      port.postMessage({
+        scrollOffset: 0,
+        image: dataUrl,
+        capture: true,
+        lastFrame: true,
+        position: this.position,
+        scroll: 0,
+      })
+    })
 
-      if (scroll + window.innerHeight > height) {
-        lastFrame = true
-        scrollOffset = window.innerHeight - (height - scroll)
-
-        scroll = height - window.innerHeight // This ensures that tabs don't exceed to max height of the video.
-      }
-
-      window.scrollTo(0, scroll)
-
-      // TODO: Would like to implement a better system for waiting for the above actions to render.
-      await new Promise((resolve) => setTimeout(resolve, this.waitTime))
-      if (lastFrame) {
-        // The final scrolled section of the page should not duplicate the previous section's portion
-        // of the visible tab captured.
-        port.postMessage({
-          scrollOffset,
-          capture: true,
-          lastFrame: true,
-          position: this.position,
-          scroll: scrollIndex++,
-        })
-      } else {
-        port.postMessage({
-          capture: true,
-          lastFrame: false,
-          position: this.position,
-          scroll: scrollIndex++,
-        })
-      }
-      await new Promise((resolve) =>
-        port.onMessage.addListener((message) => {
-          if (message.captured) {
-            resolve()
-          }
-        })
-      )
-
-      scroll += window.innerHeight
-    }
+    await new Promise((resolve) =>
+      port.onMessage.addListener((message) => {
+        if (message.captured) {
+          console.log('captured received', this.position)
+          resolve()
+        }
+      })
+    )
 
     if (this.type === 'hover') {
       this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))

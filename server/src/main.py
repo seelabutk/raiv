@@ -4,8 +4,9 @@ import os
 from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
+import requests
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.security import OAuth2PasswordBearer
@@ -75,6 +76,16 @@ def verify_token(video_id, token):
 				status_code=401
 			)
 
+# Proxy endpoints
+@app.get('/proxy/{path:path}')
+async def proxy__get(request: Request):
+	proxy_url = f"{request.url.path[7:]}?{request.url.query}"
+	t_resp = requests.request(
+	    method=request.method,
+	    url=proxy_url,
+	    allow_redirects=False,
+	)
+	return Response(content=t_resp.content, status_code=t_resp.status_code)
 
 # Recording endpoints
 @app.post('/frame/', dependencies=[Depends(validate_token)])

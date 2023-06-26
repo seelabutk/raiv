@@ -16,6 +16,7 @@
     "@fortawesome/vue-fontawesome": "^3.0.1",
     "core-js": "^3.8.3",
     "d3": "^7.8.2",
+    "dom-to-image-more": "^3.1.6",
     "lodash.throttle": "^4.1.1",
     "v-drag": "^3.0.9",
     "vue": "^3.2.13",
