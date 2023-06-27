@@ -192,13 +192,12 @@ export default class ActionMap {
     return [position, newActions.length]
   }
 
-  async _capture(port) {
-    const controlPanel = document.querySelector('#raiv .control-container')
-    controlPanel.style.opacity = 0
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    await this.root.capture(port, this.height)
+  async _capture(toggleControlPanel, port) {
+    toggleControlPanel(false)
 
-    controlPanel.style.opacity = 1
+    await this.root.capture(port, this.height, true)
+
+    toggleControlPanel(true)
     window.scrollTo(0, 0)
 
     port.postMessage({ complete: true })
@@ -207,7 +206,8 @@ export default class ActionMap {
     this._revertStyles()
     this.reset()
   }
-  async capture(serverLocation, apiKey, videoName) {
+
+  async capture(toggleControlPanel, serverLocation, apiKey, videoName) {
     this._prepareStyles(serverLocation)
     this._prepareActions(this.root, 0)
     const port = chrome.runtime.connect({ name: 'raiv' })
@@ -221,7 +221,7 @@ export default class ActionMap {
 
     port.onMessage.addListener(async (message) => {
       if (message.ready) {
-        await this._capture(port)
+        await this._capture(toggleControlPanel, port)
       }
     })
   }

@@ -1,5 +1,5 @@
 <template>
-  <div class="control-container" v-drag="'#controls-handle'">
+  <div class="control-container" v-drag="'#controls-handle'" v-show="isShown">
     <div id="controls-handle" class="handle">
       <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
     </div>
@@ -129,6 +129,7 @@ const props = defineProps({
 })
 
 const actionMapComponent = ref(null)
+const isShown = ref(true)
 
 const recordPauseIcon = computed(() =>
   props.store.recording.value ? 'fa-solid fa-pause' : 'fa-solid fa-circle'
@@ -211,10 +212,20 @@ function resetRecording() {
   props.store.reset()
 }
 
+function toggleControlPanel(value) {
+  if (value !== undefined) {
+    isShown.value = value
+  } else {
+    isShown.value = !isShown.value
+  }
+  return isShown.value
+}
+
 function capture() {
   const serverLocation = `${props.store.serverScheme.value}://${props.store.serverAddress.value}:${props.store.serverPort.value}`
 
   props.store.actionMap.value.capture(
+    toggleControlPanel,
     serverLocation,
     props.store.apiKey.value,
     props.store.videoName.value

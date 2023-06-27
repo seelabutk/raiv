@@ -1,4 +1,5 @@
 import domtoimage from 'dom-to-image-more'
+import observeDOM from '@/utils/observeDOM'
 
 export default class Action {
   constructor(parent, target, boundingBox, options) {
@@ -99,13 +100,40 @@ export default class Action {
     )
   }
 
-  async capture(port, height) {
+  async _captureCanvas(port) {
+    if (this.manualCapture) {
+      await new Promise((resolve) => {
+        this._openConfirmCapture(resolve)
+      })
+    }
+    domtoimage.toPng(document.body).then((dataUrl) => {
+      port.postMessage({
+        scrollOffset: 0,
+        image: dataUrl,
+        capture: true,
+        lastFrame: true,
+        position: this.position,
+        scroll: 0,
+      })
+    })
+  }
+
+  async capture(port, height, root = false) {
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
       window.scrollTo(0, this.scrollPosition)
       this.target = document.elementFromPoint(...this.clickPosition)
     }
 
+    // If this is not the root node, wait for the DOM to change before capturing
+    if (!root) {
+      observeDOM(document.body, async (_, observer) => {
+        observer.disconnect()
+        await this._captureCanvas(port)
+      })
+    }
+
+    // Initiate the interaction
     if (this.target instanceof Element) {
       if (this.type === 'click' || this.type === 'toggle') {
         this.target.dispatchEvent(
@@ -140,29 +168,15 @@ export default class Action {
       }
     }
 
-    if (this.manualCapture) {
-      await new Promise((resolve) => {
-        this._openConfirmCapture(resolve)
-      })
+    // If this is the root node, capture without waiting for the DOM to change
+    if (root) {
+      await this._captureCanvas(port)
     }
-
-    await new Promise((resolve) => setTimeout(resolve, this.waitTime))
-    domtoimage.toPng(document.body).then((dataUrl) => {
-      console.log('image captured', this.position)
-      port.postMessage({
-        scrollOffset: 0,
-        image: dataUrl,
-        capture: true,
-        lastFrame: true,
-        position: this.position,
-        scroll: 0,
-      })
-    })
 
     await new Promise((resolve) =>
       port.onMessage.addListener((message) => {
         if (message.captured) {
-          console.log('captured received', this.position)
+          port.onMessage.removeListener()
           resolve()
         }
       })
