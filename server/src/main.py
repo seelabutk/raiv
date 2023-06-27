@@ -77,17 +77,29 @@ def verify_token(video_id, token):
 			)
 
 # Proxy endpoints
+
+def get_proxy_url(request: Request):
+	""" Get the URL to proxy to. Find the right most instance of http:// or https:// to avoid any issues """
+	url = request.url.path
+	i, j = url.rfind('http://'), url.rfind('https://')
+	if i == -1 and j == -1:
+		raise HTTPException(status_code=400)
+	return f"{request.url.path[max(i, j):]}?{request.url.query}"
+
+
 @app.get('/proxy/{path:path}')
 async def proxy__get(request: Request):
-	proxy_url = f"{request.url.path[7:]}?{request.url.query}"
+	""" Proxy requests to the target URL. """
 	t_resp = requests.request(
-	    method=request.method,
-	    url=proxy_url,
-	    allow_redirects=False,
+		method=request.method,
+		url=get_proxy_url(request),
+		allow_redirects=False,
 	)
 	return Response(content=t_resp.content, status_code=t_resp.status_code)
 
 # Recording endpoints
+
+
 @app.post('/frame/', dependencies=[Depends(validate_token)])
 async def frame__post(frame: Frame, token: str = Depends(oauth2_scheme)):
 	""" Adds a frame to a video and prepares the frame for encoding. """
@@ -151,7 +163,6 @@ async def video__patch(
 ):
 	""" Encode the video once the front-end is done sending frames. """
 	verify_token(video_id, token)
-	
 
 	if video.complete:
 		# merge frames from scroll if necessary
