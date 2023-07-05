@@ -33,6 +33,8 @@ export default class Action {
     this.visible = options.visible === true
     this.waitTime = 250 // milliseconds before capture occurs, cannot be below 500ms in Chrome
 
+    this.capturedImageSize = [0, 0] // [width, height] of the captured iamge
+
     if (this.visible) {
       this._findSiblings()
     }
@@ -100,39 +102,7 @@ export default class Action {
     )
   }
 
-  async _captureCanvas(port) {
-    if (this.manualCapture) {
-      await new Promise((resolve) => {
-        this._openConfirmCapture(resolve)
-      })
-    }
-    domtoimage.toPng(document.body).then((dataUrl) => {
-      port.postMessage({
-        scrollOffset: 0,
-        image: dataUrl,
-        capture: true,
-        lastFrame: true,
-        position: this.position,
-        scroll: 0,
-      })
-    })
-  }
-
-  async capture(port, height, root = false) {
-    // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
-    if (this.clickPosition.length === 2) {
-      window.scrollTo(0, this.scrollPosition)
-      this.target = document.elementFromPoint(...this.clickPosition)
-    }
-
-    // If this is not the root node, wait for the DOM to change before capturing
-    if (!root) {
-      observeDOM(document.body, async (_, observer) => {
-        observer.disconnect()
-        await this._captureCanvas(port)
-      })
-    }
-
+  _takeAction() {
     // Initiate the interaction
     if (this.target instanceof Element) {
       if (this.type === 'click' || this.type === 'toggle') {
@@ -167,11 +137,80 @@ export default class Action {
         )
       }
     }
+  }
+
+  _revertActionPreChildren() {
+    if (this.type === 'hover') {
+      this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
+    }
+  }
+
+  _revertActionPostChildren() {
+    if (this.type === 'toggle') {
+      this.target.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          clientX: this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+          clientY: this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+        })
+      )
+    }
+  }
+
+  async _captureCanvas(port) {
+    if (this.manualCapture) {
+      await new Promise((resolve) => {
+        this._openConfirmCapture(resolve)
+      })
+    }
+    const canvas = await domtoimage.toCanvas(document.body)
+    this.capturedImageSize = [canvas.width, canvas.height]
+    port.postMessage({
+      scrollOffset: 0,
+      image: canvas.toDataURL('image/png'),
+      capture: true,
+      lastFrame: true,
+      position: this.position,
+      scroll: 0,
+    })
+  }
+
+  async capture(port, root = false) {
+    // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
+    if (this.clickPosition.length === 2) {
+      window.scrollTo(0, this.scrollPosition)
+      this.target = document.elementFromPoint(...this.clickPosition)
+    }
+
+    // If this is not the root node, wait for the DOM to change before capturing
+    let observer = undefined
+    let timeout = 1000
+    const shouldListen = !root && this.type !== 'toggle-off'
+    if (shouldListen) {
+      observer = observeDOM(document.body, async (_, _observer) => {
+        observer = undefined
+        _observer.disconnect()
+        await this._captureCanvas(port)
+      })
+    }
+
+    this._takeAction()
 
     // If this is the root node, capture without waiting for the DOM to change
-    if (root) {
+    if (!shouldListen) {
       await this._captureCanvas(port)
     }
+
+    // Set a timeout to capture the canvas if the DOM doesn't change
+    new Promise((resolve) => {
+      setTimeout(async () => {
+        if (observer !== undefined) {
+          observer.disconnect()
+        }
+        await this._captureCanvas(port)
+        resolve()
+      }, timeout)
+    })
 
     await new Promise((resolve) =>
       port.onMessage.addListener((message) => {
@@ -182,23 +221,13 @@ export default class Action {
       })
     )
 
-    if (this.type === 'hover') {
-      this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
-    }
+    this._revertActionPreChildren()
 
     for (let index = 0; index < this.children.length; index++) {
-      await this.children[index].capture(port, height)
+      await this.children[index].capture(port)
     }
 
-    if (this.type === 'toggle') {
-      this.target.dispatchEvent(
-        new MouseEvent('click', {
-          bubbles: true,
-          clientX: this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
-          clientY: this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
-        })
-      )
-    }
+    this._revertActionPostChildren()
   }
 
   toggleSiblings(actionMap) {

@@ -18,7 +18,6 @@ chrome.runtime.onConnect.addListener((port) => {
             actionMap: Object.assign(
               {
                 name: message.videoName,
-                devicePixelRatio: message.devicePixelRatio,
               },
               message.actionMap
             ),
@@ -61,6 +60,7 @@ chrome.runtime.onConnect.addListener((port) => {
         fetch(`${serverLocation}video/${videoId}/`, {
           body: JSON.stringify({
             complete: true,
+            actionMap: message.actionMap,
           }),
           headers: {
             Authorization: `Bearer ${apiKey}`,

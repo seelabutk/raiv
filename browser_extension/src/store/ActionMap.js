@@ -192,15 +192,28 @@ export default class ActionMap {
     return [position, newActions.length]
   }
 
+  _getActionMap() {
+    return Object.assign(
+      {
+        devicePixelRatio: 1,
+        // devicePixelRatio: window.devicePixelRatio,
+      },
+      this.root
+    )
+  }
+
   async _capture(toggleControlPanel, port) {
     toggleControlPanel(false)
 
-    await this.root.capture(port, this.height, true)
+    await this.root.capture(port, true)
 
     toggleControlPanel(true)
     window.scrollTo(0, 0)
 
-    port.postMessage({ complete: true })
+    port.postMessage({
+      complete: true,
+      actionMap: this._getActionMap(),
+    })
     port.disconnect()
 
     this._revertStyles()
@@ -215,8 +228,7 @@ export default class ActionMap {
       serverLocation,
       apiKey,
       videoName,
-      actionMap: this.root,
-      devicePixelRatio: window.devicePixelRatio,
+      actionMap: this._getActionMap(),
     })
 
     port.onMessage.addListener(async (message) => {

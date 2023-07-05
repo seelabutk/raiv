@@ -76,10 +76,28 @@ def verify_token(video_id, token):
 				status_code=401
 			)
 
+
+def update_action_map(video_id, action_map_new):
+	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
+	action_map = {}
+	if os.path.exists(path):
+		with open(path, 'r', encoding='utf-8') as file:
+			action_map = json.load(file)
+	print(action_map, action_map_new)
+	action_map.update(action_map_new)
+
+	with open(path, 'w', encoding='utf-8') as file:
+		json.dump(action_map, file, indent=2)
+	return action_map
+
+
 # Proxy endpoints
 
 def get_proxy_url(request: Request):
-	""" Get the URL to proxy to. Find the right most instance of http:// or https:// to avoid any issues """
+	"""
+	Get the URL to proxy to.
+	Find the right most instance of http:// or https:// to avoid any issues
+	"""
 	url = request.url.path
 	i, j = url.rfind('http://'), url.rfind('https://')
 	if i == -1 and j == -1:
@@ -165,6 +183,9 @@ async def video__patch(
 	verify_token(video_id, token)
 
 	if video.complete:
+		# update the action map if anything has changed
+		action_map = update_action_map(video_id, video.actionMap)
+
 		# merge frames from scroll if necessary
 		merge_frames(video_id)
 
@@ -175,12 +196,10 @@ async def video__patch(
 		)
 		
 		# encode the frames into a video
-		encode_video(video_id)
+		encode_video(video_id, action_map)
 
 		# scale the video if necessary
-		with open(_get_video_file(video_id, 'action_map.json')) as file:
-			data = json.load(file)
-			devicePixelRatio = data.get('devicePixelRatio', 1)
+		devicePixelRatio = action_map.get('devicePixelRatio', 1)
 		scale_video(video_id, devicePixelRatio)
 	return video_id
 
