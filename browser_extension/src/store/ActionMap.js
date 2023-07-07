@@ -196,9 +196,7 @@ export default class ActionMap {
   _getActionMap() {
     return Object.assign(
       {
-        devicePixelRatio: 1,
         metadata: getUserAgentInfo(),
-        // devicePixelRatio: window.devicePixelRatio,
       },
       this.root
     )
