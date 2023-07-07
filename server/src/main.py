@@ -198,7 +198,7 @@ async def video__patch(
 		encode_video(video_id, action_map)
 
 		# scale the video if necessary
-		devicePixelRatio = action_map.get('devicePixelRatio', 1)
+		devicePixelRatio = action_map.get('metadata', {}).get('devicePixelRatio', 1)
 		scale_video(video_id, devicePixelRatio)
 	return video_id
 

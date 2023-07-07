@@ -1,5 +1,6 @@
 /* global chrome */
 import Action from '@/store/Action'
+import getUserAgentInfo from '@/utils/getUserAgentInfo'
 
 export default class ActionMap {
   constructor() {
@@ -196,6 +197,7 @@ export default class ActionMap {
     return Object.assign(
       {
         devicePixelRatio: 1,
+        metadata: getUserAgentInfo(),
         // devicePixelRatio: window.devicePixelRatio,
       },
       this.root
