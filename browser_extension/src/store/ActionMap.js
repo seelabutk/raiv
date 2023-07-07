@@ -202,12 +202,11 @@ export default class ActionMap {
     )
   }
 
-  async _capture(toggleControlPanel, port) {
-    toggleControlPanel(false)
-
+  async _capture(controls, port) {
+    await controls.onPrepare()
     await this.root.capture(port, true)
+    await controls.onFinish()
 
-    toggleControlPanel(true)
     window.scrollTo(0, 0)
 
     port.postMessage({
@@ -220,7 +219,7 @@ export default class ActionMap {
     this.reset()
   }
 
-  async capture(toggleControlPanel, serverLocation, apiKey, videoName) {
+  async capture(controls, serverLocation, apiKey, videoName) {
     this._prepareStyles(serverLocation)
     this._prepareActions(this.root, 0)
     const port = chrome.runtime.connect({ name: 'raiv' })
@@ -233,7 +232,7 @@ export default class ActionMap {
 
     port.onMessage.addListener(async (message) => {
       if (message.ready) {
-        await this._capture(toggleControlPanel, port)
+        await this._capture(controls, port)
       }
     })
   }

@@ -83,7 +83,6 @@ def update_action_map(video_id, action_map_new):
 	if os.path.exists(path):
 		with open(path, 'r', encoding='utf-8') as file:
 			action_map = json.load(file)
-	print(action_map, action_map_new)
 	action_map.update(action_map_new)
 
 	with open(path, 'w', encoding='utf-8') as file:

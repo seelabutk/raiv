@@ -204,11 +204,13 @@ export default class Action {
     // Set a timeout to capture the canvas if the DOM doesn't change
     new Promise((resolve) => {
       setTimeout(async () => {
-        if (observer !== undefined) {
-          observer.disconnect()
+        if (observer === undefined) {
+          return resolve()
         }
+        observer.disconnect()
+        observer = undefined
         await this._captureCanvas(port)
-        resolve()
+        return resolve()
       }, timeout)
     })
 
