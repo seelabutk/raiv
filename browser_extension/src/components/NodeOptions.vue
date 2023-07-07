@@ -16,7 +16,7 @@
 
           <input
             :value="props.action.waitTime"
-            min="500"
+            min="0"
             type="number"
             @change="
               (event) => {

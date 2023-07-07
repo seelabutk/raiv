@@ -31,8 +31,8 @@ export default class Action {
     this.type = options.type
     this.useSiblings = false
     this.visible = options.visible === true
-    this.waitTime = 250 // milliseconds before capture occurs, cannot be below 500ms in Chrome
-
+    this.waitTime = 0 // milliseconds before capture occurs, cannot be below 500ms in Chrome
+    this.timeout = 1000 // timeout for the action to complete, in milliseconds
     this.capturedImageSize = [0, 0] // [width, height] of the captured iamge
 
     if (this.visible) {
@@ -182,11 +182,14 @@ export default class Action {
       this.target = document.elementFromPoint(...this.clickPosition)
     }
 
-    // If this is not the root node, wait for the DOM to change before capturing
+    // Determine how the page should be captured. i.e. listen for DOM changes or wait a user specified time
+    const useWaitTime =
+      root || // If this is the root node
+      this.type === 'toggle-off' || // If this is a toggle-off node
+      this.waitTime > 0 // If the user has specified a wait time
+
     let observer = undefined
-    let timeout = 1000
-    const shouldListen = !root && this.type !== 'toggle-off'
-    if (shouldListen) {
+    if (!useWaitTime) {
       observer = observeDOM(document.body, async (_, _observer) => {
         observer = undefined
         _observer.disconnect()
@@ -196,24 +199,30 @@ export default class Action {
 
     this._takeAction()
 
-    // If this is the root node, capture without waiting for the DOM to change
-    if (!shouldListen) {
-      await this._captureCanvas(port)
+    if (useWaitTime) {
+      // capture without waiting for the DOM to change
+      new Promise((resolve) => {
+        setTimeout(async () => {
+          await this._captureCanvas(port)
+          return resolve()
+        }, this.waitTime || 100)
+      })
+    } else {
+      // Set a timeout to capture the canvas if the DOM doesn't change
+      new Promise((resolve) => {
+        setTimeout(async () => {
+          if (observer === undefined) {
+            return resolve()
+          }
+          observer.disconnect()
+          observer = undefined
+          await this._captureCanvas(port)
+          return resolve()
+        }, this.timeout)
+      })
     }
 
-    // Set a timeout to capture the canvas if the DOM doesn't change
-    new Promise((resolve) => {
-      setTimeout(async () => {
-        if (observer === undefined) {
-          return resolve()
-        }
-        observer.disconnect()
-        observer = undefined
-        await this._captureCanvas(port)
-        return resolve()
-      }, timeout)
-    })
-
+    // Wait for service worker to respond
     await new Promise((resolve) =>
       port.onMessage.addListener((message) => {
         if (message.captured) {
