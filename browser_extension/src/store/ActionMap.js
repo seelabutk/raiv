@@ -5,9 +5,10 @@ import getUserAgentInfo from '@/utils/getUserAgentInfo'
 export default class ActionMap {
   constructor() {
     this.root = new Action()
-
+    this.independentActions = [] // A list of actions which are not children of any other action.
     this.height = document.documentElement.scrollHeight
     this.interactionType = 'click'
+    this.independentAction = false
     this.parentActions = [this.root] // A list of actions which any new Action should be added to.
     this.width = window.innerWidth
     this.changedStyles = []
@@ -16,6 +17,7 @@ export default class ActionMap {
   reset() {
     this.root = new Action()
     this.parentActions = [this.root]
+    this.independentActions = []
   }
 
   set(key, value) {
@@ -66,25 +68,49 @@ export default class ActionMap {
       node.children[index].scrollPosition = childObj.scrollPosition
       node.children[index].type = childObj.type
       node.children[index].waitTime = childObj.waitTime
+      node.children[index].independent = childObj.independent || false
 
       this._load(node.children[index])
       node.frameCount += node.children[index].frameCount
     }
   }
 
+  _loadIndependentActions(independentActions) {
+    for (let index = 0; index < independentActions.length; index++) {
+      const obj = independentActions[index]
+      window.scrollTo(0, obj.scrollPosition)
+
+      const target = document.elementFromPoint(...obj.clickPosition)
+
+      const action = new Action(undefined, target)
+      action.boundingBox = obj.boundingBox
+      action.canvasRanges = obj.canvasRanges
+      action.children = obj.children
+      action.clickPosition = obj.clickPosition
+      action.frameCount = obj.canvasRanges[0] * obj.canvasRanges[1]
+      action.manualCapture = obj.manualCapture
+      action.scrollPosition = obj.scrollPosition
+      action.type = obj.type
+      action.waitTime = obj.waitTime
+      action.independent = obj.independent || true
+      this.independentActions.push(action)
+    }
+  }
+
   load(storageObj) {
     this.root.children = storageObj.actions
-
     this._load(this.root)
 
+    this.independentActions = []
+    this._loadIndependentActions(storageObj.independentActions || [])
     window.scrollTo(0, 0)
   }
 
-  _add(parentIdx, target, boundingBox, event, type) {
-    let parent = this.parentActions[parentIdx]
+  _add(parent, target, boundingBox, event, type) {
     const action = new Action(parent, target, boundingBox, {
       event,
       type,
+      independent: false,
     })
 
     parent.children.push(action)
@@ -96,14 +122,29 @@ export default class ActionMap {
   }
 
   add(target, boundingBox, event) {
+    if (this.independentAction) {
+      this._addIndependentAction(
+        target,
+        boundingBox,
+        event,
+        this.interactionType
+      )
+      if (this.interactionType === 'toggle') {
+        this._addIndependentAction(target, boundingBox, event, 'toggle-off')
+      }
+      return
+    }
+
     for (let index = 0; index < this.parentActions.length; index++) {
-      this._add(index, target, boundingBox, event, this.interactionType)
+      let parent = this.parentActions[index]
+      this._add(parent, target, boundingBox, event, this.interactionType)
 
       if (this.interactionType === 'toggle') {
-        this._add(index, target, boundingBox, event, 'toggle-off')
+        this._add(parent, target, boundingBox, event, 'toggle-off')
       }
     }
   }
+
   _prepareStyles(serverLocation) {
     let links = document.querySelectorAll('link')
     links = Array.from(links).filter((link) => {
@@ -125,6 +166,24 @@ export default class ActionMap {
     this.changedStyles.forEach((style) => {
       style.element.href = style.href
     })
+  }
+
+  _addIndependentAction(target, boundingBox, event, type) {
+    const action = new Action(undefined, target, boundingBox, {
+      event,
+      type,
+      independent: true,
+    })
+    this.independentActions.push(action)
+    return action
+  }
+
+  deleteIndependentAction(action) {
+    const index = this.independentActions.indexOf(action)
+    if (index > -1) {
+      this.independentActions.splice(index, 1)
+    }
+    action.delete()
   }
 
   _prepareActions(action, position) {
@@ -183,6 +242,9 @@ export default class ActionMap {
       parent.children.splice(oldIndex + 1, 0, ...newActions)
     }
 
+    // Account for independent actions
+    position += this.independentActions.length
+
     for (let index = 0; index < action.children.length; index++) {
       const retValues = this._prepareActions(action.children[index], position)
 
@@ -197,6 +259,7 @@ export default class ActionMap {
     return Object.assign(
       {
         metadata: getUserAgentInfo(),
+        independentActions: this.independentActions,
       },
       this.root
     )
@@ -204,7 +267,7 @@ export default class ActionMap {
 
   async _capture(controls, port) {
     await controls.onPrepare()
-    await this.root.capture(port, true)
+    await this.root.capture(port, true, this.independentActions)
     await controls.onFinish()
 
     window.scrollTo(0, 0)
@@ -222,6 +285,7 @@ export default class ActionMap {
   async capture(controls, serverLocation, apiKey, videoName) {
     this._prepareStyles(serverLocation)
     this._prepareActions(this.root, 0)
+
     const port = chrome.runtime.connect({ name: 'raiv' })
     port.postMessage({
       serverLocation,

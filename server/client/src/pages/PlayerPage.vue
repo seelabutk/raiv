@@ -13,7 +13,10 @@ import videojs from 'video.js'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
+let actionMap
 let activeAction
+let oldIndependentAction = null
+let independentActions = []
 const fps = 1
 let player
 const route = useRoute()
@@ -25,30 +28,30 @@ function seekToFrame(frame) {
   }
 }
 
-function findAction(event, action, checkParent) {
-  if (checkParent === undefined) {
-    checkParent = true
-  }
-
-  if (
+function checkBoundingBox(event, action) {
+  return (
     action.boundingBox.length === 4 &&
     event.clientX >= action.boundingBox[0] &&
     event.clientY >= action.boundingBox[1] &&
     event.clientX <= action.boundingBox[2] &&
     event.clientY <= action.boundingBox[3]
-  ) {
+  )
+}
+
+function findAction(event, action, checkParent) {
+  if (checkParent === undefined) {
+    checkParent = true
+  }
+
+  // Check if the event is within the bounding box of this Action
+  if (checkBoundingBox(event, action)) {
     return action
   }
 
+  // Check if the event is within the bounding box of any children
   for (let index = 0; index < action.children.length; index++) {
     const child = action.children[index]
-    if (
-      child.boundingBox.length === 4 &&
-      event.clientX >= child.boundingBox[0] &&
-      event.clientY >= child.boundingBox[1] &&
-      event.clientX <= child.boundingBox[2] &&
-      event.clientY <= child.boundingBox[3]
-    ) {
+    if (checkBoundingBox(event, child)) {
       return child
     }
 
@@ -60,6 +63,13 @@ function findAction(event, action, checkParent) {
     }
   }
 
+  // Check if the event is within the bounding box of any indpendent actions
+  for (let index = 0; index < independentActions.length; index++) {
+    const independentAction = independentActions[index]
+    if (checkBoundingBox(event, independentAction)) {
+      return independentAction
+    }
+  }
   // if this Action has a valid ancestor, we can check it for matches
   const ancestor =
     action.disableSiblings && action.parent !== undefined
@@ -128,24 +138,50 @@ function onClick(event) {
     }
   }
 
-  activeAction = newAction
-  seekToFrame(activeAction.position)
+  if (newAction.independent) {
+    oldIndependentAction = newAction
+    seekToFrame(activeAction.position + newAction.idx)
+  } else {
+    activeAction = newAction
+    seekToFrame(activeAction.position)
+  }
 }
 
 function onHover(event) {
   const newAction = findAction(event, activeAction)
 
-  if (newAction !== undefined && newAction.type === 'hover') {
-    activeAction = newAction
-    seekToFrame(activeAction.position)
-  } else if (activeAction.type === 'hover') {
-    activeAction = activeAction.parent
-    seekToFrame(activeAction.position)
+  // if there is a new action, and it is independent
+  if (newAction !== undefined && newAction.independent) {
+    if (newAction.type === 'hover') {
+      oldIndependentAction = newAction
+      seekToFrame(activeAction.position + newAction.idx)
+    }
+  }
+  // if not an independent action
+  else {
+    // if there is a new action, and it is a hover
+    if (newAction !== undefined && newAction.type === 'hover') {
+      activeAction = newAction
+      seekToFrame(activeAction.position)
+    }
+    // if there is no new action, and the current action is a hover
+    else if (activeAction.type === 'hover') {
+      activeAction = activeAction.parent
+      seekToFrame(activeAction.position)
+    }
+    // if there is no new action, and the current action is independent and a hover
+    else if (
+      oldIndependentAction !== null &&
+      oldIndependentAction.type === 'hover'
+    ) {
+      oldIndependentAction = null
+      seekToFrame(activeAction.position)
+    }
   }
 }
 const throttledHover = throttle(onHover, 100)
 
-function addActionElements(action, parent) {
+function addActionElements(action, parent, addIndependent = true) {
   if (parent !== undefined) {
     action.parent = parent
   } else {
@@ -170,12 +206,18 @@ function addActionElements(action, parent) {
   for (let index = 0; index < action.children.length; index++) {
     addActionElements(action.children[index], action)
   }
+  if (addIndependent) {
+    for (let index = 0; index < independentActions.length; index++) {
+      addActionElements(independentActions[index], action, false)
+    }
+  }
 }
 
 onMounted(() => {
   fetch(`/video/${videoId.value}/action-map/`)
     .then((response) => response.json())
-    .then((actionMap) => {
+    .then((_actionMap) => {
+      actionMap = _actionMap
       const container = document.querySelector('.player')
       const videoElement = document.querySelector('#loom-video')
 
@@ -193,6 +235,10 @@ onMounted(() => {
         })
       })
 
+      independentActions = actionMap.independentActions
+      for (let index = 0; index < independentActions.length; index++) {
+        independentActions[index].idx = index + 1
+      }
       addActionElements(actionMap)
 
       document.addEventListener('click', onClick)

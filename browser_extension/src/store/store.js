@@ -70,6 +70,7 @@ export default class Store {
       JSON.stringify(
         {
           actions: this.actionMap.value.root.children,
+          independentActions: this.actionMap.value.independentActions,
           apiKey: this.apiKey.value,
           paused: this.paused.value,
           recording: this.recording.value,
