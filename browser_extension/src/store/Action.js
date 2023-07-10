@@ -1,3 +1,6 @@
+import domtoimage from 'dom-to-image-more'
+import observeDOM from '@/utils/observeDOM'
+
 export default class Action {
   constructor(parent, target, boundingBox, options) {
     if (boundingBox === undefined) {
@@ -28,7 +31,9 @@ export default class Action {
     this.type = options.type
     this.useSiblings = false
     this.visible = options.visible === true
-    this.waitTime = 500 // milliseconds before capture occurs, cannot be below 500ms in Chrome
+    this.waitTime = 0 // milliseconds before capture occurs, cannot be below 500ms in Chrome
+    this.timeout = 1000 // timeout for the action to complete, in milliseconds
+    this.capturedImageSize = [0, 0] // [width, height] of the captured iamge
 
     if (this.visible) {
       this._findSiblings()
@@ -97,13 +102,8 @@ export default class Action {
     )
   }
 
-  async capture(port, height) {
-    // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
-    if (this.clickPosition.length === 2) {
-      window.scrollTo(0, this.scrollPosition)
-      this.target = document.elementFromPoint(...this.clickPosition)
-    }
-
+  _takeAction() {
+    // Initiate the interaction
     if (this.target instanceof Element) {
       if (this.type === 'click' || this.type === 'toggle') {
         this.target.dispatchEvent(
@@ -137,70 +137,15 @@ export default class Action {
         )
       }
     }
+  }
 
-    if (this.manualCapture) {
-      await new Promise((resolve) => {
-        this._openConfirmCapture(resolve)
-      })
-    }
-
-    let lastFrame = false
-    let scroll = 0
-    let scrollIndex = 0
-    let scrollOffset = 0 // scrollOffset corresponds to the starting Y position of the last image.
-    while (!lastFrame) {
-      if (scroll === height) {
-        break
-      }
-
-      if (scroll + window.innerHeight > height) {
-        lastFrame = true
-        scrollOffset = window.innerHeight - (height - scroll)
-
-        scroll = height - window.innerHeight // This ensures that tabs don't exceed to max height of the video.
-      }
-
-      window.scrollTo(0, scroll)
-
-      // TODO: Would like to implement a better system for waiting for the above actions to render.
-      await new Promise((resolve) => setTimeout(resolve, this.waitTime))
-      if (lastFrame) {
-        // The final scrolled section of the page should not duplicate the previous section's portion
-        // of the visible tab captured.
-        port.postMessage({
-          scrollOffset,
-          capture: true,
-          lastFrame: true,
-          position: this.position,
-          scroll: scrollIndex++,
-        })
-      } else {
-        port.postMessage({
-          capture: true,
-          lastFrame: false,
-          position: this.position,
-          scroll: scrollIndex++,
-        })
-      }
-      await new Promise((resolve) =>
-        port.onMessage.addListener((message) => {
-          if (message.captured) {
-            resolve()
-          }
-        })
-      )
-
-      scroll += window.innerHeight
-    }
-
+  _revertActionPreChildren() {
     if (this.type === 'hover') {
       this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
     }
+  }
 
-    for (let index = 0; index < this.children.length; index++) {
-      await this.children[index].capture(port, height)
-    }
-
+  _revertActionPostChildren() {
     if (this.type === 'toggle') {
       this.target.dispatchEvent(
         new MouseEvent('click', {
@@ -210,6 +155,90 @@ export default class Action {
         })
       )
     }
+  }
+
+  async _captureCanvas(port) {
+    if (this.manualCapture) {
+      await new Promise((resolve) => {
+        this._openConfirmCapture(resolve)
+      })
+    }
+    const canvas = await domtoimage.toCanvas(document.body)
+    this.capturedImageSize = [canvas.width, canvas.height]
+    port.postMessage({
+      scrollOffset: 0,
+      image: canvas.toDataURL('image/png'),
+      capture: true,
+      lastFrame: true,
+      position: this.position,
+      scroll: 0,
+    })
+  }
+
+  async capture(port, root = false) {
+    // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
+    if (this.clickPosition.length === 2) {
+      window.scrollTo(0, this.scrollPosition)
+      this.target = document.elementFromPoint(...this.clickPosition)
+    }
+
+    // Determine how the page should be captured. i.e. listen for DOM changes or wait a user specified time
+    const useWaitTime =
+      root || // If this is the root node
+      this.type === 'toggle-off' || // If this is a toggle-off node
+      this.waitTime > 0 // If the user has specified a wait time
+
+    let observer = undefined
+    if (!useWaitTime) {
+      observer = observeDOM(document.body, async (_, _observer) => {
+        observer = undefined
+        _observer.disconnect()
+        await this._captureCanvas(port)
+      })
+    }
+
+    this._takeAction()
+
+    if (useWaitTime) {
+      // capture without waiting for the DOM to change
+      new Promise((resolve) => {
+        setTimeout(async () => {
+          await this._captureCanvas(port)
+          return resolve()
+        }, this.waitTime || 100)
+      })
+    } else {
+      // Set a timeout to capture the canvas if the DOM doesn't change
+      new Promise((resolve) => {
+        setTimeout(async () => {
+          if (observer === undefined) {
+            return resolve()
+          }
+          observer.disconnect()
+          observer = undefined
+          await this._captureCanvas(port)
+          return resolve()
+        }, this.timeout)
+      })
+    }
+
+    // Wait for service worker to respond
+    await new Promise((resolve) =>
+      port.onMessage.addListener((message) => {
+        if (message.captured) {
+          port.onMessage.removeListener()
+          resolve()
+        }
+      })
+    )
+
+    this._revertActionPreChildren()
+
+    for (let index = 0; index < this.children.length; index++) {
+      await this.children[index].capture(port)
+    }
+
+    this._revertActionPostChildren()
   }
 
   toggleSiblings(actionMap) {

@@ -9,6 +9,7 @@ fastapi = "*"
 gunicorn = "*"
 pydantic = "*"
 "uvicorn[standard]" = "*"
+requests = "*"
 
 [dev-packages]
 flake8 = "*"

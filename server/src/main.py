@@ -4,8 +4,9 @@ import os
 from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
+import requests
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.security import OAuth2PasswordBearer
@@ -76,7 +77,46 @@ def verify_token(video_id, token):
 			)
 
 
+def update_action_map(video_id, action_map_new):
+	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
+	action_map = {}
+	if os.path.exists(path):
+		with open(path, 'r', encoding='utf-8') as file:
+			action_map = json.load(file)
+	action_map.update(action_map_new)
+
+	with open(path, 'w', encoding='utf-8') as file:
+		json.dump(action_map, file, indent=2)
+	return action_map
+
+
+# Proxy endpoints
+
+def get_proxy_url(request: Request):
+	"""
+	Get the URL to proxy to.
+	Find the right most instance of http:// or https:// to avoid any issues
+	"""
+	url = request.url.path
+	i, j = url.rfind('http://'), url.rfind('https://')
+	if i == -1 and j == -1:
+		raise HTTPException(status_code=400)
+	return f"{request.url.path[max(i, j):]}?{request.url.query}"
+
+
+@app.get('/proxy/{path:path}')
+async def proxy__get(request: Request):
+	""" Proxy requests to the target URL. """
+	t_resp = requests.request(
+		method=request.method,
+		url=get_proxy_url(request),
+		allow_redirects=False,
+	)
+	return Response(content=t_resp.content, status_code=t_resp.status_code)
+
 # Recording endpoints
+
+
 @app.post('/frame/', dependencies=[Depends(validate_token)])
 async def frame__post(frame: Frame, token: str = Depends(oauth2_scheme)):
 	""" Adds a frame to a video and prepares the frame for encoding. """
@@ -140,9 +180,11 @@ async def video__patch(
 ):
 	""" Encode the video once the front-end is done sending frames. """
 	verify_token(video_id, token)
-	
 
 	if video.complete:
+		# update the action map if anything has changed
+		action_map = update_action_map(video_id, video.actionMap)
+
 		# merge frames from scroll if necessary
 		merge_frames(video_id)
 
@@ -153,13 +195,10 @@ async def video__patch(
 		)
 		
 		# encode the frames into a video
-		encode_video(video_id)
+		encode_video(video_id, action_map)
 
 		# scale the video if necessary
-		with open(_get_video_file(video_id, 'action_map.json')) as file:
-			data = json.load(file)
-			metadata = data.get('metadata', {})
-		devicePixelRatio = metadata.get('devicePixelRatio', 1)
+		devicePixelRatio = action_map.get('metadata', {}).get('devicePixelRatio', 1)
 		scale_video(video_id, devicePixelRatio)
 	return video_id
 

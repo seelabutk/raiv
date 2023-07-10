@@ -3048,6 +3048,11 @@ dom-serializer@^1.0.1:
     domhandler "^4.2.0"
     entities "^2.0.0"
 
+dom-to-image-more@^3.1.6:
+  version "3.1.6"
+  resolved "https://registry.yarnpkg.com/dom-to-image-more/-/dom-to-image-more-3.1.6.tgz#a8afd83fe90fac72d72159f2fe618c8a45281cde"
+  integrity sha512-VMO0jNme32T06mWtkOC9QXfj+1npoJxkaTFW0DCwBLguwBKMjqwndiDANxDnbZ0kvNEecwxkv0Zmgdr96cGtAA==
+
 domelementtype@^2.0.1, domelementtype@^2.2.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/domelementtype/-/domelementtype-2.3.0.tgz#5c45e8e869952626331d7aab326d01daf65d589d"
