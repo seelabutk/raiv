@@ -108,7 +108,9 @@ export default class ActionMap {
     let links = document.querySelectorAll('link')
     links = Array.from(links).filter((link) => {
       return (
-        link.rel === 'stylesheet' &&
+        (link.rel === 'stylesheet' ||
+          link.rel.endsWith('css') ||
+          link.rel.endsWith('sass')) &&
         !link.href.startsWith(window.location.origin)
       )
     })
@@ -116,6 +118,7 @@ export default class ActionMap {
       this.changedStyles.push({
         element: link,
         href: link.href,
+        hasCrossOrigin: link.hasAttribute('crossorigin'),
       })
       link.setAttribute('crossorigin', 'anonymous')
       link.href = `${serverLocation}/proxy/${link.href}`
@@ -124,6 +127,9 @@ export default class ActionMap {
   _revertStyles() {
     this.changedStyles.forEach((style) => {
       style.element.href = style.href
+      if (!style.hasCrossOrigin) {
+        style.element.removeAttribute('crossorigin')
+      }
     })
   }
 
