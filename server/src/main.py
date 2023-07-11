@@ -13,7 +13,13 @@ from fastapi.responses import FileResponse, Response
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
-from .util import encode_video, merge_frames, scale_video, zipfiles
+from .util import (
+	encode_video, 
+	merge_frames, 
+	scale_video, 
+	zipfiles, 
+	stat_video
+)
 
 
 VIDEO_DIR = os.path.join(os.getcwd(), 'data')
@@ -54,7 +60,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 API_KEY_FILE = os.path.join(os.getcwd(), 'data', 'api_keys.json')
 api_keys = []
 if os.path.exists(API_KEY_FILE):
-	print('Loading API keys...', flush=True)
 	with open(API_KEY_FILE, encoding='utf-8') as f:
 		api_keys = json.load(f)
 
@@ -76,19 +81,6 @@ def verify_token(video_id, token):
 				detail='This endpoint requires a valid API Key.',
 				status_code=401
 			)
-
-
-def update_action_map(video_id, action_map_new):
-	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
-	action_map = {}
-	if os.path.exists(path):
-		with open(path, 'r', encoding='utf-8') as file:
-			action_map = json.load(file)
-	action_map.update(action_map_new)
-
-	with open(path, 'w', encoding='utf-8') as file:
-		json.dump(action_map, file, indent=2)
-	return action_map
 
 
 # Proxy endpoints
@@ -192,7 +184,7 @@ async def video__patch(
 
 	if video.complete:
 		# update the action map if anything has changed
-		action_map = update_action_map(video_id, video.actionMap)
+		action_map = _update_action_map(video_id, video.actionMap)
 
 		# merge frames from scroll if necessary
 		merge_frames(video_id)
@@ -202,18 +194,21 @@ async def video__patch(
 			os.path.join(path, 'frames', '00000.png'),
 			os.path.join(path, 'first_frame.png')
 		)
-		
+
 		# encode the frames into a video
-		video_stat = encode_video(video_id, action_map)
+		encode_video(video_id, action_map)
+
+		# scale the video if necessary
+		devicePixelRatio = action_map.get('metadata', {}).get('devicePixelRatio', 1)
+		scale_video(video_id, devicePixelRatio)
+
+		# update the metadata
+		video_stat = stat_video(video_id)
 		_update_metadata(video_id, {
 			'complete': video.complete,
 			'updated': datetime.now().isoformat(),
 			'size': video_stat.st_size
 		})
-
-		# scale the video if necessary
-		devicePixelRatio = action_map.get('metadata', {}).get('devicePixelRatio', 1)
-		scale_video(video_id, devicePixelRatio)
 	return video_id
 
 
@@ -259,6 +254,29 @@ def _get_video_file(video_id, filename):
 		raise HTTPException(status_code=404, detail='File not found')
 
 	return path
+
+def _update_action_map(video_id, action_map_new):
+	""" Updates the action map for a video. """
+	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
+	action_map = {}
+	if os.path.exists(path):
+		with open(path, 'r', encoding='utf-8') as file:
+			action_map = json.load(file)
+
+	# preserve metadata
+	metadata = action_map.get('metadata', {})
+	metadata_new = action_map_new.get('metadata', {})
+
+	# update the action map
+	action_map.update(action_map_new)
+
+	# preserve metadata
+	action_map['metadata'] = metadata
+	action_map.get('metadata', {}).update(metadata_new)
+
+	with open(path, 'w', encoding='utf-8') as file:
+		json.dump(action_map, file, indent=2)
+	return action_map
 
 def _update_metadata(video_id, data):
 	""" Updates the metadata file for a video. """

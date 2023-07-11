@@ -87,11 +87,18 @@ def encode_video(video_id, action_map):
 		'yuv420p',
 		'../video.mp4'
 	], check=True)
-	stat = os.stat('../video.mp4')
 	os.chdir(cwd)
 
 	rmtree(path)
-	return stat
+
+
+def stat_video(video_id):
+	""" Returns the information on the videofile. """
+	path = os.path.join(VIDEO_DIR, video_id, 'video.mp4')
+	if not os.path.exists(path):
+		return None
+
+	return os.stat(path)
 
 
 def zipfiles(file_list):

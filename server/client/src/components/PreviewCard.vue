@@ -2,11 +2,22 @@
   <router-link :to="`/player/${props.videoId}/`">
     <h2>{{ props.name }}</h2>
     <img :src="`/video/${props.videoId}/preview/`" />
-    <div>
-      <p>Created : {{ created }}</p>
-      <p>Updated : {{ updated }}</p>
-      <p>File Size : {{ fileSize }}</p>
-    </div>
+    <table>
+      <tbody>
+        <tr>
+          <td>Created:</td>
+          <td>{{ created }}</td>
+        </tr>
+        <tr>
+          <td>Updated:</td>
+          <td>{{ updated }}</td>
+        </tr>
+        <tr>
+          <td>File Size:</td>
+          <td>{{ fileSize }}</td>
+        </tr>
+      </tbody>
+    </table>
     <div class="card--action-btns">
       <tippy content="Download Archive" content-class="tippy-tooltip">
         <button class="card--download" @click="downloadVideo">
@@ -24,6 +35,7 @@
 
 <script setup>
 import { defineEmits, defineProps, computed } from 'vue'
+import { humanFileSize } from '@/utils/HumanFileSize'
 import 'tippy.js/dist/tippy.css'
 
 const props = defineProps({
@@ -52,12 +64,12 @@ const updated = computed(() =>
 )
 const fileSize = computed(() => humanFileSize(props.metadata.size))
 
-function downloadVideo() {
+function downloadVideo(event) {
   event.preventDefault()
   window.open(`/video/${props.videoId}/download/`)
 }
 
-function deleteVideo() {
+function deleteVideo(event) {
   event.preventDefault()
 
   const apiKey = prompt(
@@ -79,40 +91,6 @@ function deleteVideo() {
     }
   })
 }
-
-/**
- * Format bytes as human-readable text.
- *
- * @param bytes Number of bytes.
- * @param si True to use metric (SI) units, aka powers of 1000. False to use
- *           binary (IEC), aka powers of 1024.
- * @param dp Number of decimal places to display.
- *
- * @return Formatted string.
- */
-function humanFileSize(bytes, si = false, dp = 1) {
-  const thresh = si ? 1000 : 1024
-
-  if (Math.abs(bytes) < thresh) {
-    return bytes + ' B'
-  }
-
-  const units = si
-    ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-    : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
-  let u = -1
-  const r = 10 ** dp
-
-  do {
-    bytes /= thresh
-    ++u
-  } while (
-    Math.round(Math.abs(bytes) * r) / r >= thresh &&
-    u < units.length - 1
-  )
-
-  return bytes.toFixed(dp) + ' ' + units[u]
-}
 </script>
 
 <style scoped>
@@ -122,7 +100,7 @@ a {
   display: flex;
   flex-direction: column;
   margin: 1em;
-  height: 300px;
+  height: 350px;
   width: 300px;
   padding: 1em;
   position: relative;
@@ -131,6 +109,7 @@ a {
 h2 {
   margin-bottom: 0.5em;
   text-align: center;
+  font-weight: bold;
 }
 
 img {
@@ -141,8 +120,10 @@ img {
 }
 
 .card--action-btns {
+  margin-top: 1em;
   display: flex;
   flex-direction: row;
+  gap: 0 1em;
 }
 
 button {

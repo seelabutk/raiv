@@ -6,6 +6,10 @@ import {
   faTrash,
   faDownload,
   faMagnifyingGlass,
+  faSort,
+  faArrowUp,
+  faArrowDown,
+  faCaretDown,
 } from '@fortawesome/free-solid-svg-icons'
 import VueTippy from 'vue-tippy'
 
@@ -13,7 +17,15 @@ import App from '@/App.vue'
 import GalleryPage from '@/pages/GalleryPage.vue'
 import PlayerPage from '@/pages/PlayerPage.vue'
 
-library.add(faTrash, faDownload, faMagnifyingGlass)
+library.add(
+  faTrash,
+  faDownload,
+  faMagnifyingGlass,
+  faSort,
+  faArrowDown,
+  faArrowUp,
+  faCaretDown
+)
 
 const router = createRouter({
   history: createWebHistory(),
