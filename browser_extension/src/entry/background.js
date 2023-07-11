@@ -38,33 +38,29 @@ chrome.runtime.onConnect.addListener((port) => {
           }
         })
       } else if (message.capture) {
-        chrome.tabs.captureVisibleTab({ format: 'png' }).then((image) => {
-          const request = {
-            frame: image,
-            position: message.position,
-            scrollPosition: message.scroll,
-            video: videoId,
-          }
+        const request = {
+          frame: message.image,
+          position: message.position,
+          scrollPosition: message.scroll,
+          scrollOffset: 0,
+          video: videoId,
+        }
 
-          if (message.scrollOffset) {
-            request.scrollOffset = message.scrollOffset
-          }
-
-          fetch(`${serverLocation}frame/`, {
-            body: JSON.stringify(request),
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              'Content-Type': 'application/json',
-            },
-            method: 'POST',
-          }).then(() => {
-            port.postMessage({ captured: true })
-          })
+        fetch(`${serverLocation}frame/`, {
+          body: JSON.stringify(request),
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+        }).then(() => {
+          port.postMessage({ captured: true })
         })
       } else if (message.complete) {
         fetch(`${serverLocation}video/${videoId}/`, {
           body: JSON.stringify({
             complete: true,
+            actionMap: message.actionMap,
           }),
           headers: {
             Authorization: `Bearer ${apiKey}`,

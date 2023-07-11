@@ -1,5 +1,6 @@
 /* global chrome */
 import Action from '@/store/Action'
+import getUserAgentInfo from '@/utils/getUserAgentInfo'
 
 export default class ActionMap {
   constructor() {
@@ -9,6 +10,7 @@ export default class ActionMap {
     this.interactionType = 'click'
     this.parentActions = [this.root] // A list of actions which any new Action should be added to.
     this.width = window.innerWidth
+    this.changedStyles = []
   }
 
   reset() {
@@ -25,7 +27,22 @@ export default class ActionMap {
   }
 
   removeParent(index) {
-    this.parentActions.splice(index, 1)
+    return this.parentActions.splice(index, 1)
+  }
+
+  changeParent(action, parent) {
+    // remove action from old parent
+    action.delete()
+
+    // assign new parent to action
+    action.parent = parent
+
+    // add action to new parent
+    parent.children.push(action)
+    while (parent !== undefined) {
+      parent.frameCount++
+      parent = parent.parent
+    }
   }
 
   // TODO: Determine if there's any way to do this in a robust way. The challenge is that
@@ -86,6 +103,28 @@ export default class ActionMap {
         this._add(index, target, boundingBox, event, 'toggle-off')
       }
     }
+  }
+  _prepareStyles(serverLocation) {
+    let links = document.querySelectorAll('link')
+    links = Array.from(links).filter((link) => {
+      return (
+        link.rel === 'stylesheet' &&
+        !link.href.startsWith(window.location.origin)
+      )
+    })
+    links.forEach((link) => {
+      this.changedStyles.push({
+        element: link,
+        href: link.href,
+      })
+      link.setAttribute('crossorigin', 'anonymous')
+      link.href = `${serverLocation}/proxy/${link.href}`
+    })
+  }
+  _revertStyles() {
+    this.changedStyles.forEach((style) => {
+      style.element.href = style.href
+    })
   }
 
   _prepareActions(action, position) {
@@ -154,35 +193,46 @@ export default class ActionMap {
     return [position, newActions.length]
   }
 
-  async _capture(port) {
-    const controlPanel = document.querySelector('#raiv .control-container')
-    controlPanel.style.opacity = 0
+  _getActionMap() {
+    return Object.assign(
+      {
+        metadata: getUserAgentInfo(),
+      },
+      this.root
+    )
+  }
 
-    await this.root.capture(port, this.height)
+  async _capture(controls, port) {
+    await controls.onPrepare()
+    await this.root.capture(port, true)
+    await controls.onFinish()
 
-    controlPanel.style.opacity = 1
     window.scrollTo(0, 0)
 
-    port.postMessage({ complete: true })
+    port.postMessage({
+      complete: true,
+      actionMap: this._getActionMap(),
+    })
     port.disconnect()
 
+    this._revertStyles()
     this.reset()
   }
 
-  async capture(serverLocation, apiKey, videoName) {
+  async capture(controls, serverLocation, apiKey, videoName) {
+    this._prepareStyles(serverLocation)
     this._prepareActions(this.root, 0)
-
     const port = chrome.runtime.connect({ name: 'raiv' })
     port.postMessage({
       serverLocation,
       apiKey,
       videoName,
-      actionMap: this.root,
+      actionMap: this._getActionMap(),
     })
 
     port.onMessage.addListener(async (message) => {
       if (message.ready) {
-        await this._capture(port)
+        await this._capture(controls, port)
       }
     })
   }

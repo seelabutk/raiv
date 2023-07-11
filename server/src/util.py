@@ -39,13 +39,32 @@ def merge_frames(video_id):
 		index += 1
 
 
-def encode_video(video_id):
+def get_max_wh(action_map):
+	""" Returns the maximum height and width of the frames. """
+	max_h = 0
+	max_w = 0
+
+	def dfs(action):
+		nonlocal max_h, max_w
+		if 'capturedImageSize' in action:
+			max_h = max(max_h, action['capturedImageSize'][1])
+			max_w = max(max_w, action['capturedImageSize'][0])
+		for child in action['children']:
+			dfs(child)
+	dfs(action_map)
+
+	return max_w, max_h
+
+
+def encode_video(video_id, action_map):
 	""" Creates an mp4 from the frames sent to the server. """
 	cwd = os.getcwd()
 
 	path = os.path.join(VIDEO_DIR, video_id, 'frames')
 	if not os.path.exists(path):
 		return
+
+	max_wh = get_max_wh(action_map)
 
 	os.chdir(path)
 	subprocess.run([
@@ -58,7 +77,8 @@ def encode_video(video_id):
 		'-c:v',
 		'libx264',
 		'-vf',
-		'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+		f'pad=ceil({max_wh[0]}/2)*2:ceil({max_wh[1]}/2)*2',
+		# 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
 		'-profile:v',
 		'high',
 		'-crf',
@@ -85,10 +105,41 @@ def zipfiles(file_list):
 		#close zip
 		zip.close()
 	return StreamingResponse(
-        iter([io.getvalue()]),
-        media_type="application/x-zip-compressed",
-        headers = { "Content-Disposition": f"attachment;filename={zip_filename}" }
-    )
+		iter([io.getvalue()]),
+		media_type="application/x-zip-compressed",
+		headers = { "Content-Disposition": f"attachment;filename={zip_filename}" }
+	)
+
+
+def scale_video(video_id, devicePixelRatio):
+	""" Scales the video down to the devicePixelRatio. """
+	if devicePixelRatio == 1:
+		return
+
+	cwd = os.getcwd()
+	
+	path = os.path.join(VIDEO_DIR, video_id)
+	if not os.path.exists(path):
+		return
+
+	os.chdir(path)
+	#ffmpeg -i video.mp4 -vf scale="iw/2:-2" video.cpy.mp4
+	subprocess.run([
+		'ffmpeg',
+		'-y',
+		'-i',
+		'video.mp4',
+		'-vf',
+		f'scale=iw/{devicePixelRatio}:-2',
+		'video.tmp.mp4',
+	], check=True)
+	subprocess.run([
+		'mv',
+		'video.tmp.mp4',
+		'video.mp4',
+	], check=True)
+	os.chdir(cwd)
+
 
 if __name__ == '__main__':
 	for video in os.listdir(VIDEO_DIR):

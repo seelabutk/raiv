@@ -1,10 +1,14 @@
 <template>
-  <div class="control-container" v-drag="'#controls-handle'">
+  <div
+    class="control-container"
+    v-drag="'#controls-handle'"
+    v-show="isModalShown"
+  >
     <div id="controls-handle" class="handle">
       <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
     </div>
 
-    <div class="controls">
+    <div class="controls" v-if="isControlsShown">
       <div class="recording-controls">
         <tippy :content="recordPauseTooltipText" content-class="tippy-tooltip">
           <button type="button" @click="recordToggle">
@@ -111,6 +115,9 @@
         </button>
       </div>
     </div>
+    <div class="countdown" v-if="!isControlsShown">
+      <p>Recording in {{ recordCountdown }}...</p>
+    </div>
   </div>
 </template>
 
@@ -128,7 +135,11 @@ const props = defineProps({
   },
 })
 
+const initCountdown = 3
 const actionMapComponent = ref(null)
+const isModalShown = ref(true)
+const isControlsShown = ref(true)
+const recordCountdown = ref(initCountdown)
 
 const recordPauseIcon = computed(() =>
   props.store.recording.value ? 'fa-solid fa-pause' : 'fa-solid fa-circle'
@@ -211,10 +222,42 @@ function resetRecording() {
   props.store.reset()
 }
 
+function toggleControlPanel(value) {
+  if (value !== undefined) {
+    isModalShown.value = value
+  } else {
+    isModalShown.value = !isModalShown.value
+  }
+  return isModalShown.value
+}
+
+async function prepareCapture() {
+  isControlsShown.value = false
+  await startCountdown()
+  toggleControlPanel(false)
+}
+
+async function finishCapture() {
+  isControlsShown.value = true
+  recordCountdown.value = initCountdown
+  toggleControlPanel(true)
+}
+
+async function startCountdown() {
+  while (recordCountdown.value > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    recordCountdown.value--
+  }
+}
+
 function capture() {
   const serverLocation = `${props.store.serverScheme.value}://${props.store.serverAddress.value}:${props.store.serverPort.value}`
-
+  const controls = {
+    onPrepare: prepareCapture,
+    onFinish: finishCapture,
+  }
   props.store.actionMap.value.capture(
+    controls,
     serverLocation,
     props.store.apiKey.value,
     props.store.videoName.value
@@ -242,7 +285,8 @@ button {
   border-radius: 4px;
 }
 
-.controls {
+.controls,
+.countdown {
   padding: 1em;
   overflow: visible;
 }
