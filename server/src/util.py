@@ -1,7 +1,11 @@
+from fastapi.responses import StreamingResponse
 from glob import glob
-import os
 from shutil import rmtree
+from io import BytesIO
 import subprocess
+import zipfile
+import os
+
 
 VIDEO_DIR = os.path.join(os.getcwd(), 'data')
 
@@ -86,6 +90,32 @@ def encode_video(video_id, action_map):
 	os.chdir(cwd)
 
 	rmtree(path)
+
+
+def stat_video(video_id):
+	""" Returns the information on the videofile. """
+	path = os.path.join(VIDEO_DIR, video_id, 'video.mp4')
+	if not os.path.exists(path):
+		return None
+
+	return os.stat(path)
+
+
+def zipfiles(file_list):
+	""" Zip a list of files and stream the resulting archive. """
+	io = BytesIO()
+	zip_sub_dir = "final_archive"
+	zip_filename = "%s.zip" % zip_sub_dir
+	with zipfile.ZipFile(io, mode='w', compression=zipfile.ZIP_DEFLATED) as zip:
+		for fpath in file_list:
+			zip.write(fpath, os.path.basename(fpath))
+		#close zip
+		zip.close()
+	return StreamingResponse(
+		iter([io.getvalue()]),
+		media_type="application/x-zip-compressed",
+		headers = { "Content-Disposition": f"attachment;filename={zip_filename}" }
+	)
 
 
 def scale_video(video_id, devicePixelRatio):

@@ -9,11 +9,16 @@
     "build-watch": "vue-cli-service --env.NODE_ENV=development build --watch --mode development"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.4.0",
+    "@fortawesome/free-solid-svg-icons": "^6.4.0",
+    "@fortawesome/vue-fontawesome": "^3.0.3",
     "core-js": "^3.8.3",
+    "fortawesome": "^0.0.1-security",
     "lodash.throttle": "^4.1.1",
     "video.js": "^8.0.4",
     "vue": "^3.2.13",
-    "vue-router": "4"
+    "vue-router": "4",
+    "vue-tippy": "v6"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

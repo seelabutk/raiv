@@ -4,6 +4,7 @@ import os
 from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
+from datetime import datetime
 import requests
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -12,7 +13,13 @@ from fastapi.responses import FileResponse, Response
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
-from .util import encode_video, merge_frames, scale_video
+from .util import (
+	encode_video, 
+	merge_frames, 
+	scale_video, 
+	zipfiles, 
+	stat_video
+)
 
 
 VIDEO_DIR = os.path.join(os.getcwd(), 'data')
@@ -56,7 +63,6 @@ if os.path.exists(API_KEY_FILE):
 	with open(API_KEY_FILE, encoding='utf-8') as f:
 		api_keys = json.load(f)
 
-
 def validate_token(token: str = Depends(oauth2_scheme)):
 	if token not in api_keys:
 		raise HTTPException(
@@ -75,19 +81,6 @@ def verify_token(video_id, token):
 				detail='This endpoint requires a valid API Key.',
 				status_code=401
 			)
-
-
-def update_action_map(video_id, action_map_new):
-	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
-	action_map = {}
-	if os.path.exists(path):
-		with open(path, 'r', encoding='utf-8') as file:
-			action_map = json.load(file)
-	action_map.update(action_map_new)
-
-	with open(path, 'w', encoding='utf-8') as file:
-		json.dump(action_map, file, indent=2)
-	return action_map
 
 
 # Proxy endpoints
@@ -164,6 +157,13 @@ async def video__post(video: Video, token: str = Depends(oauth2_scheme)):
 	fpath = os.path.join(path, 'action_map.json')
 	with open(fpath, 'w', encoding='utf-8') as file:
 		json.dump(video.actionMap, file)
+	_update_metadata(uuid, {
+			'complete': video.complete,
+			'id': uuid,
+			'created': datetime.now().isoformat(),
+			'updated': datetime.now().isoformat(),
+			'size': 0
+	})
 
 	fpath = os.path.join(path, 'api_key.txt')
 	with open(fpath, 'w', encoding='utf-8') as file:
@@ -174,16 +174,17 @@ async def video__post(video: Video, token: str = Depends(oauth2_scheme)):
 
 @app.patch('/video/{video_id}/', dependencies=[Depends(validate_token)])
 async def video__patch(
-	video_id,
-	video: Video,
-	token: str = Depends(oauth2_scheme)
+		video_id,
+		video: Video,
+		token: str = Depends(oauth2_scheme)
 ):
 	""" Encode the video once the front-end is done sending frames. """
 	verify_token(video_id, token)
 
+
 	if video.complete:
 		# update the action map if anything has changed
-		action_map = update_action_map(video_id, video.actionMap)
+		action_map = _update_action_map(video_id, video.actionMap)
 
 		# merge frames from scroll if necessary
 		merge_frames(video_id)
@@ -193,13 +194,21 @@ async def video__patch(
 			os.path.join(path, 'frames', '00000.png'),
 			os.path.join(path, 'first_frame.png')
 		)
-		
+
 		# encode the frames into a video
 		encode_video(video_id, action_map)
 
 		# scale the video if necessary
 		devicePixelRatio = action_map.get('metadata', {}).get('devicePixelRatio', 1)
 		scale_video(video_id, devicePixelRatio)
+
+		# update the metadata
+		video_stat = stat_video(video_id)
+		_update_metadata(video_id, {
+			'complete': video.complete,
+			'updated': datetime.now().isoformat(),
+			'size': video_stat.st_size
+		})
 	return video_id
 
 
@@ -214,15 +223,13 @@ async def video__get__list():
 		path = os.path.join(VIDEO_DIR, video_id)
 		if os.path.isdir(path) and not os.path.exists(os.path.join(path, 'frames')):
 			with open(
-				os.path.join(path, 'action_map.json'),
-				'r',
-				encoding='utf-8'
-			) as file:
-				name = json.load(file).get('name', 'Unnamed Video')
-
+				os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
+			) as action_file:
+				actionMap = json.load(action_file)
 				objects.append({
 					'id': video_id,
-					'name': name
+					'name': actionMap.get('name', 'Unnamed Video'),
+					'metadata': actionMap.get('metadata', {}),
 				})
 
 	return objects
@@ -248,6 +255,51 @@ def _get_video_file(video_id, filename):
 
 	return path
 
+def _update_action_map(video_id, action_map_new):
+	""" Updates the action map for a video. """
+	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
+	action_map = {}
+	if os.path.exists(path):
+		with open(path, 'r', encoding='utf-8') as file:
+			action_map = json.load(file)
+
+	# preserve metadata
+	metadata = action_map.get('metadata', {})
+	metadata_new = action_map_new.get('metadata', {})
+
+	# update the action map
+	action_map.update(action_map_new)
+
+	# preserve metadata
+	action_map['metadata'] = metadata
+	action_map.get('metadata', {}).update(metadata_new)
+
+	with open(path, 'w', encoding='utf-8') as file:
+		json.dump(action_map, file, indent=2)
+	return action_map
+
+def _update_metadata(video_id, data):
+	""" Updates the metadata file for a video. """
+	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
+
+	if not os.path.exists(path):
+		raise HTTPException(status_code=404, detail='File not found')
+
+	with open(path, 'r', encoding='utf-8') as file:
+		actionMap = json.load(file)
+	
+	if 'metadata' not in actionMap:
+		actionMap['metadata'] = {}
+	actionMap['metadata'].update(data)
+
+	with open(path, 'w', encoding='utf-8') as file:
+		json.dump(actionMap, file)
+
+@app.get('/video/{video_id}/meta/')
+async def metadata__get__detail(video_id):
+	""" Retrieve the action map for a video. """
+	return FileResponse(_get_video_file(video_id, 'meta.json'))
+
 
 @app.get('/video/{video_id}/action-map/')
 async def action_map__get__detail(video_id):
@@ -261,11 +313,21 @@ async def preview__get__detail(video_id):
 	return FileResponse(_get_video_file(video_id, 'first_frame.png'))
 
 
+@app.get('/video/{video_id}/download/')
+async def archive__get_download(video_id):
+	""" Retrieve a zipfile of the RAIV archive. """
+	return zipfiles([
+		_get_video_file(video_id, 'video.mp4'),
+		_get_video_file(video_id, 'action_map.json'),
+	])
+
+
 @app.get('/video/{video_id}/video/')
 async def video__get__detail(video_id, range: str = Header(None)):  # pylint: disable=redefined-builtin # noqa: E501
 	""" Stream the video file back to the client. """
 	if not range:
-		raise HTTPException(status_code=404, detail='Video range not specified')
+		raise HTTPException(
+			status_code=404, detail='Video range not specified')
 
 	video_path = _get_video_file(video_id, 'video.mp4')
 	filesize = os.path.getsize(video_path)
