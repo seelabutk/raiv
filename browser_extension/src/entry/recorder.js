@@ -8,13 +8,22 @@ import {
   faStop,
   faXmark,
   faArrowRotateLeft,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons'
 import drag from 'v-drag'
 import VueTippy from 'vue-tippy'
 
 import App from '@/views/RecorderView'
 
-library.add(faCircle, faGrip, faPause, faStop, faXmark, faArrowRotateLeft)
+library.add(
+  faCircle,
+  faGrip,
+  faPause,
+  faStop,
+  faXmark,
+  faArrowRotateLeft,
+  faTrash
+)
 
 function toggleUI() {
   const raiv = document.getElementById('raiv')

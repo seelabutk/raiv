@@ -1,125 +1,127 @@
 <template>
-  <button
-    type="button"
-    :disabled="props.store.actionMap.value.root.independentActions < 1"
-    @click="open"
-  >
-    View Independent Actions
-  </button>
-  <dialog
-    class="independent-action-dialog"
-    v-drag="'#independent-action-handle'"
-  >
-    <div id="independent-action-handle" class="handle">
-      <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
+  <div>
+    <button
+      type="button"
+      :disabled="independentActions.length < 1"
+      @click="open"
+    >
+      View Independent Actions
+    </button>
+    <dialog
+      class="independent-action-dialog"
+      v-drag="'#independent-action-handle'"
+    >
+      <div id="independent-action-handle" class="handle">
+        <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
 
-      <button class="close-btn" type="button" @click="close">
-        <font-awesome-icon icon="fa-solid fa-xmark" class="fa-lg" />
-      </button>
-    </div>
+        <button class="close-btn" type="button" @click="close">
+          <font-awesome-icon icon="fa-solid fa-xmark" class="fa-lg" />
+        </button>
+      </div>
 
-    <div class="independent-action-contents">
-      <table class="styled-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th class="table-header-title">Label</th>
-            <th class="table-header-title">Type</th>
-            <th class="table-header-title">Wait Time</th>
-            <th class="table-header-title">Manual Capture</th>
-            <th class="table-header-title">Disable Siblings</th>
-            <th class="table-header-title">Canvas Rows</th>
-            <th class="table-header-title">Canvas Columns</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(action, i) in independentActions" :key="i">
-            <td>
-              <tippy content="Delete Action">
-                <button
-                  class="delete-action-btn"
-                  type="button"
-                  @click="deleteAction(action)"
-                >
-                  <font-awesome-icon icon="fa-solid fa-xmark" class="fa-lg" />
-                </button>
-              </tippy>
-            </td>
-            <td>
-              <tippy v-bind:content="label(action)">
-                {{ crop(label(action), 10) }}
-              </tippy>
-            </td>
-            <td>{{ action.type }}</td>
-            <td>
-              <input
-                class="number-input"
-                :value="independentActions[i].waitTime"
-                min="0"
-                step="100"
-                type="number"
-                @change="
-                  (event) => {
-                    handleWaitTimeChange(event, action)
-                  }
-                "
-              />
-            </td>
-            <td>
-              <input
-                class="toggle-input"
-                :checked="action.manualCapture"
-                type="checkbox"
-                @input="toggleManualCapture(action)"
-              />
-            </td>
-            <td>
-              <input
-                class="toggle-input"
-                :checked="action.disableSiblings"
-                type="checkbox"
-                @input="toggleDisableSiblings(action)"
-              />
-            </td>
-            <td>
-              <input
-                v-if="isCanvas(action)"
-                :value="action.canvasRanges[0]"
-                min="1"
-                type="number"
-                @change="
-                  (event) => {
-                    action.set('canvasRanges', [
-                      event.target.value,
-                      action.canvasRanges[1],
-                    ])
-                    props.store.save()
-                  }
-                "
-              />
-            </td>
-            <td>
-              <input
-                v-if="isCanvas(action)"
-                :value="action.canvasRanges[1]"
-                min="1"
-                type="number"
-                @change="
-                  (event) => {
-                    action.set('canvasRanges', [
-                      action.canvasRanges[0],
-                      event.target.value,
-                    ])
-                    props.store.save()
-                  }
-                "
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </dialog>
+      <div class="independent-action-contents">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th class="table-header-title">Label</th>
+              <th class="table-header-title">Type</th>
+              <th class="table-header-title">Wait Time</th>
+              <th class="table-header-title">Manual Capture</th>
+              <th class="table-header-title">Disable Siblings</th>
+              <th class="table-header-title">Canvas Rows</th>
+              <th class="table-header-title">Canvas Columns</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(action, i) in independentActions" :key="i">
+              <td>
+                <tippy v-bind:content="label(action)">
+                  {{ crop(label(action), 10) }}
+                </tippy>
+              </td>
+              <td>{{ action.type }}</td>
+              <td>
+                <input
+                  class="number-input"
+                  :value="independentActions[i].waitTime"
+                  min="0"
+                  step="100"
+                  type="number"
+                  @change="
+                    (event) => {
+                      handleWaitTimeChange(event, action)
+                    }
+                  "
+                />
+              </td>
+              <td>
+                <input
+                  class="toggle-input"
+                  :checked="action.manualCapture"
+                  type="checkbox"
+                  @input="toggleManualCapture(action)"
+                />
+              </td>
+              <td>
+                <input
+                  class="toggle-input"
+                  :checked="action.disableSiblings"
+                  type="checkbox"
+                  @input="toggleDisableSiblings(action)"
+                />
+              </td>
+              <td>
+                <input
+                  v-if="isCanvas(action)"
+                  :value="action.canvasRanges[0]"
+                  min="1"
+                  type="number"
+                  @change="
+                    (event) => {
+                      action.set('canvasRanges', [
+                        event.target.value,
+                        action.canvasRanges[1],
+                      ])
+                      props.store.save()
+                    }
+                  "
+                />
+              </td>
+              <td>
+                <input
+                  v-if="isCanvas(action)"
+                  :value="action.canvasRanges[1]"
+                  min="1"
+                  type="number"
+                  @change="
+                    (event) => {
+                      action.set('canvasRanges', [
+                        action.canvasRanges[0],
+                        event.target.value,
+                      ])
+                      props.store.save()
+                    }
+                  "
+                />
+              </td>
+              <td>
+                <tippy content="Delete Action">
+                  <button
+                    class="delete-action-btn"
+                    type="button"
+                    @click="deleteAction(action)"
+                  >
+                    <font-awesome-icon icon="fa-solid fa-trash" class="fa-sm" />
+                  </button>
+                </tippy>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </dialog>
+  </div>
 </template>
 <script setup>
 import { defineProps, onMounted, computed } from 'vue'
@@ -218,7 +220,7 @@ onMounted(() => {
   font-size: 0.9em;
   font-family: sans-serif;
   border: 1px solid #000;
-  overflow-y: scroll;
+  overflow-y: auto;
   max-height: 500px;
   max-width: fit-content;
   width: 100%;
@@ -283,13 +285,13 @@ td {
   flex-direction: column;
   align-items: left;
   justify-content: center;
-  padding: 16px;
+  padding: 1em;
   width: 100%;
 }
 
 input[type='checkbox'] {
-  width: 15px !important;
-  height: 15px !important;
+  width: 1em !important;
+  height: 1em !important;
 }
 
 /* Hide number input arrows */

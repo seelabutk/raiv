@@ -31,10 +31,8 @@
         :hidden="!props.store.recording.value"
         :store="props.store"
       />
-
-      <div class="recording-dialogs" :hidden="totalFrameCount <= 1">
+      <div class="recording-dialogs" v-show="totalFrameCount > 1">
         <ActionMap ref="actionMapComponent" :store="props.store" />
-
         <IndependentActions
           ref="independentActionsComponent"
           :store="props.store"
@@ -312,6 +310,10 @@ button {
 }
 
 .controls .recording-controls div {
+  margin-top: 0;
+}
+
+.controls .recording-dialogs div {
   margin-top: 0;
 }
 
