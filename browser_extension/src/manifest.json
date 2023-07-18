@@ -1,20 +1,26 @@
 {
-	"manifest_version": 3,
-	"name": "RAIV",
-	"description": "Capture and record UI interactions for easy sharing.",
-	"version": "0.0.0",
-	"background": {
-		"service_worker": "/background.js"
-	},
-	"action": {
-		"default_icon": "/icons/video-solid.png"
-	},
-	"permissions": [
-		"activeTab",
-		"scripting"
-	],
-	"web_accessible_resources": [{
-		"matches": ["<all_urls>"],
-		"resources": ["/icons/*.svg"]
-	}]
+  "manifest_version": 3,
+  "name": "RAIV",
+  "description": "Capture and record UI interactions for easy sharing.",
+  "version": "0.0.0",
+  "background": {
+    "service_worker": "/background.js"
+  },
+  "action": {
+    "default_icon": "/icons/video-solid.png"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "/icons/*.svg"
+      ]
+    }
+  ]
 }

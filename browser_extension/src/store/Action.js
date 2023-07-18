@@ -29,6 +29,7 @@ export default class Action {
     this.siblings = []
     this.target = target
     this.type = options.type
+    this.independent = options.independent === true
     this.useSiblings = false
     this.visible = options.visible === true
     this.waitTime = 0 // milliseconds before capture occurs, cannot be below 500ms in Chrome
@@ -145,6 +146,7 @@ export default class Action {
     }
   }
 
+  // If the action is a toggle, then we need to dispatch a click event to remove the toggle.
   _revertActionPostChildren() {
     if (this.type === 'toggle') {
       this.target.dispatchEvent(
@@ -175,7 +177,7 @@ export default class Action {
     })
   }
 
-  async capture(port, root = false) {
+  async capture(port, root = false, independentActions = undefined) {
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
       window.scrollTo(0, this.scrollPosition)
@@ -234,8 +236,16 @@ export default class Action {
 
     this._revertActionPreChildren()
 
+    // Iterate through the independent actions and capture them.
+    if (independentActions !== undefined) {
+      for (let index = 0; index < independentActions.length; index++) {
+        independentActions[index].position = this.position + index + 1
+        await independentActions[index].capture(port, false, undefined)
+      }
+    }
+
     for (let index = 0; index < this.children.length; index++) {
-      await this.children[index].capture(port)
+      await this.children[index].capture(port, false, independentActions)
     }
 
     this._revertActionPostChildren()

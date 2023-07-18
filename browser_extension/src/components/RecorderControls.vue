@@ -19,7 +19,7 @@
         <tippy content="Reset Recording">
           <button
             type="button"
-            :hidden="props.store.actionMap.value.root.frameCount <= 1"
+            :hidden="totalFrameCount <= 1"
             @click="resetRecording"
           >
             <font-awesome-icon icon="fa-solid fa-arrow-rotate-left" />
@@ -31,20 +31,25 @@
         :hidden="!props.store.recording.value"
         :store="props.store"
       />
-
-      <ActionMap
-        ref="actionMapComponent"
-        :hidden="props.store.actionMap.value.root.frameCount <= 1"
-        :store="props.store"
-      />
-
-      <div
-        v-if="props.store.actionMap.value.root.frameCount > 1"
-        class="capture-settings"
-      >
+      <div class="recording-dialogs" v-show="totalFrameCount > 1">
+        <ActionMap ref="actionMapComponent" :store="props.store" />
+        <IndependentActions
+          ref="independentActionsComponent"
+          :store="props.store"
+        />
+      </div>
+      <div v-if="totalFrameCount > 1" class="capture-settings">
         <p>
-          {{ props.store.actionMap.value.root.frameCount }} frames will be
-          captured.
+          {{ props.store.actionMap.value.independentActions.length }}
+          Independent Actions.
+        </p>
+        <p>
+          {{ props.store.actionMap.value.root.frameCount }}
+          Normal Actions.
+        </p>
+        <p>
+          {{ totalFrameCount }}
+          total frames will be captured.
         </p>
 
         <div>
@@ -126,6 +131,7 @@ import { computed, defineProps, onMounted, ref } from 'vue'
 import throttle from 'lodash.throttle'
 import 'tippy.js/dist/tippy.css'
 import ActionMap from '@/components/ActionMap'
+import IndependentActions from '@/components/IndependentActions'
 import InteractionToolbar from '@/components/InteractionToolbar'
 
 const props = defineProps({
@@ -137,9 +143,17 @@ const props = defineProps({
 
 const initCountdown = 3
 const actionMapComponent = ref(null)
+const independentActionsComponent = ref(null)
 const isModalShown = ref(true)
 const isControlsShown = ref(true)
 const recordCountdown = ref(initCountdown)
+
+const totalFrameCount = computed(() => {
+  return (
+    props.store.actionMap.value.root.frameCount *
+    (props.store.actionMap.value.independentActions.length + 1)
+  )
+})
 
 const recordPauseIcon = computed(() =>
   props.store.recording.value ? 'fa-solid fa-pause' : 'fa-solid fa-circle'
@@ -299,6 +313,10 @@ button {
   margin-top: 0;
 }
 
+.controls .recording-dialogs div {
+  margin-top: 0;
+}
+
 .controls .recording-controls span {
   margin-right: 1em;
 }
@@ -322,5 +340,12 @@ button {
 
 .api-key-input {
   width: 20em !important;
+}
+.recording-dialogs {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  gap: 0 1em;
 }
 </style>

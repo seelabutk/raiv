@@ -14,6 +14,11 @@
         <option value="toggle">Toggle</option>
       </select>
     </label>
+    <br />
+    <label>
+      Independent Action:
+      <input type="checkbox" v-model="actionMap.independentAction" />
+    </label>
   </div>
 </template>
 
