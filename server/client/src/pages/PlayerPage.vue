@@ -31,10 +31,10 @@ function seekToFrame(frame) {
 function checkBoundingBox(event, action) {
   return (
     action.boundingBox.length === 4 &&
-    event.clientX >= action.boundingBox[0] &&
-    event.clientY >= action.boundingBox[1] &&
-    event.clientX <= action.boundingBox[2] &&
-    event.clientY <= action.boundingBox[3]
+    event.pageX >= action.boundingBox[0] &&
+    event.pageY >= action.boundingBox[1] &&
+    event.pageX <= action.boundingBox[2] &&
+    event.pageY <= action.boundingBox[3]
   )
 }
 

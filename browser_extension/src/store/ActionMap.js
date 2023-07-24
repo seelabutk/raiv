@@ -230,11 +230,15 @@ export default class ActionMap {
             action.boundingBox = newBoundingBox
             action.clickPosition = newClickPosition
           } else {
-            const newAction = new Action(parent, action.target, {
-              type: action.type,
-            })
+            const newAction = new Action(
+              parent,
+              action.target,
+              newBoundingBox,
+              {
+                type: action.type,
+              }
+            )
 
-            newAction.boundingBox = newBoundingBox
             newAction.clickPosition = newClickPosition
             newAction.parent = undefined
             newAction.position = position++
