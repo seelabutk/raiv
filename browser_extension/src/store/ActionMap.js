@@ -69,7 +69,10 @@ export default class ActionMap {
       node.children[index].type = childObj.type
       node.children[index].waitTime = childObj.waitTime
       node.children[index].independent = childObj.independent || false
-
+      node.children[index].sliderOrientation =
+        childObj.sliderOrientation || 'horizontal'
+      node.children[index].sliderSteps = childObj.sliderSteps || 1
+      node.children[index].sliderValue = childObj.sliderValue || 0
       this._load(node.children[index])
       node.frameCount += node.children[index].frameCount
     }
@@ -93,6 +96,9 @@ export default class ActionMap {
       action.type = obj.type
       action.waitTime = obj.waitTime
       action.independent = obj.independent || true
+      action.sliderOrientation = obj.sliderOrientation || 'horizontal'
+      action.sliderSteps = obj.sliderSteps || 1
+      action.sliderValue = obj.sliderValue || 0
       this.independentActions.push(action)
     }
   }
@@ -193,6 +199,8 @@ export default class ActionMap {
   }
 
   _prepareSlider(parent, action, position) {
+    if (action.type !== 'slider') return [position, 0]
+
     const tagName = action.target.tagName.toLowerCase()
 
     const newActions = []
@@ -239,28 +247,20 @@ export default class ActionMap {
         newAction.clickPosition = newClickPosition
         newAction.parent = undefined
         newAction.position = position++
+
         newAction.sliderValue =
           minValue + deltaValue * ((i + 0.5) / sliderSteps)
         newActions.push(newAction)
       }
+      position += this.independentActions.length
     }
     const oldIndex = parent.children.indexOf(action)
     parent.children.splice(oldIndex + 1, 0, ...newActions)
-    return position
+    return [position, newActions.length]
   }
 
-  _prepareActions(action, position) {
-    const parent = action.parent
-    // NOTE: This should probably be done in another way, but I need to ensure that
-    // the object isn't circular before sending to the service worker.
-    action.parent = undefined
-    // Each Action needs to have a frame position assigned to it so we can seek properly
-    // during playback.
-    action.position = position++
-
-    // If this Action is on a canvas and should be repeated, then add Actions to the tree.
+  _prepareCanvas(parent, action, position) {
     const newActions = []
-    let numNewActions = 0
     const [rows, columns] = action.canvasRanges
     if (rows * columns > 1) {
       const [left, top, right, bottom] = action.boundingBox
@@ -302,21 +302,42 @@ export default class ActionMap {
 
             newActions.push(newAction)
           }
+
+          position += this.independentActions.length
         }
       }
       const oldIndex = parent.children.indexOf(action)
       parent.children.splice(oldIndex + 1, 0, ...newActions)
-      numNewActions += newActions.length
     }
+    return [position, newActions.length]
+  }
 
-    if (action.type === 'slider') {
-      const retValues = this._prepareSlider(parent, action, position)
-      position = retValues[0]
-      numNewActions += retValues[1]
-    }
+  _prepareActions(action, position) {
+    const parent = action.parent
+    // NOTE: This should probably be done in another way, but I need to ensure that
+    // the object isn't circular before sending to the service worker.
+    action.parent = undefined
+    // Each Action needs to have a frame position assigned to it so we can seek properly
+    // during playback.
+    action.position = position++
+
+    let numNewActions = 0
+    let retValues
+
+    // If this Action is on a canvas and should be repeated, then add Actions to the tree.
+    retValues = this._prepareCanvas(parent, action, position)
+    position = retValues[0]
+    numNewActions += retValues[1]
+
+    // If this Action is a slider, then add Actions to the tree.
+    retValues = this._prepareSlider(parent, action, position)
+    position = retValues[0]
+    numNewActions += retValues[1]
 
     // Account for independent actions
-    position += this.independentActions.length
+    if (numNewActions == 0) {
+      position += this.independentActions.length
+    }
 
     for (let index = 0; index < action.children.length; index++) {
       const retValues = this._prepareActions(action.children[index], position)
