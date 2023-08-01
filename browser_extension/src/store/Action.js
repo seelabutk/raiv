@@ -36,6 +36,11 @@ export default class Action {
     this.timeout = 1000 // timeout for the action to complete, in milliseconds
     this.capturedImageSize = [0, 0] // [width, height] of the captured iamge
 
+    // Slider specific options
+    this.sliderOrientation = options.sliderOrientation || 'horizontal'
+    this.sliderSteps = options.sliderSteps || 1
+    this.sliderValue = options.sliderValue || 0
+
     if (this.visible) {
       this._findSiblings()
     }
@@ -136,6 +141,34 @@ export default class Action {
               this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
           })
         )
+      } else if (this.type === 'slider') {
+        if (this.target.tagName.toLowerCase() === 'input') {
+          // If the slider is an input element, set the value directly
+          this.target.value = this.sliderValue
+          // Need to dispatch both input and change events to trigger the slider
+          // to update depending on which event it listens to
+          this.target.dispatchEvent(new Event('input', { bubbles: true }))
+          this.target.dispatchEvent(new Event('change', { bubbles: true }))
+        } else {
+          this.target.dispatchEvent(
+            new MouseEvent('mousedown', {
+              bubbles: true,
+              clientX:
+                this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+              clientY:
+                this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+            })
+          )
+          this.target.dispatchEvent(
+            new MouseEvent('mouseup', {
+              bubbles: true,
+              clientX:
+                this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
+              clientY:
+                this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
+            })
+          )
+        }
       }
     }
   }

@@ -110,7 +110,7 @@ function onClick(event) {
     return
   }
 
-  if (!['click', 'toggle', 'toggle-off'].includes(newAction.type)) {
+  if (!['click', 'toggle', 'toggle-off', 'slider'].includes(newAction.type)) {
     return
   }
 
@@ -190,7 +190,9 @@ function addActionElements(action, parent, addIndependent = true) {
 
   if (
     action.boundingBox.length === 4 &&
-    (action.type === 'click' || action.type === 'toggle')
+    (action.type === 'click' ||
+      action.type === 'toggle' ||
+      action.type === 'slider')
   ) {
     const div = document.createElement('div')
     div.style.cursor = 'pointer'

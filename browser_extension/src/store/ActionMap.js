@@ -192,9 +192,65 @@ export default class ActionMap {
     action.delete()
   }
 
+  _prepareSlider(parent, action, position) {
+    const tagName = action.target.tagName.toLowerCase()
+
+    const newActions = []
+    const [left, top, right, bottom] = action.boundingBox
+
+    const height = bottom - top
+    const width = right - left
+    const sliderOrientation = action.sliderOrientation
+    const sliderSteps = action.sliderSteps
+
+    const offset =
+      sliderOrientation === 'horizontal'
+        ? width / sliderSteps
+        : height / sliderSteps
+
+    // if the tagName is an input we need to set the value directly
+    const deltaValue =
+      tagName === 'input' ? action.target.max - action.target.min : 0
+    const minValue = Number(action.target.min || 0)
+
+    for (let i = 0; i < sliderSteps; i++) {
+      const newBoundingBox = [
+        left + (sliderOrientation === 'horizontal' ? offset * i : 0),
+        top + (sliderOrientation === 'vertical' ? offset * i : 0),
+        left + (sliderOrientation === 'horizontal' ? offset * (i + 1) : width),
+        top + (sliderOrientation === 'vertical' ? offset * (i + 1) : height),
+      ]
+      const newClickPosition = [
+        left +
+        (sliderOrientation === 'horizontal' ? offset * (i + 0.5) : width / 2),
+        top +
+        (sliderOrientation === 'vertical' ? offset * (i + 0.5) : height / 2),
+      ]
+      if (i === 0) {
+        action.boundingBox = newBoundingBox
+        action.clickPosition = newClickPosition
+        action.type = 'slider'
+        // action.sliderValue = minValue + deltaValue * (i / sliderSteps)
+        action.sliderValue = minValue + deltaValue * ((i + 0.5) / sliderSteps)
+      } else {
+        const newAction = new Action(parent, action.target, newBoundingBox, {
+          type: 'slider',
+        })
+        newAction.clickPosition = newClickPosition
+        newAction.parent = undefined
+        newAction.position = position++
+        newAction.sliderValue =
+          minValue + deltaValue * ((i + 0.5) / sliderSteps)
+        newActions.push(newAction)
+      }
+    }
+    const oldIndex = parent.children.indexOf(action)
+    parent.children.splice(oldIndex + 1, 0, ...newActions)
+    return position
+  }
+
   _prepareActions(action, position) {
     const parent = action.parent
-
     // NOTE: This should probably be done in another way, but I need to ensure that
     // the object isn't circular before sending to the service worker.
     action.parent = undefined
@@ -204,6 +260,7 @@ export default class ActionMap {
 
     // If this Action is on a canvas and should be repeated, then add Actions to the tree.
     const newActions = []
+    let numNewActions = 0
     const [rows, columns] = action.canvasRanges
     if (rows * columns > 1) {
       const [left, top, right, bottom] = action.boundingBox
@@ -247,9 +304,15 @@ export default class ActionMap {
           }
         }
       }
-
       const oldIndex = parent.children.indexOf(action)
       parent.children.splice(oldIndex + 1, 0, ...newActions)
+      numNewActions += newActions.length
+    }
+
+    if (action.type === 'slider') {
+      const retValues = this._prepareSlider(parent, action, position)
+      position = retValues[0]
+      numNewActions += retValues[1]
     }
 
     // Account for independent actions
@@ -262,7 +325,7 @@ export default class ActionMap {
       index += retValues[1]
     }
 
-    return [position, newActions.length]
+    return [position, numNewActions]
   }
 
   _getActionMap() {

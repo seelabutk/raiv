@@ -12,6 +12,7 @@
         <option value="click">Click</option>
         <option value="hover">Hover</option>
         <option value="toggle">Toggle</option>
+        <option value="slider">Slider</option>
       </select>
     </label>
     <br />

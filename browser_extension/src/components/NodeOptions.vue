@@ -52,6 +52,44 @@
         </label>
       </div>
 
+      <div v-if="isSlider">
+        <p>
+          The targeted element is a slider. Choose the orientation of the
+          slider, and the number of discrete steps to record.
+        </p>
+
+        <label>
+          Orientation
+          <select
+            :value="props.action.sliderOrientation"
+            @change="
+              (event) => {
+                props.action.set('sliderOrientation', event.target.value)
+                props.store.save()
+              }
+            "
+          >
+            <option value="horizontal">Horizontal</option>
+            <option value="vertical">Vertical</option>
+          </select>
+        </label>
+
+        <label>
+          Steps
+          <input
+            :value="props.action.sliderSteps"
+            min="1"
+            type="number"
+            @change="
+              (event) => {
+                props.action.set('sliderSteps', event.target.value)
+                props.store.save()
+              }
+            "
+          />
+        </label>
+      </div>
+
       <div v-if="isCanvas">
         <p>
           The targeted element is a canvas. If there are interactions inside the
@@ -142,6 +180,7 @@ const isCanvas = computed(
     props.action.target &&
     props.action.target.tagName.toLowerCase() === 'canvas'
 )
+const isSlider = computed(() => props.action.type === 'slider')
 
 const isChangeParent = ref(false)
 const isChangeParentText = computed(() =>
