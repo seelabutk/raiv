@@ -28,4 +28,5 @@ RUN pip install \
   fastapi \
   gunicorn \
   pydantic \
+  requests \
   uvicorn[standard]
