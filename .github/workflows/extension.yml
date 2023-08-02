@@ -1,3 +1,5 @@
+name: Build and Package Chrome Extension
+
 on:
   push:
     tags:
