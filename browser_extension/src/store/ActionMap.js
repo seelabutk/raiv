@@ -1,10 +1,11 @@
 /* global chrome */
-import Action from '@/store/Action'
+// import Action from '@/store/Action'
+import { getNewAction, BaseAction } from '@/store/actions'
 import getUserAgentInfo from '@/utils/getUserAgentInfo'
 
 export default class ActionMap {
   constructor() {
-    this.root = new Action()
+    this.root = new BaseAction()
     this.independentActions = [] // A list of actions which are not children of any other action.
     this.height = document.documentElement.scrollHeight
     this.interactionType = 'click'
@@ -15,7 +16,7 @@ export default class ActionMap {
   }
 
   reset() {
-    this.root = new Action()
+    this.root = new BaseAction()
     this.parentActions = [this.root]
     this.independentActions = []
   }
@@ -47,6 +48,17 @@ export default class ActionMap {
     }
   }
 
+  copyActionToParent(action, parent) {
+    // Recursively copy an action and its children to a new parent.
+    const newAction = action.copy()
+    newAction.parent = parent
+    parent.children.push(newAction)
+    while (parent !== undefined) {
+      parent.frameCount++
+      parent = parent.parent
+    }
+  }
+
   // TODO: Determine if there's any way to do this in a robust way. The challenge is that
   // document.elementFromPoint will fail if the clickPosition is only valid if prior actions
   // have been taken.
@@ -57,7 +69,10 @@ export default class ActionMap {
 
       const target = document.elementFromPoint(...childObj.clickPosition)
 
-      node.children[index] = new Action(node, target)
+      // node.children[index] = new Action(node, target)
+      node.children[index] = getNewAction(node, target, childObj.boundingBox, {
+        type: childObj.type,
+      })
       node.children[index].boundingBox = childObj.boundingBox
       node.children[index].canvasRanges = childObj.canvasRanges
       node.children[index].children = childObj.children
@@ -85,7 +100,10 @@ export default class ActionMap {
 
       const target = document.elementFromPoint(...obj.clickPosition)
 
-      const action = new Action(undefined, target)
+      // const action = new Action(undefined, target)
+      let action = getNewAction(undefined, target, obj.boundingBox, {
+        type: obj.type,
+      })
       action.boundingBox = obj.boundingBox
       action.canvasRanges = obj.canvasRanges
       action.children = obj.children
@@ -113,7 +131,8 @@ export default class ActionMap {
   }
 
   _add(parent, target, boundingBox, event, type) {
-    const action = new Action(parent, target, boundingBox, {
+    // const action = new Action(parent, target, boundingBox, {
+    const action = getNewAction(parent, target, boundingBox, {
       event,
       type,
       independent: false,
@@ -181,7 +200,8 @@ export default class ActionMap {
   }
 
   _addIndependentAction(target, boundingBox, event, type) {
-    const action = new Action(undefined, target, boundingBox, {
+    // const action = new Action(undefined, target, boundingBox, {
+    const action = getNewAction(undefined, target, boundingBox, {
       event,
       type,
       independent: true,
@@ -241,7 +261,8 @@ export default class ActionMap {
         // action.sliderValue = minValue + deltaValue * (i / sliderSteps)
         action.sliderValue = minValue + deltaValue * ((i + 0.5) / sliderSteps)
       } else {
-        const newAction = new Action(parent, action.target, newBoundingBox, {
+        // const newAction = new Action(parent, action.target, newBoundingBox, {
+        const newAction = getNewAction(parent, action.target, newBoundingBox, {
           type: 'slider',
         })
         newAction.clickPosition = newClickPosition
@@ -287,7 +308,8 @@ export default class ActionMap {
             action.boundingBox = newBoundingBox
             action.clickPosition = newClickPosition
           } else {
-            const newAction = new Action(
+            // const newAction = new Action(
+            const newAction = getNewAction(
               parent,
               action.target,
               newBoundingBox,
