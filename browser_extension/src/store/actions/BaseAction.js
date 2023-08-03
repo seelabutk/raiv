@@ -129,7 +129,10 @@ export default class BaseAction {
     })
   }
 
-  async _capture(port, root = false, independentActions = undefined) {
+  async _capture(port, position, root = false, independentActions = undefined) {
+    // save the current frame position
+    this.position = position
+
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
       window.scrollTo(0, this.scrollPosition)
@@ -185,27 +188,40 @@ export default class BaseAction {
         }
       })
     )
-
+    // Increment the frame position
+    position++
     this._revertActionPreChildren()
 
     // Iterate through the independent actions and capture them.
     if (independentActions !== undefined) {
       for (let index = 0; index < independentActions.length; index++) {
         independentActions[index].position = this.position + index + 1
-        await independentActions[index].capture(port, false, undefined)
+        position = await independentActions[index].capture(
+          port,
+          position,
+          false,
+          undefined
+        )
       }
     }
 
     for (let index = 0; index < this.children.length; index++) {
-      await this.children[index].capture(port, false, independentActions)
+      position = await this.children[index].capture(
+        port,
+        position,
+        false,
+        independentActions
+      )
     }
 
     this._revertActionPostChildren()
+    return position
   }
 
-  async capture(port, root = false, independentActions = undefined) {
-    await this._capture(port, root, independentActions)
+  async capture(port, position, root = false, independentActions = undefined) {
+    return await this._capture(port, position, root, independentActions)
   }
+
   toggleSiblings(actionMap) {
     const parent = this.parent
 

@@ -335,40 +335,41 @@ export default class ActionMap {
   }
 
   _prepareActions(action, position) {
-    const parent = action.parent
+    // const parent = action.parent
     // NOTE: This should probably be done in another way, but I need to ensure that
     // the object isn't circular before sending to the service worker.
     action.parent = undefined
     // Each Action needs to have a frame position assigned to it so we can seek properly
     // during playback.
-    action.position = position++
+    // action.position = position++
 
-    let numNewActions = 0
-    let retValues
+    // let numNewActions = 0
+    // let retValues
 
     // If this Action is on a canvas and should be repeated, then add Actions to the tree.
-    retValues = this._prepareCanvas(parent, action, position)
-    position = retValues[0]
-    numNewActions += retValues[1]
-
-    // If this Action is a slider, then add Actions to the tree.
-    retValues = this._prepareSlider(parent, action, position)
-    position = retValues[0]
-    numNewActions += retValues[1]
+    // retValues = this._prepareCanvas(parent, action, position)
+    // position = retValues[0]
+    // numNewActions += retValues[1]
+    //
+    // // If this Action is a slider, then add Actions to the tree.
+    // retValues = this._prepareSlider(parent, action, position)
+    // position = retValues[0]
+    // numNewActions += retValues[1]
 
     // Account for independent actions
-    if (numNewActions == 0) {
-      position += this.independentActions.length
-    }
+    // if (numNewActions == 0) {
+    //   position += this.independentActions.length
+    // }
 
     for (let index = 0; index < action.children.length; index++) {
-      const retValues = this._prepareActions(action.children[index], position)
+      // const retValues = this._prepareActions(action.children[index], position)
+      this._prepareActions(action.children[index], position)
 
-      position = retValues[0]
-      index += retValues[1]
+      // position = retValues[0]
+      // index += retValues[1]
     }
 
-    return [position, numNewActions]
+    // return [position, numNewActions]
   }
 
   _getActionMap() {
@@ -383,7 +384,7 @@ export default class ActionMap {
 
   async _capture(controls, port) {
     await controls.onPrepare()
-    await this.root.capture(port, true, this.independentActions)
+    await this.root.capture(port, 0, true, this.independentActions)
     await controls.onFinish()
 
     window.scrollTo(0, 0)
