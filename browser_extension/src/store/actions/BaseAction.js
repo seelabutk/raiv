@@ -129,9 +129,10 @@ export default class BaseAction {
     })
   }
 
-  async _capture(port, position, root = false, independentActions = undefined) {
+  async _capture(port, root = false, independentActions = undefined) {
+    // async _capture(port, position, root = false, independentActions = undefined) {
     // save the current frame position
-    this.position = position
+    // this.position = position
 
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
@@ -189,16 +190,17 @@ export default class BaseAction {
       })
     )
     // Increment the frame position
-    position++
+    // position++
     this._revertActionPreChildren()
 
     // Iterate through the independent actions and capture them.
     if (independentActions !== undefined) {
       for (let index = 0; index < independentActions.length; index++) {
         independentActions[index].position = this.position + index + 1
-        position = await independentActions[index].capture(
+        // position = await independentActions[index].capture(
+        await independentActions[index].capture(
           port,
-          position,
+          // position,
           false,
           undefined
         )
@@ -206,20 +208,23 @@ export default class BaseAction {
     }
 
     for (let index = 0; index < this.children.length; index++) {
-      position = await this.children[index].capture(
+      // position = await this.children[index].capture(
+      await this.children[index].capture(
         port,
-        position,
+        // position,
         false,
         independentActions
       )
     }
 
     this._revertActionPostChildren()
-    return position
+    // return position
   }
 
-  async capture(port, position, root = false, independentActions = undefined) {
-    return await this._capture(port, position, root, independentActions)
+  // async capture(port, position, root = false, independentActions = undefined) {
+  async capture(port, root = false, independentActions = undefined) {
+    // return await this._capture(port, position, root, independentActions)
+    return await this._capture(port, root, independentActions)
   }
 
   toggleSiblings(actionMap) {
