@@ -7,9 +7,12 @@ import {
   faDownload,
   faMagnifyingGlass,
   faSort,
+  faGrip,
   faArrowUp,
   faArrowDown,
   faCaretDown,
+  faBars,
+  faX,
 } from '@fortawesome/free-solid-svg-icons'
 import VueTippy from 'vue-tippy'
 
@@ -24,7 +27,10 @@ library.add(
   faSort,
   faArrowDown,
   faArrowUp,
-  faCaretDown
+  faGrip,
+  faCaretDown,
+  faBars,
+  faX
 )
 
 const router = createRouter({

@@ -20,4 +20,35 @@ function getNewAction(parent, target, boundingBox, options) {
   }
 }
 
-export { getNewAction, BaseAction, Click, Hover, Toggle }
+function copyAction(action) {
+  const parent = action.parent
+  const target = action.target
+  const boundingBox = action.boundingBox
+  const newAction = getNewAction(parent, target, boundingBox, {
+    type: action.type,
+  })
+  newAction.boundingBox = action.boundingBox
+  newAction.canvasRanges = action.canvasRanges
+  newAction.clickPosition = action.clickPosition
+  newAction.frameCount = action.canvasRanges[0] * action.canvasRanges[1]
+  newAction.manualCapture = action.manualCapture
+  newAction.scrollPosition = action.scrollPosition
+  newAction.waitTime = action.waitTime
+  newAction.independent = action.independent || false
+
+  switch (action.type) {
+    case 'click':
+    case 'hover':
+    case 'toggle':
+    case 'toggle-off':
+      break
+    case 'slider':
+      newAction.sliderOrientation = action.sliderOrientation || 'horizontal'
+      newAction.sliderValue = action.sliderValue || 0
+      newAction.sliderSteps = action.sliderSteps || 1
+  }
+
+  return newAction
+}
+
+export { getNewAction, copyAction, BaseAction, Click, Hover, Toggle }

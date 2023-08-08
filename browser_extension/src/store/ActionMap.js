@@ -1,5 +1,5 @@
 /* global chrome */
-import { getNewAction, BaseAction } from '@/store/actions'
+import { getNewAction, BaseAction, copyAction } from '@/store/actions'
 import getUserAgentInfo from '@/utils/getUserAgentInfo'
 
 export default class ActionMap {
@@ -47,14 +47,29 @@ export default class ActionMap {
     }
   }
 
-  copyActionToParent(action, parent) {
-    // Recursively copy an action and its children to a new parent.
-    const newAction = action.copy()
-    newAction.parent = parent
-    parent.children.push(newAction)
-    while (parent !== undefined) {
-      parent.frameCount++
-      parent = parent.parent
+  _deepChildrenCopy(parent, node) {
+    if (
+      node === undefined ||
+      node.children === undefined ||
+      node.children.length === 0
+    ) {
+      return
+    }
+
+    const children = node.children
+    const origLength = parent.children.length
+    for (let index = 0; index < children.length; index++) {
+      const childObj = children[index]
+
+      // node.children[index] = new Action(node, target)
+      let idx = origLength + index
+      let newAction = copyAction(childObj)
+      newAction.parent = parent
+      parent.children.push(newAction)
+      console.log(parent, parent.children, newAction, idx)
+      this._deepChildrenCopy(parent.children[idx], childObj)
+      console.log(parent, parent.children, newAction, idx, origLength, index)
+      parent.frameCount += parent.children[idx].frameCount
     }
   }
 
@@ -217,8 +232,8 @@ export default class ActionMap {
     action.delete()
   }
 
-  _prepareSlider(parent, action, position) {
-    if (action.type !== 'slider') return [position, 0]
+  _prepareSlider(parent, action) {
+    if (action.type !== 'slider') return 0
 
     const tagName = action.target.tagName.toLowerCase()
 
@@ -259,28 +274,25 @@ export default class ActionMap {
         action.type = 'slider'
         action.sliderValue = minValue + deltaValue * ((i + 0.5) / sliderSteps)
       } else {
-        // const newAction = new Action(parent, action.target, newBoundingBox, {
         const newAction = getNewAction(parent, action.target, newBoundingBox, {
           type: 'slider',
         })
         newAction.clickPosition = newClickPosition
-        newAction.parent = undefined
-        newAction.position = position++
         newAction.disableSiblings = action.disableSiblings
         newAction.manualCapture = action.manualCapture
 
         newAction.sliderValue =
           minValue + deltaValue * ((i + 0.5) / sliderSteps)
+        this._deepChildrenCopy(newAction, action)
         newActions.push(newAction)
       }
-      position += this.independentActions.length
     }
     const oldIndex = parent.children.indexOf(action)
     parent.children.splice(oldIndex + 1, 0, ...newActions)
-    return [position, newActions.length]
+    return newActions.length
   }
 
-  _prepareCanvas(parent, action, position) {
+  _prepareCanvas(parent, action) {
     const newActions = []
     const [rows, columns] = action.canvasRanges
     if (rows * columns > 1) {
@@ -308,7 +320,6 @@ export default class ActionMap {
             action.boundingBox = newBoundingBox
             action.clickPosition = newClickPosition
           } else {
-            // const newAction = new Action(
             const newAction = getNewAction(
               parent,
               action.target,
@@ -319,58 +330,55 @@ export default class ActionMap {
             )
 
             newAction.clickPosition = newClickPosition
-            newAction.parent = undefined
-            newAction.position = position++
+
             newAction.disableSiblings = action.disableSiblings
             newAction.manualCapture = action.manualCapture
+            this._deepChildrenCopy(newAction, action)
+
             newActions.push(newAction)
           }
-
-          position += this.independentActions.length
         }
       }
       const oldIndex = parent.children.indexOf(action)
       parent.children.splice(oldIndex + 1, 0, ...newActions)
     }
-    return [position, newActions.length]
+    return newActions.length
   }
 
-  _prepareActions(action, position) {
-    const parent = action.parent
-    // NOTE: This should probably be done in another way, but I need to ensure that
-    // the object isn't circular before sending to the service worker.
-    action.parent = undefined
+  _preparePositions(action, position) {
     // Each Action needs to have a frame position assigned to it so we can seek properly
     // during playback.
     action.position = position++
 
+    // Account for independent actions
+    position += this.independentActions.length
+
+    // Recursively prepare positions for children
+    for (let index = 0; index < action.children.length; index++) {
+      position = this._preparePositions(action.children[index], position)
+    }
+    return position
+  }
+
+  _prepareActions(action) {
+    const parent = action.parent
+    // NOTE: This should probably be done in another way, but I need to ensure that
+    // the object isn't circular before sending to the service worker.
+    action.parent = undefined
+
     let numNewActions = 0
-    let retValues
 
     // If this Action is on a canvas and should be repeated, then add Actions to the tree.
-    retValues = this._prepareCanvas(parent, action, position)
-    position = retValues[0]
-    numNewActions += retValues[1]
+    numNewActions += this._prepareCanvas(parent, action)
 
     // If this Action is a slider, then add Actions to the tree.
-    retValues = this._prepareSlider(parent, action, position)
-    position = retValues[0]
-    numNewActions += retValues[1]
-
-    // Account for independent actions
-    if (numNewActions == 0) {
-      position += this.independentActions.length
-    }
+    numNewActions += this._prepareSlider(parent, action)
 
     for (let index = 0; index < action.children.length; index++) {
-      const retValues = this._prepareActions(action.children[index], position)
-      // this._prepareActions(action.children[index], position)
-
-      position = retValues[0]
-      index += retValues[1]
+      this._prepareActions(action.children[index])
     }
 
-    return [position, numNewActions]
+    return numNewActions
   }
 
   _getActionMap() {
@@ -402,7 +410,8 @@ export default class ActionMap {
 
   async capture(controls, serverLocation, apiKey, videoName) {
     this._prepareStyles(serverLocation)
-    this._prepareActions(this.root, 0)
+    this._prepareActions(this.root)
+    this._preparePositions(this.root, 0)
 
     const port = chrome.runtime.connect({ name: 'raiv' })
     port.postMessage({
