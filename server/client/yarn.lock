@@ -938,6 +938,13 @@
   dependencies:
     regenerator-runtime "^0.13.11"
 
+"@babel/runtime@^7.21.0":
+  version "7.22.10"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.22.10.tgz#ae3e9631fd947cb7e3610d3e9d8fef5f76696682"
+  integrity sha512-21t/fkKLMZI4pqP2wlmsQAWnYW1PDyKyyUV4vCi+B25ydmdaYTKXPwCj0BzSUnZf4seIiYvSA3jcZ3gdsMFkLQ==
+  dependencies:
+    regenerator-runtime "^0.14.0"
+
 "@babel/template@^7.0.0", "@babel/template@^7.18.10", "@babel/template@^7.20.7":
   version "7.20.7"
   resolved "https://registry.yarnpkg.com/@babel/template/-/template-7.20.7.tgz#a15090c2839a83b02aa996c0b4994005841fd5a8"
@@ -3165,6 +3172,11 @@ electron-to-chromium@^1.4.284:
   version "1.4.334"
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.334.tgz#eacdcb1145534202d569610c5915b63a3fec0eb9"
   integrity sha512-laZ1odk+TRen6q0GeyQx/JEkpD3iSZT7ewopCpKqg9bTjP1l8XRfU3Bg20CFjNPZkp5+NDBl3iqd4o/kPO+Vew==
+
+elkjs@^0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/elkjs/-/elkjs-0.8.2.tgz#c37763c5a3e24e042e318455e0147c912a7c248e"
+  integrity sha512-L6uRgvZTH+4OF5NE/MBbzQx/WYpru1xCBE9respNj6qznEewGUIfhzmm7horWWxbNO2M0WckQypGctR8lH79xQ==
 
 emoji-regex@^8.0.0:
   version "8.0.0"
@@ -5491,6 +5503,11 @@ regenerator-runtime@^0.13.11:
   resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.13.11.tgz#f6dca3e7ceec20590d07ada785636a90cdca17f9"
   integrity sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==
 
+regenerator-runtime@^0.14.0:
+  version "0.14.0"
+  resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.14.0.tgz#5e19d68eb12d486f797e15a3c6a918f7cec5eb45"
+  integrity sha512-srw17NI0TUWHuGa5CFGGmhfNIeja30WMBfbslPNhf6JrqQlLN5gcrvig1oqPxiVaXb0oW0XRKtH6Nngs5lKCIA==
+
 regenerator-transform@^0.15.1:
   version "0.15.1"
   resolved "https://registry.yarnpkg.com/regenerator-transform/-/regenerator-transform-0.15.1.tgz#f6c4e99fc1b4591f780db2586328e4d9a9d8dc56"
@@ -5582,6 +5599,62 @@ restore-cursor@^3.1.0:
   dependencies:
     onetime "^5.1.0"
     signal-exit "^3.0.2"
+
+rete-area-plugin@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/rete-area-plugin/-/rete-area-plugin-2.0.0.tgz#bb314572225f9970a8bf90c1155771b3a56d702e"
+  integrity sha512-afui5oS0CP4xa+krSMketSO68EjGybIP2D5IpINbnW6vOIwexcLKI08EcmQUtFk62Z2D8X1BLRIM4PMtt4wPYw==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
+
+rete-auto-arrange-plugin@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/rete-auto-arrange-plugin/-/rete-auto-arrange-plugin-2.0.0.tgz#10243d8e7d90c29846ad7658a09f235e692f7263"
+  integrity sha512-wyrJ+DW94J1E4ceTX6XVHt7lnp0eNXdwHKnuREY8ePl3BO8buLutvVpuMFwJEVW6AbnUVcKY38/huAwp4wDGoQ==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
+
+rete-connection-plugin@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/rete-connection-plugin/-/rete-connection-plugin-2.0.0.tgz#d50c5d42935a97148efc8795d815ef090000f2d5"
+  integrity sha512-8M+UC6gcWwTi0PEICprmCaoGxwEA4x42z0ywx3O5NQSILvkhWcvQXzHcyvwGx/LTsJT/UPzNjCfixu/TbRyTEw==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
+
+rete-minimap-plugin@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/rete-minimap-plugin/-/rete-minimap-plugin-2.0.0.tgz#3c6a88e32dac6730d12f542c0f87f76fe45bb277"
+  integrity sha512-5adT/3KSU2wt5hT5jyfpZbuMKj7/uprJDLQOeWnSygWw/9mef6l1IP+uvfopjj87hELbrhFHjIzduC923C6gow==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
+
+rete-readonly-plugin@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/rete-readonly-plugin/-/rete-readonly-plugin-2.0.0.tgz#c86700ff431fb23d27039640c168d1a223f9dca1"
+  integrity sha512-XDje/lKjXuV+C/bGZAPL9yH4nGoQny3vs29gGPXL3ttIQTAu2dYd1Bu9YI6s0pJ8gNFemLGsVWwMOjtpXPJPfA==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
+
+rete-render-utils@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/rete-render-utils/-/rete-render-utils-2.0.1.tgz#9a166d76c3e5273dcf33f10ef103202e36fd7e1a"
+  integrity sha512-mzNVADCE1iV0AlkVyz1Pai34GG55VYBIWWOv9MqHUl7jlnpNIIkx+hARIc3wgabcye46IdswQPUApuARhvjbmA==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
+
+rete-vue-plugin@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/rete-vue-plugin/-/rete-vue-plugin-2.0.3.tgz#3999a079a95eb1cf7ec3a10613ec2db0c696de33"
+  integrity sha512-Uwr+vDAENL3M2zSzpYsxnphVlC2+EEgWDFDCFFyi1zuGJFcvSQtro4Ay87W24TE2s3z0+AZylu+XNP/eCZTuUg==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
+
+rete@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/rete/-/rete-2.0.2.tgz#d5fc2fd7383716c12e8e9a7f7e56fa45adca4bfd"
+  integrity sha512-VZhyWl0E3dzcRRiN5OIVK4CIVcADZHO4XCFs85fjoi4ZYCPcB3P608wzq5MbdlYOfptPyuvKOrRqgFCtILdKIw==
+  dependencies:
+    "@babel/runtime" "^7.21.0"
 
 retry@^0.13.1:
   version "0.13.1"
@@ -6422,6 +6495,11 @@ wcwidth@^1.0.1:
   integrity sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==
   dependencies:
     defaults "^1.0.3"
+
+web-worker@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/web-worker/-/web-worker-1.2.0.tgz#5d85a04a7fbc1e7db58f66595d7a3ac7c9c180da"
+  integrity sha512-PgF341avzqyx60neE9DD+XS26MMNMoUQRz9NOZwW32nPQrF6p77f1htcnjBSEV8BGMKZ16choqUG4hyI0Hx7mA==
 
 webidl-conversions@^3.0.0:
   version "3.0.1"

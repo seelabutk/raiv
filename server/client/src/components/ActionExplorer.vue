@@ -69,7 +69,7 @@ onMounted(() => {
   height: 100%;
   background: linear-gradient(to right, transparent 50%, rgba(0, 0, 0, 0.5) 50%)
     left;
-  z-index: 10000;
+  z-index: 100;
   background-size: 200%;
   transition: 0.5s ease-out;
 }

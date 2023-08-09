@@ -1,11 +1,31 @@
 <template>
-  <div class="action-map-dialog"></div>
+  <div class="rete" ref="rete"></div>
 </template>
 
 <script setup>
+/* eslint-disable no-unused-vars */
 /* global chrome */
-import * as d3 from 'd3'
-import { defineExpose, defineProps, onMounted, computed } from 'vue'
+import { NodeEditor, ClassicPreset } from 'rete'
+import { AreaPlugin, AreaExtensions } from 'rete-area-plugin'
+import {
+  ConnectionPlugin,
+  Presets as ConnectionPresets,
+} from 'rete-connection-plugin'
+import { VuePlugin, Presets } from 'rete-vue-plugin'
+import { ReadonlyPlugin } from 'rete-readonly-plugin'
+import {
+  AutoArrangePlugin,
+  Presets as ArrangePresets,
+} from 'rete-auto-arrange-plugin'
+import { MinimapExtra, MinimapPlugin } from 'rete-minimap-plugin'
+
+import {
+  defineExpose,
+  defineProps,
+  onMounted,
+  computed,
+  onUnmounted,
+} from 'vue'
 
 const props = defineProps({
   actionMap: {
@@ -23,175 +43,82 @@ const props = defineProps({
 })
 
 let currentAction = computed(() => props.currentAction)
-// let currentAction = ref(props.store.actionMap.value.root)
-// const nodeOptions = ref(null)
-// const nodeTitle = ref('Root')
+let area = null
 
-const options = {
-  dx: 64, // the distance between nodes on the x-axis
-  dy: 128, // the distance between nodes on the y-axis
-  height: screen.height, // the height of the svg
-  // height: 600, // the height of the svg
-  iconSize: 20, // the height/width of the icon
-  labelY: '0.32em', // this shifts the text label down
-  nodeRadius: 16, // the size of each node's circle tag
-  textOffset: 4, // the gap between the circle and text
-  width: screen.width, // the width of the svg
-  // width: 600, // the width of the svg
-}
+async function createEditor(container) {
+  // Create editor and engine
+  const socket = new ClassicPreset.Socket('socket')
+  const editor = new NodeEditor()
+  const area = new AreaPlugin(container)
+  const connection = new ConnectionPlugin()
+  const render = new VuePlugin()
+  const readonly = new ReadonlyPlugin()
+  const arrange = new AutoArrangePlugin()
+  const minimap = new MinimapPlugin({
+    boundViewport: true,
+  })
 
-let dialog
-let dragging = false
-const dragOrigin = {
-  x: 0,
-  y: 0,
-}
-let svg
-let viewBox = [-options.dx, -options.height / 2, options.width, options.height]
-let newViewBox = viewBox
+  // Setup and register plugins
+  AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
+    accumulating: AreaExtensions.accumulateOnCtrl(),
+  })
 
-function label() {
-  return 'label'
-}
+  arrange.addPreset(ArrangePresets.classic.setup())
 
-// Renders the action tree into an SVG
-function render() {
-  // Remove the old SVG
-  svg.selectAll('*').remove()
+  render.addPreset(Presets.classic.setup())
+  render.addPreset(Presets.minimap.setup({ size: 200 }))
 
-  // Recompute the layout for the new tree structure
-  const tree = d3.hierarchy(props.actionMap)
-  d3.tree().nodeSize([options.dx, options.dy])(tree)
+  connection.addPreset(ConnectionPresets.classic.setup())
 
-  // Resets the viewBox on a new render
-  svg.attr('viewBox', viewBox)
+  editor.use(readonly.root)
+  editor.use(area)
 
-  // Draw the links between nodes
-  svg
-    .append('g')
-    .attr('stroke', 'white')
-    .attr('fill', 'white')
-    .selectAll('path')
-    .data(tree.links())
-    .join('path')
-    .attr(
-      'd',
-      d3
-        .link(d3.curveBumpX)
-        .x((d) => d.y)
-        .y((d) => d.x)
-    )
+  area.use(arrange)
+  area.use(readonly.area)
+  area.use(connection)
+  area.use(render)
+  area.use(minimap)
 
-  // Create the node containers
-  const node = svg
-    .append('g')
-    .selectAll('g')
-    .data(tree.descendants())
-    .join('g')
-    .attr('transform', (d) => `translate(${d.y},${d.x})`)
-    .style('stroke', (d) => {
-      if (d.data === currentAction.value) {
-        return 'green'
-      }
-      return 'red'
-    })
-    .style('cursor', 'pointer')
-    .on('click', function (event, d) {
-      props.setCurrentAction(d.data)
-      d3.select(this).style('stroke', 'green')
-      render()
-    })
-    .on('contextmenu', function (event) {
-      event.preventDefault()
-    })
+  AreaExtensions.simpleNodesOrder(area)
 
-  // Draw the nodes inside their containers
-  node.append('circle').attr('r', options.nodeRadius).attr('fill', 'white')
+  // Create Nodes
+  const actionMap = props.actionMap
+  async function dfs(node) {
+    const n = new ClassicPreset.Node(`Action ${node.position}`)
+    if (node.position != 0) {
+      n.addInput('port', new ClassicPreset.Input(socket))
+    }
+    if (node.children.length != 0) {
+      n.addOutput('port', new ClassicPreset.Output(socket))
+    }
 
-  // Draw the fa icons inside of the circles
-  node
-    .append('image')
-    .attr('href', (d) => {
-      const type = d.data.type
+    await editor.addNode(n)
 
-      if (type === 'click') {
-        return chrome.runtime.getURL('/icons/hand-pointer-solid.svg')
-      } else if (type === 'hover') {
-        return chrome.runtime.getURL('/icons/arrow-pointer-solid.svg')
-      } else if (type === 'toggle') {
-        return chrome.runtime.getURL('/icons/toggle-on-solid.svg')
-      } else if (type === 'toggle-off') {
-        return chrome.runtime.getURL('/icons/toggle-off-solid.svg')
-      }
-    })
-    .attr('height', options.iconSize)
-    .attr('width', options.iconSize)
-    .attr('x', -options.iconSize / 2)
-    .attr('y', -options.iconSize / 2)
-
-  // Draw the labels
-  node
-    .append('text')
-    .text((d) => label(d))
-    .style('fill', 'white')
-    .attr('x', options.nodeRadius + options.textOffset)
-    .attr('dy', options.labelY)
-    .selectAll('text')
-
-  dialog.appendChild(svg.node())
-}
-
-// Panning initialization
-function onPointerDown(event) {
-  dragging = true
-
-  dragOrigin.x = event.clientX
-  dragOrigin.y = event.clientY
-
-  svg.style('cursor', 'grabbing')
-}
-
-// Panning handler
-function onPointerMove(event) {
-  if (!dragging) {
-    return
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i]
+      const childNode = await dfs(child)
+      await editor.addConnection(
+        new ClassicPreset.Connection(n, 'port', childNode, 'port')
+      )
+    }
+    return n
   }
+  const node = await dfs(actionMap)
+  await arrange.layout()
 
-  event.preventDefault()
+  AreaExtensions.zoomAt(area, editor.getNodes())
 
-  svg.attr('viewBox', [
-    newViewBox[0] - (event.clientX - dragOrigin.x),
-    newViewBox[1] - (event.clientY - dragOrigin.y),
-    newViewBox[2],
-    newViewBox[3],
-  ])
-}
-
-// Panning clean up
-function onPointerUp() {
-  dragging = false
-
-  newViewBox = svg
-    .attr('viewBox')
-    .split(',')
-    .map((val) => Number(val))
-
-  svg.style('cursor', 'grab')
+  return area
 }
 
 onMounted(() => {
-  dialog = document.querySelector('.action-map-dialog')
-  svg = d3
-    .create('svg')
-    .attr('height', `${options.height}px`)
-    .attr('width', `${options.width}px`)
-    .style('cursor', 'grab')
-    .on('pointerdown', onPointerDown)
-    .on('pointerleave', onPointerUp)
-    .on('pointermove', onPointerMove)
-    .on('pointerup', onPointerUp)
-
-  render()
+  let container = document.querySelector('.rete')
+  createEditor(container).then((a) => {
+    area = a
+  })
+})
+onUnmounted(() => {
+  area.destroy()
 })
 
 // TODO: It would be nice to render only as needed without having parents
@@ -199,13 +126,13 @@ onMounted(() => {
 // Object passed in. Even if reactivity can be properly established, this
 // render likely needs to be throttled to avoid many render calls when
 // performing an action that affects many nodes.
-defineExpose({ render })
+// defineExpose({ render })
 </script>
 
 <style scoped>
-.action-map-dialog {
-  left: -10em;
-  top: 1em;
-  z-index: 10001;
+.rete {
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
 }
 </style>
