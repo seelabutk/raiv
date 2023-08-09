@@ -13,12 +13,8 @@ import {
 } from 'rete-connection-plugin'
 import { VuePlugin, Presets } from 'rete-vue-plugin'
 import { ReadonlyPlugin } from 'rete-readonly-plugin'
-import {
-  AutoArrangePlugin,
-  Presets as ArrangePresets,
-} from 'rete-auto-arrange-plugin'
-import { MinimapExtra, MinimapPlugin } from 'rete-minimap-plugin'
-
+import { MinimapPlugin } from 'rete-minimap-plugin'
+import * as d3 from 'd3'
 import {
   defineExpose,
   defineProps,
@@ -26,7 +22,9 @@ import {
   computed,
   onUnmounted,
 } from 'vue'
+import Node from '@/components/ActionNode'
 
+// Props
 const props = defineProps({
   actionMap: {
     required: true,
@@ -42,59 +40,92 @@ const props = defineProps({
   },
 })
 
+// Render Options
+const options = {
+  dx: 64, // the distance between nodes on the x-axis
+  dy: 256 + 64, // the distance between nodes on the y-axis
+}
+
+// Variables
 let currentAction = computed(() => props.currentAction)
 let area = null
 
+// Create the rete graph editor
 async function createEditor(container) {
   // Create editor and engine
   const socket = new ClassicPreset.Socket('socket')
   const editor = new NodeEditor()
   const area = new AreaPlugin(container)
-  const connection = new ConnectionPlugin()
+  // const connection = new ConnectionPlugin()  // disable changing connections
   const render = new VuePlugin()
   const readonly = new ReadonlyPlugin()
-  const arrange = new AutoArrangePlugin()
   const minimap = new MinimapPlugin({
     boundViewport: true,
   })
+  const selector = AreaExtensions.selector()
+  const accumulating = AreaExtensions.accumulateOnCtrl()
+  AreaExtensions.selectableNodes(area, selector, { accumulating })
 
   // Setup and register plugins
-  AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
-    accumulating: AreaExtensions.accumulateOnCtrl(),
-  })
-
-  arrange.addPreset(ArrangePresets.classic.setup())
+  render.addPreset(
+    Presets.classic.setup({
+      customize: {
+        node(context) {
+          return Node
+        },
+      },
+    })
+  )
 
   render.addPreset(Presets.classic.setup())
   render.addPreset(Presets.minimap.setup({ size: 200 }))
-
-  connection.addPreset(ConnectionPresets.classic.setup())
+  // connection.addPreset(ConnectionPresets.classic.setup())  // disable changing connections
 
   editor.use(readonly.root)
   editor.use(area)
 
-  area.use(arrange)
   area.use(readonly.area)
-  area.use(connection)
+  // area.use(connection)  // disable changing connections
   area.use(render)
   area.use(minimap)
 
   AreaExtensions.simpleNodesOrder(area)
 
-  // Create Nodes
-  const actionMap = props.actionMap
-  async function dfs(node) {
-    const n = new ClassicPreset.Node(`Action ${node.position}`)
-    if (node.position != 0) {
+  // Use d3's layout algorithm to calculate node positions
+  const tree = d3.hierarchy(props.actionMap)
+  d3.tree().nodeSize([options.dx, options.dy])(tree)
+
+  // Helper function to create rete node
+  function createNode(node) {
+    const position = node.data.position
+    const length = node.data.children.length
+
+    // Create nodes
+    const n = new ClassicPreset.Node(`Action ${position}`)
+    n.currentAction = currentAction
+    // Create sockets
+    if (position != 0) {
       n.addInput('port', new ClassicPreset.Input(socket))
     }
-    if (node.children.length != 0) {
+    if (position != length - 1) {
       n.addOutput('port', new ClassicPreset.Output(socket))
     }
 
-    await editor.addNode(n)
+    // Add relevant props
+    n.action = node.data
+    n.currentAction = currentAction
+    return n
+  }
 
-    for (let i = 0; i < node.children.length; i++) {
+  // iterate through actionmap and create rete graph
+  async function dfs(node) {
+    // Create the node
+    const n = createNode(node)
+    await editor.addNode(n)
+    await area.translate(n.id, { x: node.y, y: node.x })
+
+    // Iterate through the children and create connections
+    for (let i = 0; i < node.data.children.length; i++) {
       const child = node.children[i]
       const childNode = await dfs(child)
       await editor.addConnection(
@@ -103,10 +134,18 @@ async function createEditor(container) {
     }
     return n
   }
-  const node = await dfs(actionMap)
-  await arrange.layout()
+  await dfs(tree)
 
   AreaExtensions.zoomAt(area, editor.getNodes())
+  readonly.enable()
+
+  area.addPipe((context) => {
+    if (context.type === 'nodepicked') {
+      const node = editor.getNode(context.data.id)
+      props.setCurrentAction(node.action)
+    }
+    return context
+  })
 
   return area
 }
@@ -121,12 +160,6 @@ onUnmounted(() => {
   area.destroy()
 })
 
-// TODO: It would be nice to render only as needed without having parents
-// make this call, but reactivity is being lost in the properties of the
-// Object passed in. Even if reactivity can be properly established, this
-// render likely needs to be throttled to avoid many render calls when
-// performing an action that affects many nodes.
-// defineExpose({ render })
 </script>
 
 <style scoped>
