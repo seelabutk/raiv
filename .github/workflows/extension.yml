@@ -27,7 +27,7 @@ jobs:
         run: cd browser_extension && yarn build
       # Compress build
       - name: Compress extension
-        run: cd browser_extension/dist && zip -rj raiv.zip *
+        run: cd browser_extension/dist && zip -r raiv.zip *
       # Create Release name
       - name: Set env
         run: echo "RELEASE_NAME='RAIV ${{ github.ref_name }}'}/" >> $GITHUB_ENV
