@@ -1,8 +1,16 @@
 <template>
-  <div class="player">
-    <video id="loom-video" class="video-js" preload="auto" muted>
-      <source :src="`/video/${videoId}/video/`" type="video/mp4" />
-    </video>
+  <div>
+    <ActionExplorer
+      ref="actionExplorer"
+      :actionMap="actionMap"
+      :currentAction="activeAction"
+      :setCurrentAction="setCurrentAction"
+    />
+    <div class="player">
+      <video id="loom-video" class="video-js" preload="auto" muted>
+        <source :src="`/video/${videoId}/video/`" type="video/mp4" />
+      </video>
+    </div>
   </div>
 </template>
 
@@ -12,15 +20,24 @@ import 'video.js/dist/video-js.css'
 import videojs from 'video.js'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import ActionExplorer from '@/components/ActionExplorer'
 
-let actionMap
-let activeAction
+let actionMap = ref({})
+let activeAction = ref({})
 let oldIndependentAction = null
 let independentActions = []
+const actionExplorer = ref(null)
 const fps = 1
 let player
 const route = useRoute()
 const videoId = ref(route.params.id)
+
+function setCurrentAction(action) {
+  if (action !== undefined) {
+    activeAction.value = action
+    seekToFrame(action.position)
+  }
+}
 
 function seekToFrame(frame) {
   if (player !== undefined) {
@@ -104,20 +121,20 @@ function getIndexPath(parent, target) {
 }
 
 function onClick(event) {
-  let newAction = findAction(event, activeAction)
+  let newAction = findAction(event, activeAction.value)
 
   if (newAction === undefined) {
     return
   }
 
-  if (!['click', 'toggle', 'toggle-off'].includes(newAction.type)) {
+  if (!['click', 'toggle', 'toggle-off', 'slider'].includes(newAction.type)) {
     return
   }
 
   if (newAction.type === 'toggle' || newAction.type === 'toggle-off') {
     const indexPath = getIndexPath(newAction, activeAction)
 
-    if (newAction === activeAction || indexPath.length > 0) {
+    if (newAction === activeAction.value || indexPath.length > 0) {
       // Toggles need to be switched to their sibling state!
       let childIndex = newAction.parent.children.indexOf(newAction)
       if (newAction.type === 'toggle') {
@@ -140,34 +157,34 @@ function onClick(event) {
 
   if (newAction.independent) {
     oldIndependentAction = newAction
-    seekToFrame(activeAction.position + newAction.idx)
+    seekToFrame(activeAction.value.position + newAction.idx)
   } else {
-    activeAction = newAction
-    seekToFrame(activeAction.position)
+    activeAction.value = newAction
+    seekToFrame(activeAction.value.position)
   }
 }
 
 function onHover(event) {
-  const newAction = findAction(event, activeAction)
+  const newAction = findAction(event, activeAction.value)
 
   // if there is a new action, and it is independent
   if (newAction !== undefined && newAction.independent) {
     if (newAction.type === 'hover') {
       oldIndependentAction = newAction
-      seekToFrame(activeAction.position + newAction.idx)
+      seekToFrame(activeAction.value.position + newAction.idx)
     }
   }
   // if not an independent action
   else {
     // if there is a new action, and it is a hover
     if (newAction !== undefined && newAction.type === 'hover') {
-      activeAction = newAction
-      seekToFrame(activeAction.position)
+      activeAction.value = newAction
+      seekToFrame(activeAction.value.position)
     }
     // if there is no new action, and the current action is a hover
-    else if (activeAction.type === 'hover') {
-      activeAction = activeAction.parent
-      seekToFrame(activeAction.position)
+    else if (activeAction.value.type === 'hover') {
+      activeAction.value = activeAction.value.parent
+      seekToFrame(activeAction.value.position)
     }
     // if there is no new action, and the current action is independent and a hover
     else if (
@@ -175,7 +192,7 @@ function onHover(event) {
       oldIndependentAction.type === 'hover'
     ) {
       oldIndependentAction = null
-      seekToFrame(activeAction.position)
+      seekToFrame(activeAction.value.position)
     }
   }
 }
@@ -185,12 +202,14 @@ function addActionElements(action, parent, addIndependent = true) {
   if (parent !== undefined) {
     action.parent = parent
   } else {
-    activeAction = action
+    activeAction.value = action
   }
 
   if (
     action.boundingBox.length === 4 &&
-    (action.type === 'click' || action.type === 'toggle')
+    (action.type === 'click' ||
+      action.type === 'toggle' ||
+      action.type === 'slider')
   ) {
     const div = document.createElement('div')
     div.style.cursor = 'pointer'
@@ -217,14 +236,14 @@ onMounted(() => {
   fetch(`/video/${videoId.value}/action-map/`)
     .then((response) => response.json())
     .then((_actionMap) => {
-      actionMap = _actionMap
+      actionMap.value = _actionMap
       const container = document.querySelector('.player')
       const videoElement = document.querySelector('#loom-video')
 
-      container.style.height = `${actionMap.height}px`
-      container.style.width = `${actionMap.width}px`
-      videoElement.style.height = `${actionMap.height}px`
-      videoElement.style.width = `${actionMap.width}px`
+      container.style.height = `${actionMap.value.height}px`
+      container.style.width = `${actionMap.value.width}px`
+      videoElement.style.height = `${actionMap.value.height}px`
+      videoElement.style.width = `${actionMap.value.width}px`
 
       player = videojs('loom-video')
       player.ready(() => {
@@ -235,11 +254,11 @@ onMounted(() => {
         })
       })
 
-      independentActions = actionMap.independentActions
+      independentActions = actionMap.value.independentActions
       for (let index = 0; index < independentActions.length; index++) {
         independentActions[index].idx = index + 1
       }
-      addActionElements(actionMap)
+      addActionElements(actionMap.value)
 
       document.addEventListener('click', onClick)
       document.addEventListener('mousemove', throttledHover)

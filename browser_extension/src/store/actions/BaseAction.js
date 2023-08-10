@@ -1,41 +1,37 @@
 import domtoimage from 'dom-to-image-more'
 import observeDOM from '@/utils/observeDOM'
 
-export default class Action {
+export default class BaseAction {
   constructor(parent, target, boundingBox, options) {
-    if (boundingBox === undefined) {
-      boundingBox = []
-    }
+    if (boundingBox === undefined) boundingBox = []
+    if (options === undefined) options = {}
 
-    if (options === undefined) {
-      options = {}
-    }
+    this.position // set at capture
+    this.type = 'action' // set by subclasses
 
+    this.parent = parent // removed at capture to avoid circular JSON
+    this.target = target
     this.boundingBox = boundingBox
-    this.canvasRanges = [1, 1] // the number of rows and columns to treat a canvas as when repeating an Action over it
     this.children = []
-    if (options.event !== undefined) {
-      this.clickPosition = [options.event.clientX, options.event.clientY]
-    } else {
-      this.clickPosition = []
-    }
+
     this.disableSiblings = false // during playback, should performing this interaction prevent this Action's siblings from being available (eg because this Action closes a dialog)?
     this.frameCount = 1 // the number of frames this Action and its children represent
     this.manualCapture = false // this forces the Action capture to be confirmed by the user, useful if the user needs to position an element before capture
-    this.parent = parent // removed at capture to avoid circular JSON
-    this.position // set at capture
-    this.scrollPosition =
-      document.documentElement.scrollTop || document.body.scrollTop
     this.siblings = []
-    this.target = target
-    this.type = options.type
     this.independent = options.independent === true
     this.useSiblings = false
     this.visible = options.visible === true
+
+    this.clickPosition =
+      options.event !== undefined
+        ? [options.event.clientX, options.event.clientY]
+        : []
+    this.scrollPosition =
+      document.documentElement.scrollTop || document.body.scrollTop
     this.waitTime = 0 // milliseconds before capture occurs, cannot be below 500ms in Chrome
     this.timeout = 1000 // timeout for the action to complete, in milliseconds
     this.capturedImageSize = [0, 0] // [width, height] of the captured iamge
-
+    this.canvasRanges = [1, 1] // the number of rows and columns to treate a canvas as when repeating an Action over it
     if (this.visible) {
       this._findSiblings()
     }
@@ -104,59 +100,15 @@ export default class Action {
   }
 
   _takeAction() {
-    // Initiate the interaction
-    if (this.target instanceof Element) {
-      if (this.type === 'click' || this.type === 'toggle') {
-        this.target.dispatchEvent(
-          new MouseEvent('click', {
-            bubbles: true,
-            clientX:
-              this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
-            clientY:
-              this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
-          })
-        )
-      } else if (this.type === 'hover') {
-        this.target.dispatchEvent(
-          new MouseEvent('mouseover', {
-            bubbles: true,
-            clientX:
-              this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
-            clientY:
-              this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
-          })
-        )
-
-        this.target.dispatchEvent(
-          new MouseEvent('mousemove', {
-            bubbles: true,
-            clientX:
-              this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
-            clientY:
-              this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
-          })
-        )
-      }
-    }
+    // This is a stub method that should be overridden by subclasses
   }
 
   _revertActionPreChildren() {
-    if (this.type === 'hover') {
-      this.target.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }))
-    }
+    // This is a stub method that should be overridden by subclasses
   }
 
-  // If the action is a toggle, then we need to dispatch a click event to remove the toggle.
   _revertActionPostChildren() {
-    if (this.type === 'toggle') {
-      this.target.dispatchEvent(
-        new MouseEvent('click', {
-          bubbles: true,
-          clientX: this.clickPosition.length === 2 ? this.clickPosition[0] : 0,
-          clientY: this.clickPosition.length === 2 ? this.clickPosition[1] : 0,
-        })
-      )
-    }
+    // This is a stub method that should be overridden by subclasses
   }
 
   async _captureCanvas(port) {
@@ -177,7 +129,11 @@ export default class Action {
     })
   }
 
-  async capture(port, root = false, independentActions = undefined) {
+  async _capture(port, root = false, independentActions = undefined) {
+    // async _capture(port, position, root = false, independentActions = undefined) {
+    // save the current frame position
+    // this.position = position
+
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
       window.scrollTo(0, this.scrollPosition)
@@ -233,22 +189,42 @@ export default class Action {
         }
       })
     )
-
+    // Increment the frame position
+    // position++
     this._revertActionPreChildren()
 
     // Iterate through the independent actions and capture them.
     if (independentActions !== undefined) {
       for (let index = 0; index < independentActions.length; index++) {
         independentActions[index].position = this.position + index + 1
-        await independentActions[index].capture(port, false, undefined)
+        // position = await independentActions[index].capture(
+        await independentActions[index].capture(
+          port,
+          // position,
+          false,
+          undefined
+        )
       }
     }
 
     for (let index = 0; index < this.children.length; index++) {
-      await this.children[index].capture(port, false, independentActions)
+      // position = await this.children[index].capture(
+      await this.children[index].capture(
+        port,
+        // position,
+        false,
+        independentActions
+      )
     }
 
     this._revertActionPostChildren()
+    // return position
+  }
+
+  // async capture(port, position, root = false, independentActions = undefined) {
+  async capture(port, root = false, independentActions = undefined) {
+    // return await this._capture(port, position, root, independentActions)
+    return await this._capture(port, root, independentActions)
   }
 
   toggleSiblings(actionMap) {
@@ -256,7 +232,7 @@ export default class Action {
 
     if (this.useSiblings) {
       for (let index = 0; index < this.siblings.length; index++) {
-        const action = new Action(parent, this.siblings[index], {
+        const action = new BaseAction(parent, this.siblings[index], {
           copy: this,
           visible: false,
         })
