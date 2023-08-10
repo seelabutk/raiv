@@ -7,7 +7,7 @@ on:
 jobs:
   publish_to_github_packages:
     name: Build Chrome extension and Publish to Github Packages
-    runs-on: ubtun
+    runs-on: ubuntu-latest
     steps:
       # Check out repository
       - name: Check out the repo
