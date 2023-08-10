@@ -3,7 +3,7 @@ name: Build and Package Chrome Extension
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 jobs:
   publish_to_github_packages:
     name: Build Chrome extension and Publish to Github Packages
