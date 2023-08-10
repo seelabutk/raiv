@@ -12,11 +12,11 @@ jobs:
     name: Build Chrome extension and Publish to Github Packages
     runs-on: ubuntu-latest
     steps:
-      # Get github tag name
-      - name: Retrieve Tag Name
-        run: |
-           echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-           echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+#       # Get github tag name
+#       - name: Retrieve Tag Name
+#         run: |
+#            echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+#            echo "Tag name from github.ref_name: ${{  github.ref_name }}"
       # Check out repository
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -36,6 +36,9 @@ jobs:
       # Compress build
       - name: Compress extension
         run: zip -rj raiv.zip browser_extension/dist/*
+      # Create Release name
+      - name: Set env
+        run: echo "RELEASE_NAME='RAIV ${{ github.ref_name }}'}/" >> $GITHUB_ENV
       # Create draft release
       - name: Create Draft Release
         id: create_release
@@ -43,8 +46,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: 1.0.1
-          release_name: raiv
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ env.RELEASE_VERSION }}
           draft: true
           prerelease: false
       # Add zip as asset to draft release
