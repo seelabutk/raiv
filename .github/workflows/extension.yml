@@ -1,8 +1,5 @@
 name: Build and Package Chrome Extension
 
-# on:
-#   push:
-#     branches: [ "main" ]
 on:
   push:
     tags:
@@ -12,11 +9,6 @@ jobs:
     name: Build Chrome extension and Publish to Github Packages
     runs-on: ubuntu-latest
     steps:
-#       # Get github tag name
-#       - name: Retrieve Tag Name
-#         run: |
-#            echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-#            echo "Tag name from github.ref_name: ${{  github.ref_name }}"
       # Check out repository
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -35,7 +27,7 @@ jobs:
         run: cd browser_extension && yarn build
       # Compress build
       - name: Compress extension
-        run: zip -rj raiv.zip browser_extension/dist/*
+        run: cd browser_extension/dist && zip -rj raiv.zip *
       # Create Release name
       - name: Set env
         run: echo "RELEASE_NAME='RAIV ${{ github.ref_name }}'}/" >> $GITHUB_ENV
@@ -56,7 +48,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./raiv.zip
+          asset_path: ./browser_extension/dist/raiv.zip
           asset_name: raiv.zip
           asset_content_type: application/zip
       # Publish release
