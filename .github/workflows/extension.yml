@@ -19,12 +19,16 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           # Defaults to the user or organization that owns the workflow file
           scope: '@octocat'
+      # Install dependencies
       - name: Install extension dependencies
         run: cd browser_extension && yarn install --frozen-lockfile 
+      # Build extension
       - name: Build extension
         run: cd browser_extension && yarn build
+      # Compress build
       - name: Compress extension
-        run: zip -rj raiv.zip dist/*
+        run: zip -rj raiv.zip browser_extension/dist/*
+      # Create draft release
       - name: Create Draft Release
         id: create_release
         uses: actions/create-release@v1
@@ -35,6 +39,7 @@ jobs:
           release_name: raiv
           draft: true
           prerelease: false
+      # Add zip as asset to draft release
       - uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
