@@ -22,7 +22,7 @@ jobs:
       - name: Install extension dependencies
         run: cd browser_extension && yarn install --frozen-lockfile 
       - name: Build extension
-        run: yarn build
+        run: cd browser_extension && yarn build
       - name: Compress extension
         run: zip -rj raiv.zip dist/*
       - name: Create Draft Release
@@ -35,6 +35,14 @@ jobs:
           release_name: raiv
           draft: true
           prerelease: false
+      - uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./raiv.zip
+          asset_name: raiv.zip
+          asset_content_type: application/zip
 
 # cd browser_extension && yarn install --frozen-lockfile
 # yarn build
