@@ -89,7 +89,7 @@ def encode_video(video_id, action_map):
 	], check=True)
 	os.chdir(cwd)
 
-	rmtree(path)
+	# rmtree(path)
 
 
 def stat_video(video_id):
