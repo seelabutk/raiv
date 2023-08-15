@@ -15,6 +15,7 @@ RUN apt install -y nodejs
 
 COPY src /opt/run/src
 COPY client /opt/run/client
+COPY policy.xml /etc/ImageMagick-6/policy.xml
 
 RUN npm install --global yarn
 WORKDIR /opt/run/client
@@ -30,3 +31,4 @@ RUN pip install \
   pydantic \
   requests \
   uvicorn[standard]
+
