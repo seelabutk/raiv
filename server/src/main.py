@@ -7,7 +7,7 @@ from uuid import uuid4
 from datetime import datetime
 import requests
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.security import OAuth2PasswordBearer
@@ -172,43 +172,49 @@ async def video__post(video: Video, token: str = Depends(oauth2_scheme)):
 	return uuid
 
 
+def _compose_video(video_id, video):
+	# update the action map if anything has changed
+	action_map = _update_action_map(video_id, video.actionMap)
+
+	# merge frames from scroll if necessary
+	merge_frames(video_id)
+
+	path = os.path.join(VIDEO_DIR, video_id)
+	copy(
+		os.path.join(path, 'frames', '00000.png'),
+		os.path.join(path, 'first_frame.png')
+	)
+
+	# encode the frames into a video
+	encode_video(video_id, action_map)
+
+	# scale the video if necessary
+	devicePixelRatio = action_map.get(
+		'metadata', {}).get('devicePixelRatio', 1)
+	scale_video(video_id, devicePixelRatio)
+
+	# update the metadata
+	video_stat = stat_video(video_id)
+	_update_metadata(video_id, {
+		'complete': video.complete,
+		'updated': datetime.now().isoformat(),
+		'size': video_stat.st_size
+	})
+
+
 @app.patch('/video/{video_id}/', dependencies=[Depends(validate_token)])
 async def video__patch(
-		video_id,
-		video: Video,
-		token: str = Depends(oauth2_scheme)
+	video_id,
+	video: Video,
+	background_tasks: BackgroundTasks,
+	token: str = Depends(oauth2_scheme)
 ):
 	""" Encode the video once the front-end is done sending frames. """
 	verify_token(video_id, token)
 
-
 	if video.complete:
-		# update the action map if anything has changed
-		action_map = _update_action_map(video_id, video.actionMap)
+		background_tasks.add_task(_compose_video, video_id, video)
 
-		# merge frames from scroll if necessary
-		merge_frames(video_id)
-
-		path = os.path.join(VIDEO_DIR, video_id)
-		copy(
-			os.path.join(path, 'frames', '00000.png'),
-			os.path.join(path, 'first_frame.png')
-		)
-
-		# encode the frames into a video
-		encode_video(video_id, action_map)
-
-		# scale the video if necessary
-		devicePixelRatio = action_map.get('metadata', {}).get('devicePixelRatio', 1)
-		scale_video(video_id, devicePixelRatio)
-
-		# update the metadata
-		video_stat = stat_video(video_id)
-		_update_metadata(video_id, {
-			'complete': video.complete,
-			'updated': datetime.now().isoformat(),
-			'size': video_stat.st_size
-		})
 	return video_id
 
 
