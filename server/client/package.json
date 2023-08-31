@@ -12,6 +12,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/vue-fontawesome": "^3.0.3",
+    "@mdi/font": "^7.2.96",
     "core-js": "^3.8.3",
     "d3": "^7.8.5",
     "elkjs": "^0.8.2",
@@ -32,6 +33,7 @@
     "vue": "^3.2.13",
     "vue-router": "4",
     "vue-tippy": "v6",
+    "vuetify": "^3.3.15",
     "web-worker": "^1.2.0"
   },
   "devDependencies": {

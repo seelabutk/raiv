@@ -1,42 +1,59 @@
 <template>
-  <router-link :to="`/player/${props.videoId}/`">
-    <h2>{{ props.name }}</h2>
-    <img :src="`/video/${props.videoId}/preview/`" />
-    <table>
-      <tbody>
-        <tr>
-          <td>Created:</td>
-          <td>{{ created }}</td>
-        </tr>
-        <tr>
-          <td>Updated:</td>
-          <td>{{ updated }}</td>
-        </tr>
-        <tr>
-          <td>File Size:</td>
-          <td>{{ fileSize }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="card--action-btns">
-      <tippy content="Download Archive" content-class="tippy-tooltip">
-        <button class="card--download" @click="downloadVideo">
-          <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-download" />
-        </button>
-      </tippy>
-      <tippy content="Delete Archive" content-class="tippy-tooltip">
-        <button class="card--delete" @click="deleteVideo">
-          <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-trash" />
-        </button>
-      </tippy>
-    </div>
-  </router-link>
+  <v-card min-width="300">
+    <router-link :to="`/player/${props.videoId}/`">
+      <v-img
+        :src="`/video/${props.videoId}/preview/`"
+        class="align-end"
+        gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,1)"
+        height="200"
+        cover
+      >
+        <v-card-title class="text-white">{{ props.name }}</v-card-title>
+      </v-img>
+    </router-link>
+
+    <v-card-actions>
+      <v-spacer />
+
+      <v-tooltip :text="shareText" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-bind="props"
+            icon="mdi-share-variant"
+            size="small"
+            @click="shareVideo"
+          />
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Download" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-bind="props"
+            icon="mdi-download"
+            size="small"
+            @click="downloadVideo"
+          />
+        </template>
+      </v-tooltip>
+
+      <v-tooltip text="Delete" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-bind="props"
+            color="red"
+            icon="mdi-delete"
+            size="small"
+            @click="deleteVideo"
+          />
+        </template>
+      </v-tooltip>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script setup>
-import { defineEmits, defineProps, computed } from 'vue'
-import { humanFileSize } from '@/utils/HumanFileSize'
-import 'tippy.js/dist/tippy.css'
+import { defineEmits, defineProps, ref } from 'vue'
 
 const props = defineProps({
   name: {
@@ -54,24 +71,24 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['delete'])
+const shareText = ref('Share')
 
-// Format Archive metadata
-const created = computed(() =>
-  new Date(props.metadata.created).toLocaleString()
-)
-const updated = computed(() =>
-  new Date(props.metadata.updated).toLocaleString()
-)
-const fileSize = computed(() => humanFileSize(props.metadata.size))
+function shareVideo() {
+  navigator.clipboard.writeText(
+    new URL(`/player/${props.videoId}/`, window.location.origin).href
+  )
 
-function downloadVideo(event) {
-  event.preventDefault()
+  shareText.value = 'Copied to clipboard!'
+  setTimeout(() => {
+    shareText.value = 'Share'
+  }, 2000)
+}
+
+function downloadVideo() {
   window.open(`/video/${props.videoId}/download/`)
 }
 
-function deleteVideo(event) {
-  event.preventDefault()
-
+function deleteVideo() {
   const apiKey = prompt(
     `To delete "${props.name}", please enter the API key used to generate it.`
   )
@@ -92,54 +109,3 @@ function deleteVideo(event) {
   })
 }
 </script>
-
-<style scoped>
-a {
-  border: 1px solid black;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  margin: 1em;
-  height: 350px;
-  width: 300px;
-  padding: 1em;
-  position: relative;
-}
-
-h2 {
-  margin-bottom: 0.5em;
-  text-align: center;
-  font-weight: bold;
-}
-
-img {
-  height: 200px;
-  overflow: hidden;
-  border: 1px solid black;
-  margin-bottom: 1em;
-}
-
-.card--action-btns {
-  margin-top: 1em;
-  display: flex;
-  flex-direction: row;
-  gap: 0 1em;
-}
-
-button {
-  cursor: pointer;
-  border-radius: 4px;
-  padding: 0.5em;
-  border: 1px solid #000000;
-}
-
-.card--download {
-  background: #eeeeee;
-  color: black;
-}
-
-.card--delete {
-  background: red;
-  color: white;
-}
-</style>
