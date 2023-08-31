@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 anyio = "*"
+chardet = "*"
 fastapi = "*"
 gunicorn = "*"
 pydantic = "*"
