@@ -14,6 +14,9 @@ import {
   faBars,
   faX,
 } from '@fortawesome/free-solid-svg-icons'
+import '@mdi/font/css/materialdesignicons.css'
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
 import VueTippy from 'vue-tippy'
 
 import App from '@/App.vue'
@@ -41,10 +44,19 @@ const router = createRouter({
   ],
 })
 
+import * as components from 'vuetify/components'
+import * as directives from 'vuetify/directives'
+
+const vuetify = createVuetify({
+  components,
+  directives,
+})
+
 const app = createApp(App)
 
 app.component('font-awesome-icon', FontAwesomeIcon)
 app.use(router)
+app.use(vuetify)
 app.use(VueTippy, {
   defaultProps: {
     placement: 'bottom',
