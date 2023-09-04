@@ -38,8 +38,7 @@ def get_vec_db(db_dir, collection_name="raiv"):
 
 
 def populate_vec_db(video_dir, collection_name="raiv"):
-	# get the collection
-	collection = get_vec_db(video_dir, collection_name)
+
 
 	# get list of video directories
 	video_dirs = [
@@ -54,8 +53,15 @@ def populate_vec_db(video_dir, collection_name="raiv"):
 		for name in video_dirs
 		if os.path.exists(os.path.join(video_dir, name, "video.mp4"))
 	]
+	
+	add_videos_to_vec_db(video_dir, video_dirs, video_fns, collection_name=collection_name)
 
-	# get the embedder model
+
+def add_videos_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv"):
+	# get the collection
+	collection = get_vec_db(video_dir, collection_name)
+ 
+    # get the embedder model
 	options = get_embedder_options(video_dir)
 	with vision.ImageEmbedder.create_from_options(options) as embedder:
 		# iterate over videos
@@ -74,7 +80,6 @@ def populate_vec_db(video_dir, collection_name="raiv"):
 					},
 					ids=f'{id}-{frame_no}',
 				)
-
 
 def query_vec_db(video_dir, query_image, collection_name="raiv", n_results=2):
 	# get the collection

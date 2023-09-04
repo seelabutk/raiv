@@ -29,6 +29,7 @@ from .vector_db import (
 	populate_vec_db,
 	query_vec_db,
 	image_from_bin,
+ 	add_videos_to_vec_db,
 )
 
 
@@ -220,6 +221,13 @@ def _compose_video(video_id, video):
 		'updated': datetime.now().isoformat(),
 		'size': video_stat.st_size
 	})
+ 
+	# add the video to the vector db
+	add_videos_to_vec_db(
+		VIDEO_DIR, 
+		[video_id], 
+		[os.path.join(path, "video.mp4")]
+	)
 
 
 @app.patch('/video/{video_id}/', dependencies=[Depends(validate_token)])
