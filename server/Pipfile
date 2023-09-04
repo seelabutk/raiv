@@ -11,6 +11,12 @@ gunicorn = "*"
 pydantic = "*"
 "uvicorn[standard]" = "*"
 requests = "*"
+chromadb = "*"
+mediapipe = "*"
+numpy = "*"
+opencv-python = "*"
+hnswlib = "*"
+pyparsing = "*"
 
 [dev-packages]
 flake8 = "*"

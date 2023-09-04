@@ -7,11 +7,15 @@ from uuid import uuid4
 from datetime import datetime
 import requests
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, BackgroundTasks
+from fastapi import (
+    Depends, FastAPI, Header, HTTPException, 
+    Request, BackgroundTasks
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
+
 
 from .util import (
 	encode_video, 
@@ -19,6 +23,12 @@ from .util import (
 	scale_video, 
 	zipfiles, 
 	stat_video
+)
+from .vector_db import (
+	get_embedder_model,
+	populate_vec_db,
+	query_vec_db,
+	image_from_bin,
 )
 
 
@@ -48,6 +58,12 @@ class Video(BaseModel):
 	complete: bool = False
 
 
+class Query(BaseModel):
+    image: str = None
+    text: str = None
+    nResults: int = 1
+
+
 app = FastAPI()
 app.add_middleware(
 	CORSMiddleware,
@@ -62,6 +78,10 @@ api_keys = []
 if os.path.exists(API_KEY_FILE):
 	with open(API_KEY_FILE, encoding='utf-8') as f:
 		api_keys = json.load(f)
+
+# get the embedder model and populate the db (if any videos exist)
+get_embedder_model(VIDEO_DIR)
+populate_vec_db(VIDEO_DIR)
 
 def validate_token(token: str = Depends(oauth2_scheme)):
 	if token not in api_keys:
@@ -360,6 +380,14 @@ async def video__get__detail(video_id, range: str = Header(None)):  # pylint: di
 			headers=headers,
 			media_type='video/mp4'
 		)
+
+
+@app.post('/search/image/')
+async def video_reverse_search(query:Query):
+    frame_data = b64decode(query.image.split(',')[1])
+    image = image_from_bin(frame_data)
+    results = query_vec_db(VIDEO_DIR, image, n_results=query.nResults)
+    return results
 
 
 @app.get('/{path:path}')
