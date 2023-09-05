@@ -203,7 +203,6 @@ function findActionByFrame(frame) {
   const root = actionMap.value
   let minClosestFrame = 0
   let minClosestAction = root
-  let maxClosestFrame = Number.MAX_SAFE_INTEGER
 
   const dfs = (action) => {
     if (action.position <= frame) {
