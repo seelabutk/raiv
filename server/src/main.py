@@ -255,7 +255,7 @@ async def video__get__list():
 	objects = []
 	for video_id in video_list:
 		path = os.path.join(VIDEO_DIR, video_id)
-		if os.path.isdir(path): # and not os.path.exists(os.path.join(path, 'frames')):
+		if os.path.isdir(path) and not video_id == "embeddings": # and not os.path.exists(os.path.join(path, 'frames')):
 			with open(
 				os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
 			) as action_file:

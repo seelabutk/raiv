@@ -25,11 +25,13 @@ def read_video(path):
 	return frames[:, :, :, ::-1]
 
 
-def get_vec_db(db_dir, collection_name="raiv"):
+def get_vec_db(video_dir, collection_name="raiv"):
 	""" Get or create the chrome collection. """
-
+	path = os.path.join(video_dir, 'embeddings')
+	os.makedirs(path, exist_ok=True)
+ 
 	# get the chroma client
-	client = chromadb.PersistentClient(path=db_dir)
+	client = chromadb.PersistentClient(path=path)
 
 	# get or create the collection
 	collection = client.get_or_create_collection(collection_name)
@@ -38,8 +40,6 @@ def get_vec_db(db_dir, collection_name="raiv"):
 
 
 def populate_vec_db(video_dir, collection_name="raiv"):
-
-
 	# get list of video directories
 	video_dirs = [
 		name
