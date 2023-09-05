@@ -41,6 +41,7 @@ const router = createRouter({
   routes: [
     { path: '/', component: GalleryPage },
     { path: '/player/:id', component: PlayerPage },
+    { path: '/player/:id/:frameNo', component: PlayerPage },
   ],
 })
 

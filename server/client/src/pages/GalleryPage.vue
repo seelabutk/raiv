@@ -1,6 +1,5 @@
 <template>
   <!-- <nav> -->
-  <!-- https://vuetifyjs.com/en/api/v-toolbar/ -->
   <v-toolbar class="pa-4" flat height="70px" elevation="0">
     <!-- Title  -->
     <v-toolbar-title>RAIV Gallery</v-toolbar-title>
@@ -9,10 +8,10 @@
 
     <!-- Search Bar -->
     <v-text-field
-      class="mr-4"
+      class="mr-4 nav--search-bar"
       variant="solo-filled"
       v-model="searchQuery"
-      prepend-icon="mdi-magnify"
+      prepend-inner-icon="mdi-magnify"
       placeholder="Search"
       density="compact"
       hide-details
@@ -20,10 +19,8 @@
     ></v-text-field>
 
     <!-- Order By Field -->
-
-    <!-- https://vuetifyjs.com/en/api/v-select/ -->
     <v-select
-      class="mr-4"
+      class="mr-4 nav--sort-by"
       variant="solo-filled"
       v-model="sortType"
       density="compact"
@@ -59,21 +56,23 @@
       <template v-slot:activator="{ props }">
         <v-btn icon v-bind="props">
           <v-icon>mdi-image-search</v-icon>
-          <v-dialog 
-          v-model="searchDialog" 
-          activator="parent" width="400px">
+          <v-dialog v-model="searchDialog" activator="parent" width="400px">
             <v-card>
               <v-card-title>
                 <span class="text-h5">Image Search</span>
               </v-card-title>
               <v-card-text>
-                  <v-file-input
-                    v-model="imageSearchFile"
-                    variant="solo-filled"
-                    prepend-icon="mdi-image"
-                    accept="image/*"
-                    label="File input"
-                  ></v-file-input>
+                <v-file-input
+                  v-model="imageSearchFile"
+                  variant="solo-filled"
+                  density="compact"
+                  prepend-icon=""
+                  prepend-inner-icon="mdi-image"
+                  accept="image/*"
+                  label="File input"
+                  hide-details
+                  single-line
+                ></v-file-input>
               </v-card-text>
 
               <v-card-actions>
@@ -102,6 +101,24 @@
 
   <!--Video Preview Gallery  -->
   <div class="gallery">
+    <div v-if="imageSearchResults.length > 0">
+      <!-- <v-divider></v-divider> -->
+      <span class="text-h5">Search Results</span>
+      <ul>
+        <PreviewCard
+          v-for="video in imageSearchResults"
+          :key="`${video.id}-${video.frame_no}`"
+          :id="`${video.id}-${video.frame_no}`"
+          :name="video.name"
+          :video-id="video.id"
+          :metadata="video.metadata"
+          :frameNo="video.frame_no"
+          @delete="deleteCard(video)"
+        ></PreviewCard>
+      </ul>
+      <v-divider></v-divider>
+      <span class="text-h5 mb-2">All</span>
+    </div>
     <ul>
       <PreviewCard
         v-for="video in getVideoList(sortType, sortReversed)"
@@ -134,6 +151,7 @@ const orderByOptions = ref([
 ])
 const sortType = ref({ text: 'Created', value: 'created' })
 const imageSearchFile = ref([])
+const imageSearchResults = ref([])
 
 function deleteCard(video) {
   const index = videos.value.indexOf(video)
@@ -167,7 +185,7 @@ function sortVideoList(videoList, sortType = 'created', reversed = false) {
   return videoList
 }
 
-function toggleDialog(value=undefined) {
+function toggleDialog(value = undefined) {
   if (value === undefined) {
     searchDialog.value = !searchDialog.value
   } else {
@@ -184,16 +202,17 @@ function filterVideos(videoList) {
 async function imageSearch() {
   toggleDialog(false)
   // Do nothing if no file uploaded
+  imageSearchResults.value = []
   if (imageSearchFile.value.length === 0) {
     return
   }
-  
+
   // Get file input and clear the form
   const fileInput = imageSearchFile.value[0]
   function getBase64(file) {
     const reader = new FileReader()
-    return new Promise(resolve => {
-      reader.onload = ev => {
+    return new Promise((resolve) => {
+      reader.onload = (ev) => {
         resolve(ev.target.result)
       }
       reader.readAsDataURL(file)
@@ -203,25 +222,28 @@ async function imageSearch() {
   imageSearchFile.value = []
 
   // Build query
-  const nResults = 1
-  const body = JSON.stringify({ image, nResults:nResults })
+  const nResults = 3
+  const body = JSON.stringify({ image, nResults: nResults })
   const res = await fetch('/search/image/', {
-    method: "POST",
+    method: 'POST',
     headers: {
       'Content-type': 'application/json; charset=UTF-8',
     },
-    body
-  }).then(res => res.json())
+    body,
+  }).then((res) => res.json())
 
-  // Filter results 
-  videoList = res.metadatas[0]
-  videoList = videoList.map(video => {
-    const v = videos.value.find(v => v.id === video.video_id)
-    v.frame_no = video.frame_no
-    return v
+  // Filter results
+  console.log(res.metadatas[0])
+  imageSearchResults.value = res.metadatas[0].map((video) => {
+    const v = videos.value.find((v) => v.id === video.video_id)
+    return {
+      id: v.id,
+      name: v.name,
+      metadata: v.metadata,
+      frame_no: video.frame_no,
+    }
   })
-  console.log(videoList)
-
+  console.log(imageSearchResults.value)
   // TODO - Display video list to the user
 }
 
@@ -235,7 +257,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-
 ul {
   display: flex;
   flex-wrap: wrap;
@@ -249,5 +270,11 @@ ul {
 
 .gallery {
   padding: 2em;
+}
+.nav--search-bar {
+  max-width: 300px;
+}
+.nav--sort-by {
+  max-width: 150px;
 }
 </style>

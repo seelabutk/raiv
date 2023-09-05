@@ -1,6 +1,12 @@
 <template>
-  <v-card min-width="300">
-    <router-link :to="`/player/${props.videoId}/`">
+  <v-card min-width="300" class="ma-4">
+    <router-link
+      :to="
+        props.frameNo === undefined
+          ? `/player/${props.videoId}/`
+          : `/player/${props.videoId}/${props.frameNo}/`
+      "
+    >
       <v-img
         :src="`/video/${props.videoId}/preview/`"
         class="align-end"
@@ -13,6 +19,9 @@
     </router-link>
 
     <v-card-actions>
+      <span v-if="props.frameNo !== undefined" class="mr-2">
+        Frame {{ props.frameNo }}
+      </span>
       <v-spacer />
 
       <v-tooltip :text="shareText" location="bottom">
@@ -67,6 +76,10 @@ const props = defineProps({
   metadata: {
     required: true,
     type: Object,
+  },
+  frameNo: {
+    required: false,
+    type: Number,
   },
 })
 
