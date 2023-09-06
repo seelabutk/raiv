@@ -1,69 +1,145 @@
 <template>
-  <nav>
-    <h1 class="nav--title">RAIV Gallery</h1>
+  <v-layout>
+    <v-app-bar elevation="0" color="grey-lighten-3">
+      <!-- Title  -->
+      <v-toolbar-title class="font-weight-bold">RAIV Gallery</v-toolbar-title>
 
-    <!-- Search Bar -->
-    <div class="nav--searchbar">
-      <font-awesome-icon
-        class="fa-fw fa-sm"
-        icon="fa-solid fa-magnifying-glass"
-      />
-      <input
+      <v-spacer></v-spacer>
+
+      <!-- Search Bar -->
+      <v-text-field
+        class="mr-4 nav--search-bar"
+        variant="solo-filled"
         v-model="searchQuery"
-        class="nav--searchbar-input"
-        type="text"
+        prepend-inner-icon="mdi-magnify"
         placeholder="Search"
-      />
-    </div>
+        density="compact"
+        hide-details
+        single-line
+      ></v-text-field>
 
-    <!-- Order By Field -->
-    <tippy
-      content="Select the field objects are ordered by."
-      content-class="tippy-tooltip"
-    >
-      <div class="nav--sortby">
-        <select name="sort" v-model="sortType" class="nav--sortby-select">
-          <option value="created">Created</option>
-          <option value="updated">Updated</option>
-          <option value="size">File Size</option>
-          <option value="title">Title</option>
-        </select>
-        <font-awesome-icon class="fa-fw fa-sm" icon="fa-solid fa-caret-down" />
-      </div>
-    </tippy>
+      <!-- Order By Field -->
+      <v-select
+        class="mr-4 nav--sort-by"
+        variant="solo-filled"
+        v-model="sortType"
+        density="compact"
+        :items="orderByOptions"
+        item-value="value"
+        item-title="text"
+        label="Sort By"
+        hide-details
+        return-object
+        single-line
+      ></v-select>
 
-    <!-- Order Direction -->
-    <div class="nav--sort-dir" @click="sortReversed = !sortReversed">
-      <tippy
-        v-if="sortReversed"
-        content="Order Ascending"
-        content-class="tippy-tooltip"
+      <!-- Order Direction -->
+      <v-tooltip
+        :text="sortReversed ? 'Order Ascending' : 'Order Descending'"
+        location="bottom"
       >
-        <font-awesome-icon class="fa-fw fa-sm" icon="fa-solid fa-arrow-up" />
-      </tippy>
-      <tippy
-        v-if="!sortReversed"
-        content="Order Descending"
-        content-class="tippy-tooltip"
-      >
-        <font-awesome-icon class="fa-fw fa-sm" icon="fa-solid fa-arrow-down" />
-      </tippy>
-    </div>
-  </nav>
+        <template v-slot:activator="{ props }">
+          <v-btn
+            icon
+            class="mr-4"
+            v-bind="props"
+            @click="sortReversed = !sortReversed"
+          >
+            <v-icon v-if="sortReversed">mdi-arrow-up</v-icon>
+            <v-icon v-if="!sortReversed">mdi-arrow-down</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
 
-  <!--Video Preview Gallery  -->
-  <div class="gallery">
-    <ul>
-      <PreviewCard
-        v-for="video in getVideoList(sortType, sortReversed)"
-        :key="video.id"
-        :name="video.name"
-        :video-id="video.id"
-        :metadata="video.metadata"
-        @delete="deleteCard(video)"
-      ></PreviewCard>
-    </ul>
-  </div>
+      <!-- Image Search -->
+      <v-tooltip text="Image Search" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn icon v-bind="props">
+            <v-icon>mdi-image-search</v-icon>
+            <v-dialog v-model="searchDialog" activator="parent" width="400px">
+              <v-card>
+                <v-card-title>
+                  <span class="text-h5">Image Search</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-file-input
+                    v-model="imageSearchFile"
+                    variant="solo-filled"
+                    density="compact"
+                    prepend-icon=""
+                    prepend-inner-icon="mdi-image"
+                    accept="image/*"
+                    label="File input"
+                    hide-details
+                    single-line
+                  ></v-file-input>
+                </v-card-text>
+
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    color="blue-darken-1"
+                    variant="text"
+                    @click="toggleDialog(false)"
+                  >
+                    Close
+                  </v-btn>
+                  <v-btn
+                    color="blue-darken-1"
+                    variant="text"
+                    @click="imageSearch()"
+                  >
+                    Search
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </v-btn>
+        </template>
+      </v-tooltip>
+    </v-app-bar>
+
+    <!--Video Preview Gallery  -->
+    <v-main>
+      <v-container fluid class="pa-8">
+        <v-row
+          v-if="imageSearchResults.length > 0 || searchQuery.length > 0"
+          class="px-4"
+        >
+          <span class="text-h5">Search Results</span>
+          <v-spacer></v-spacer>
+          <v-btn
+            append-icon="mdi-close-box"
+            variant="plain"
+            @click="clearSearch"
+          >
+            Clear
+          </v-btn>
+          <v-divider></v-divider>
+        </v-row>
+        <v-row>
+          <ul>
+            <PreviewCard
+              v-for="video in getFilteredAndSortedVideoList(
+                sortType,
+                sortReversed
+              )"
+              :key="
+                imageSearchResults.length
+                  ? `${video.id}-${video.frame_no}`
+                  : video.id
+              "
+              :name="video.name"
+              :video-id="video.id"
+              :metadata="video.metadata"
+              :frameNo="video.frame_no"
+              @delete="deleteCard(video)"
+            ></PreviewCard>
+          </ul>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-layout>
 </template>
 
 <script setup>
@@ -72,10 +148,19 @@ import PreviewCard from '@/components/PreviewCard'
 import 'tippy.js/dist/tippy.css'
 import { getSortFunction } from '@/utils/Sorts'
 
-const sortType = ref('created')
 const sortReversed = ref(false)
 const videos = ref([])
 const searchQuery = ref('')
+const searchDialog = ref(false)
+const orderByOptions = ref([
+  { text: 'Created', value: 'created' },
+  { text: 'Updated', value: 'updated' },
+  { text: 'File Size', value: 'size' },
+  { text: 'Title', value: 'title' },
+])
+const sortType = ref({ text: 'Created', value: 'created' })
+const imageSearchFile = ref([])
+const imageSearchResults = ref([])
 
 function deleteCard(video) {
   const index = videos.value.indexOf(video)
@@ -85,14 +170,25 @@ function deleteCard(video) {
   }
 }
 
-function getVideoList(sortType = 'created', reversed = false) {
-  let videoList = videos.value
+function getVideoList() {
+  if (imageSearchResults.value.length > 0) {
+    return imageSearchResults.value
+  }
+  return videos.value
+}
+function getFilteredAndSortedVideoList(
+  sortType = { text: 'Created', value: 'created' },
+  reversed = false
+) {
+  // retreive the proper video list
+  let videoList = getVideoList()
+
   // filter videos
   videoList = filterVideos(videoList)
 
   // sort videos
   if (sortType) {
-    videoList = sortVideoList(videoList, sortType, reversed)
+    videoList = sortVideoList(videoList, sortType.value, reversed)
   }
   return videoList
 }
@@ -106,10 +202,69 @@ function sortVideoList(videoList, sortType = 'created', reversed = false) {
   return videoList
 }
 
+function toggleDialog(value = undefined) {
+  if (value === undefined) {
+    searchDialog.value = !searchDialog.value
+  } else {
+    searchDialog.value = value
+  }
+}
+
 function filterVideos(videoList) {
   return videoList.filter((video) =>
     video.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
+}
+
+function clearSearch() {
+  // clear text bar search
+  searchQuery.value = ''
+  // clear image search
+  imageSearchResults.value = []
+}
+
+async function imageSearch() {
+  toggleDialog(false)
+  // Do nothing if no file uploaded
+  if (imageSearchFile.value.length === 0) {
+    return
+  }
+
+  // Get file input and clear the form
+  const fileInput = imageSearchFile.value[0]
+  function getBase64(file) {
+    const reader = new FileReader()
+    return new Promise((resolve) => {
+      reader.onload = (ev) => {
+        resolve(ev.target.result)
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+  const image = await getBase64(fileInput)
+  imageSearchFile.value = []
+
+  // Build query
+  const nResults = 4
+  const body = JSON.stringify({ image, nResults: nResults })
+  const res = await fetch('/search/image/', {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json; charset=UTF-8',
+    },
+    body,
+  }).then((res) => res.json())
+
+  // Filter results
+  imageSearchResults.value = res.metadatas[0].map((video) => {
+    const v = videos.value.find((v) => v.id === video.video_id)
+    return {
+      id: v.id,
+      name: v.name,
+      metadata: v.metadata,
+      frame_no: video.frame_no,
+    }
+  })
 }
 
 onMounted(() => {
@@ -122,73 +277,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-nav {
-  display: flex;
-  flex-direction: row;
-  height: 70px;
-  padding: 1em 1em;
-  background-color: #eee;
-  align-items: center;
-}
-
-.nav--title {
-  font-size: 1.25em;
-  font-weight: bold;
-}
-
-.nav--searchbar {
-  padding: 0.5em;
-  height: 2.5em;
-  margin-right: 1em;
-  margin-left: auto;
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  border: 1px solid #000000;
-  border-radius: 4px;
-}
-
-.nav--searchbar-input {
-  padding: 0;
-  padding-left: 0.5em;
-}
-
-.nav--sortby {
-  padding: 0.5em;
-  height: 2.5em;
-  margin-right: 1em;
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  border-radius: 4px;
-  border: 1px solid #000000;
-}
-.nav--sortby-select {
-  border: none;
-}
-.nav--sort-dir {
-  padding: 0.5em;
-  height: 2.5em;
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  border-radius: 4px;
-  border: 1px solid #000000;
-}
-
-button {
-  background: #eee;
-  border: 1px solid #ddd;
-  cursor: pointer;
-  padding: 0.5em;
-}
-
 ul {
   display: flex;
   flex-wrap: wrap;
@@ -202,5 +290,11 @@ ul {
 
 .gallery {
   padding: 2em;
+}
+.nav--search-bar {
+  max-width: 300px;
+}
+.nav--sort-by {
+  max-width: 150px;
 }
 </style>

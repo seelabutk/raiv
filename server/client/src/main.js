@@ -41,6 +41,7 @@ const router = createRouter({
   routes: [
     { path: '/', component: GalleryPage },
     { path: '/player/:id', component: PlayerPage },
+    { path: '/player/:id/:frameNo', component: PlayerPage },
   ],
 })
 
@@ -50,6 +51,9 @@ import * as directives from 'vuetify/directives'
 const vuetify = createVuetify({
   components,
   directives,
+  theme: {
+    defaultTheme: 'light',
+  },
 })
 
 const app = createApp(App)

@@ -32,6 +32,7 @@ const fps = 1
 let player
 const route = useRoute()
 const videoId = ref(route.params.id)
+const initFrameNo = ref(route.params.frameNo)
 
 // function setCurrentAction(action) {
 //   if (action !== undefined) {
@@ -199,6 +200,44 @@ function onHover(event) {
 }
 const throttledHover = throttle(onHover, 100)
 
+function findActionByFrame(frame) {
+  const root = actionMap.value
+  let minClosestFrame = 0
+  let minClosestAction = root
+
+  const dfs = (action) => {
+    if (action.position <= frame) {
+      if (action.position > minClosestFrame) {
+        minClosestFrame = action.position
+        minClosestAction = action
+      }
+    }
+
+    if (action.position === frame) {
+      return action
+    }
+
+    for (let index = 0; index < action.children.length; index++) {
+      const result = dfs(action.children[index])
+      if (result !== undefined) {
+        return result
+      }
+    }
+
+    return undefined
+  }
+  let action = dfs(root)
+
+  // if action is undefined, then it is an independent action
+  if (action === undefined) {
+    activeAction.value = minClosestAction
+    const diff = frame - minClosestFrame
+    oldIndependentAction = independentActions[diff - 1]
+  } else {
+    activeAction.value = action
+  }
+}
+
 function addActionElements(action, parent, addIndependent = true) {
   if (parent !== undefined) {
     action.parent = parent
@@ -239,15 +278,6 @@ onMounted(() => {
     .then((_actionMap) => {
       actionMap.value = _actionMap
 
-      player = videojs('loom-video')
-      player.ready(() => {
-        player.currentTime(0)
-
-        player.on('click', (event) => {
-          event.preventDefault()
-        })
-      })
-
       independentActions = actionMap.value.independentActions
       for (let index = 0; index < independentActions.length; index++) {
         independentActions[index].idx = index + 1
@@ -256,6 +286,20 @@ onMounted(() => {
 
       document.addEventListener('click', onClick)
       document.addEventListener('mousemove', throttledHover)
+
+      player = videojs('loom-video')
+      player.ready(() => {
+        player.currentTime(0)
+
+        player.on('click', (event) => {
+          event.preventDefault()
+        })
+        // If given an initial frame number, seek to that frame, and update the current action
+        if (initFrameNo.value !== undefined) {
+          findActionByFrame(parseInt(initFrameNo.value))
+          seekToFrame(parseInt(initFrameNo.value))
+        }
+      })
     })
 })
 </script>
