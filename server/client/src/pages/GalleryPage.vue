@@ -1,135 +1,145 @@
 <template>
-  <!-- <nav> -->
-  <v-toolbar class="pa-4" flat height="70px" elevation="0">
-    <!-- Title  -->
-    <v-toolbar-title>RAIV Gallery</v-toolbar-title>
+  <v-layout>
+    <v-app-bar elevation="0" color="grey-lighten-3">
+      <!-- Title  -->
+      <v-toolbar-title class="font-weight-bold">RAIV Gallery</v-toolbar-title>
 
-    <v-spacer></v-spacer>
+      <v-spacer></v-spacer>
 
-    <!-- Search Bar -->
-    <v-text-field
-      class="mr-4 nav--search-bar"
-      variant="solo-filled"
-      v-model="searchQuery"
-      prepend-inner-icon="mdi-magnify"
-      placeholder="Search"
-      density="compact"
-      hide-details
-      single-line
-    ></v-text-field>
+      <!-- Search Bar -->
+      <v-text-field
+        class="mr-4 nav--search-bar"
+        variant="solo-filled"
+        v-model="searchQuery"
+        prepend-inner-icon="mdi-magnify"
+        placeholder="Search"
+        density="compact"
+        hide-details
+        single-line
+      ></v-text-field>
 
-    <!-- Order By Field -->
-    <v-select
-      class="mr-4 nav--sort-by"
-      variant="solo-filled"
-      v-model="sortType"
-      density="compact"
-      :items="orderByOptions"
-      item-value="value"
-      item-title="text"
-      label="Sort By"
-      hide-details
-      return-object
-      single-line
-    ></v-select>
+      <!-- Order By Field -->
+      <v-select
+        class="mr-4 nav--sort-by"
+        variant="solo-filled"
+        v-model="sortType"
+        density="compact"
+        :items="orderByOptions"
+        item-value="value"
+        item-title="text"
+        label="Sort By"
+        hide-details
+        return-object
+        single-line
+      ></v-select>
 
-    <!-- Order Direction -->
-    <v-tooltip
-      :text="sortReversed ? 'Order Ascending' : 'Order Descending'"
-      location="bottom"
-    >
-      <template v-slot:activator="{ props }">
-        <v-btn
-          icon
-          class="mr-4"
-          v-bind="props"
-          @click="sortReversed = !sortReversed"
+      <!-- Order Direction -->
+      <v-tooltip
+        :text="sortReversed ? 'Order Ascending' : 'Order Descending'"
+        location="bottom"
+      >
+        <template v-slot:activator="{ props }">
+          <v-btn
+            icon
+            class="mr-4"
+            v-bind="props"
+            @click="sortReversed = !sortReversed"
+          >
+            <v-icon v-if="sortReversed">mdi-arrow-up</v-icon>
+            <v-icon v-if="!sortReversed">mdi-arrow-down</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+
+      <!-- Image Search -->
+      <v-tooltip text="Image Search" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn icon v-bind="props">
+            <v-icon>mdi-image-search</v-icon>
+            <v-dialog v-model="searchDialog" activator="parent" width="400px">
+              <v-card>
+                <v-card-title>
+                  <span class="text-h5">Image Search</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-file-input
+                    v-model="imageSearchFile"
+                    variant="solo-filled"
+                    density="compact"
+                    prepend-icon=""
+                    prepend-inner-icon="mdi-image"
+                    accept="image/*"
+                    label="File input"
+                    hide-details
+                    single-line
+                  ></v-file-input>
+                </v-card-text>
+
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    color="blue-darken-1"
+                    variant="text"
+                    @click="toggleDialog(false)"
+                  >
+                    Close
+                  </v-btn>
+                  <v-btn
+                    color="blue-darken-1"
+                    variant="text"
+                    @click="imageSearch()"
+                  >
+                    Search
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </v-btn>
+        </template>
+      </v-tooltip>
+    </v-app-bar>
+
+    <!--Video Preview Gallery  -->
+    <v-main>
+      <v-container fluid class="pa-8">
+        <v-row
+          v-if="imageSearchResults.length > 0 || searchQuery.length > 0"
+          class="px-4"
         >
-          <v-icon v-if="sortReversed">mdi-arrow-up</v-icon>
-          <v-icon v-if="!sortReversed">mdi-arrow-down</v-icon>
-        </v-btn>
-      </template>
-    </v-tooltip>
-
-    <!-- Image Search -->
-    <v-tooltip text="Image Search" location="bottom">
-      <template v-slot:activator="{ props }">
-        <v-btn icon v-bind="props">
-          <v-icon>mdi-image-search</v-icon>
-          <v-dialog v-model="searchDialog" activator="parent" width="400px">
-            <v-card>
-              <v-card-title>
-                <span class="text-h5">Image Search</span>
-              </v-card-title>
-              <v-card-text>
-                <v-file-input
-                  v-model="imageSearchFile"
-                  variant="solo-filled"
-                  density="compact"
-                  prepend-icon=""
-                  prepend-inner-icon="mdi-image"
-                  accept="image/*"
-                  label="File input"
-                  hide-details
-                  single-line
-                ></v-file-input>
-              </v-card-text>
-
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                  color="blue-darken-1"
-                  variant="text"
-                  @click="toggleDialog(false)"
-                >
-                  Close
-                </v-btn>
-                <v-btn
-                  color="blue-darken-1"
-                  variant="text"
-                  @click="imageSearch()"
-                >
-                  Search
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-        </v-btn>
-      </template>
-    </v-tooltip>
-  </v-toolbar>
-
-  <!--Video Preview Gallery  -->
-  <div class="gallery">
-    <div v-if="imageSearchResults.length > 0">
-      <!-- <v-divider></v-divider> -->
-      <span class="text-h5">Search Results</span>
-      <ul>
-        <PreviewCard
-          v-for="video in imageSearchResults"
-          :key="`${video.id}-${video.frame_no}`"
-          :id="`${video.id}-${video.frame_no}`"
-          :name="video.name"
-          :video-id="video.id"
-          :metadata="video.metadata"
-          :frameNo="video.frame_no"
-          @delete="deleteCard(video)"
-        ></PreviewCard>
-      </ul>
-      <v-divider></v-divider>
-      <span class="text-h5 mb-2">All</span>
-    </div>
-    <ul>
-      <PreviewCard
-        v-for="video in getVideoList(sortType, sortReversed)"
-        :key="video.id"
-        :name="video.name"
-        :video-id="video.id"
-        :metadata="video.metadata"
-        @delete="deleteCard(video)"
-      ></PreviewCard>
-    </ul>
-  </div>
+          <span class="text-h5">Search Results</span>
+          <v-spacer></v-spacer>
+          <v-btn
+            append-icon="mdi-close-box"
+            variant="plain"
+            @click="clearSearch"
+          >
+            Clear
+          </v-btn>
+          <v-divider></v-divider>
+        </v-row>
+        <v-row>
+          <ul>
+            <PreviewCard
+              v-for="video in getFilteredAndSortedVideoList(
+                sortType,
+                sortReversed
+              )"
+              :key="
+                imageSearchResults.length
+                  ? `${video.id}-${video.frame_no}`
+                  : video.id
+              "
+              :name="video.name"
+              :video-id="video.id"
+              :metadata="video.metadata"
+              :frameNo="video.frame_no"
+              @delete="deleteCard(video)"
+            ></PreviewCard>
+          </ul>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-layout>
 </template>
 
 <script setup>
@@ -138,7 +148,6 @@ import PreviewCard from '@/components/PreviewCard'
 import 'tippy.js/dist/tippy.css'
 import { getSortFunction } from '@/utils/Sorts'
 
-// const sortType = ref('created')
 const sortReversed = ref(false)
 const videos = ref([])
 const searchQuery = ref('')
@@ -161,11 +170,19 @@ function deleteCard(video) {
   }
 }
 
-function getVideoList(
+function getVideoList() {
+  if (imageSearchResults.value.length > 0) {
+    return imageSearchResults.value
+  }
+  return videos.value
+}
+function getFilteredAndSortedVideoList(
   sortType = { text: 'Created', value: 'created' },
   reversed = false
 ) {
-  let videoList = videos.value
+  // retreive the proper video list
+  let videoList = getVideoList()
+
   // filter videos
   videoList = filterVideos(videoList)
 
@@ -199,10 +216,16 @@ function filterVideos(videoList) {
   )
 }
 
+function clearSearch() {
+  // clear text bar search
+  searchQuery.value = ''
+  // clear image search
+  imageSearchResults.value = []
+}
+
 async function imageSearch() {
   toggleDialog(false)
   // Do nothing if no file uploaded
-  imageSearchResults.value = []
   if (imageSearchFile.value.length === 0) {
     return
   }
@@ -222,7 +245,7 @@ async function imageSearch() {
   imageSearchFile.value = []
 
   // Build query
-  const nResults = 3
+  const nResults = 4
   const body = JSON.stringify({ image, nResults: nResults })
   const res = await fetch('/search/image/', {
     method: 'POST',
@@ -233,7 +256,6 @@ async function imageSearch() {
   }).then((res) => res.json())
 
   // Filter results
-  console.log(res.metadatas[0])
   imageSearchResults.value = res.metadatas[0].map((video) => {
     const v = videos.value.find((v) => v.id === video.video_id)
     return {
@@ -243,8 +265,6 @@ async function imageSearch() {
       frame_no: video.frame_no,
     }
   })
-  console.log(imageSearchResults.value)
-  // TODO - Display video list to the user
 }
 
 onMounted(() => {

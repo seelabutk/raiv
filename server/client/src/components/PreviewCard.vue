@@ -19,7 +19,10 @@
     </router-link>
 
     <v-card-actions>
-      <span v-if="props.frameNo !== undefined" class="mr-2">
+      <span
+        v-if="props.frameNo !== undefined && props.frameNo !== null"
+        class="mr-2"
+      >
         Frame {{ props.frameNo }}
       </span>
       <v-spacer />
