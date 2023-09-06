@@ -17,6 +17,7 @@ numpy = "*"
 opencv-python = "*"
 hnswlib = "*"
 pyparsing = "*"
+spacy = "*"
 
 [dev-packages]
 flake8 = "*"

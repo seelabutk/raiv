@@ -32,6 +32,7 @@ export default class BaseAction {
     this.timeout = 1000 // timeout for the action to complete, in milliseconds
     this.capturedImageSize = [0, 0] // [width, height] of the captured iamge
     this.canvasRanges = [1, 1] // the number of rows and columns to treate a canvas as when repeating an Action over it
+    this.tags = "" // the tags associated with this Action
     if (this.visible) {
       this._findSiblings()
     }
@@ -130,9 +131,7 @@ export default class BaseAction {
   }
 
   async _capture(port, root = false, independentActions = undefined) {
-    // async _capture(port, position, root = false, independentActions = undefined) {
-    // save the current frame position
-    // this.position = position
+
 
     // NOTE: This is necessary for elements that are rendered when their parent is interacted with.
     if (this.clickPosition.length === 2) {
@@ -151,6 +150,8 @@ export default class BaseAction {
       observer = observeDOM(document.body, async (_, _observer) => {
         observer = undefined
         _observer.disconnect()
+        // Get the text within the dom
+        this.tags = document.body.innerText
         await this._captureCanvas(port)
       })
     }
@@ -161,6 +162,8 @@ export default class BaseAction {
       // capture without waiting for the DOM to change
       new Promise((resolve) => {
         setTimeout(async () => {
+          // Get the text within the dom
+          this.tags = document.body.innerText
           await this._captureCanvas(port)
           return resolve()
         }, this.waitTime || 100)

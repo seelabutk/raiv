@@ -32,3 +32,5 @@ RUN pip install \
   requests \
   uvicorn[standard]
 
+# Tag cleaning dependencies
+# RUN python3 -m spacy download en_core_web_sm

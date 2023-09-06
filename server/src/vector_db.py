@@ -1,5 +1,6 @@
 import os
 import cv2
+import json
 import chromadb
 import subprocess
 import numpy as np
@@ -38,8 +39,60 @@ def get_vec_db(video_dir, collection_name="raiv"):
 
 	return collection
 
+def populate_text_vec_db(video_dir, collection_name="raiv"):
+    # get list of video directories
+	video_dirs = [
+		name
+		for name in os.listdir(video_dir)
+		if os.path.isdir(os.path.join(video_dir, name))
+	]
 
-def populate_vec_db(video_dir, collection_name="raiv"):
+	# get list of action map fns
+	video_fns = [
+		os.path.join(video_dir, name, "action_map.json")
+		for name in video_dirs
+		if os.path.exists(os.path.join(video_dir, name, "action_map.json"))
+	]
+ 
+	add_text_to_vec_db(video_dir, video_dirs, video_fns, collection_name=collection_name)
+
+
+def add_text_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv"):
+	# get the collection
+	collection = get_vec_db(video_dir, collection_name)
+	for id, video_fn in zip(video_dirs, video_fns):
+		with open(video_fn, 'r') as f:
+			action_map = json.load(f)
+   
+		def dfs(action):
+			# add the tags to the collection
+			document = action.get('tags', '')
+			frame_no = action.get('position', 0)
+			collection.add(
+				documents=document,
+				metadatas={
+					"video_id": id,
+					"frame_no": frame_no,
+				},
+				ids=f'{id}-{frame_no}',
+			)
+			for child in action.get('children', []):
+				dfs(child)
+		dfs(action_map)
+     
+
+def query_text_vec_db(video_dir, query_text, collection_name="raiv", n_results=2):
+	# get the collection
+	collection = get_vec_db(video_dir, collection_name)
+ 
+	# query the collection
+	results = collection.query(
+		query_texts=query_text,
+		n_results=n_results,
+	)
+	return results
+
+def populate_image_vec_db(video_dir, collection_name="raiv"):
 	# get list of video directories
 	video_dirs = [
 		name
@@ -62,7 +115,7 @@ def add_videos_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv
 	collection = get_vec_db(video_dir, collection_name)
  
     # get the embedder model
-	options = get_embedder_options(video_dir)
+	options = get_image_embedder_options(video_dir)
 	with vision.ImageEmbedder.create_from_options(options) as embedder:
 		# iterate over videos
 		for id, video_fn in zip(video_dirs, video_fns):
@@ -70,7 +123,7 @@ def add_videos_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv
 			# for each frame, get embedding and add to collection
 			for frame_no, frame in enumerate(video):
 				# generate the embedding
-				embedding = get_embedding(embedder, frame)
+				embedding = get_image_embedding(embedder, frame)
 				# add the embedding to the collection
 				collection.add(
 					embeddings=embedding.tolist(),
@@ -81,15 +134,15 @@ def add_videos_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv
 					ids=f'{id}-{frame_no}',
 				)
 
-def query_vec_db(video_dir, query_image, collection_name="raiv", n_results=2):
+def query_image_vec_db(video_dir, query_image, collection_name="raiv", n_results=2):
 	# get the collection
 	collection = get_vec_db(video_dir, collection_name)
 
 	# get the embedder model
-	options = get_embedder_options(video_dir)
+	options = get_image_embedder_options(video_dir)
 	with vision.ImageEmbedder.create_from_options(options) as embedder:
 		# get the embedding of the query image
-		query_embedding = get_embedding(embedder, query_image)
+		query_embedding = get_image_embedding(embedder, query_image)
 		# query the collection
 		results = collection.query(
 			query_embeddings=query_embedding.tolist(),
@@ -98,7 +151,7 @@ def query_vec_db(video_dir, query_image, collection_name="raiv", n_results=2):
 	return results
 
 
-def get_embedder_options(video_dir, model_asset_name="embedder.tflite"):
+def get_image_embedder_options(video_dir, model_asset_name="embedder.tflite"):
 	# Create options for Image Embedder
 	model_asset_path = os.path.join(video_dir, model_asset_name)
 
@@ -112,7 +165,7 @@ def get_embedder_options(video_dir, model_asset_name="embedder.tflite"):
 	return options
 
 
-def get_embedder_model(video_dir, model_asset_name="embedder.tflite"):
+def get_image_embedder_model(video_dir, model_asset_name="embedder.tflite"):
 	model_asset_path = os.path.join(video_dir, model_asset_name)
 	if not os.path.exists(model_asset_path):
 		subprocess.run([
@@ -124,7 +177,7 @@ def get_embedder_model(video_dir, model_asset_name="embedder.tflite"):
 		], check=True)
 
 
-def get_embedding(embedder, frame):
+def get_image_embedding(embedder, frame):
 	image_tensor = mp.Image(
 		image_format=mp.ImageFormat.SRGB, data=frame.astype(np.uint8))
 	embedding = embedder.embed(image_tensor)
