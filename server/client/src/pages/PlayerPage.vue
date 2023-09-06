@@ -1,11 +1,12 @@
 <template>
   <div>
+    <!--
     <ActionExplorer
       ref="actionExplorer"
       :actionMap="actionMap"
       :currentAction="activeAction"
       :setCurrentAction="setCurrentAction"
-    />
+    /> -->
     <div class="player">
       <video id="loom-video" class="video-js" preload="auto" muted>
         <source :src="`/video/${videoId}/video/`" type="video/mp4" />
@@ -20,24 +21,24 @@ import 'video.js/dist/video-js.css'
 import videojs from 'video.js'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import ActionExplorer from '@/components/ActionExplorer'
+// import ActionExplorer from '@/components/ActionExplorer'
 
 let actionMap = ref({})
 let activeAction = ref({})
 let oldIndependentAction = null
 let independentActions = []
-const actionExplorer = ref(null)
+// const actionExplorer = ref(null)
 const fps = 1
 let player
 const route = useRoute()
 const videoId = ref(route.params.id)
 
-function setCurrentAction(action) {
-  if (action !== undefined) {
-    activeAction.value = action
-    seekToFrame(action.position)
-  }
-}
+// function setCurrentAction(action) {
+//   if (action !== undefined) {
+//     activeAction.value = action
+//     seekToFrame(action.position)
+//   }
+// }
 
 function seekToFrame(frame) {
   if (player !== undefined) {
@@ -237,13 +238,6 @@ onMounted(() => {
     .then((response) => response.json())
     .then((_actionMap) => {
       actionMap.value = _actionMap
-      const container = document.querySelector('.player')
-      const videoElement = document.querySelector('#loom-video')
-
-      container.style.height = `${actionMap.value.height}px`
-      container.style.width = `${actionMap.value.width}px`
-      videoElement.style.height = `${actionMap.value.height}px`
-      videoElement.style.width = `${actionMap.value.width}px`
 
       player = videojs('loom-video')
       player.ready(() => {
