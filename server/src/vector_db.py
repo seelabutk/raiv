@@ -44,14 +44,14 @@ def populate_text_vec_db(video_dir, collection_name="raiv"):
 	video_dirs = [
 		name
 		for name in os.listdir(video_dir)
-		if os.path.isdir(os.path.join(video_dir, name))
+		if os.path.isdir(os.path.join(video_dir, name)) and name != "embeddings"
 	]
 
 	# get list of action map fns
 	video_fns = [
 		os.path.join(video_dir, name, "action_map.json")
 		for name in video_dirs
-		if os.path.exists(os.path.join(video_dir, name, "action_map.json"))
+		if os.path.exists(os.path.join(video_dir, name, "action_map.json")) 
 	]
  
 	add_text_to_vec_db(video_dir, video_dirs, video_fns, collection_name=collection_name)
@@ -97,7 +97,7 @@ def populate_image_vec_db(video_dir, collection_name="raiv"):
 	video_dirs = [
 		name
 		for name in os.listdir(video_dir)
-		if os.path.isdir(os.path.join(video_dir, name))
+		if os.path.isdir(os.path.join(video_dir, name)) and name != "embeddings"
 	]
 
 	# get list of video fns
