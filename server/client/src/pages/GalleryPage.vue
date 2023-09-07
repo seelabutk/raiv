@@ -6,6 +6,14 @@
 
       <v-spacer></v-spacer>
 
+      <!-- Search Type -->
+      <v-checkbox
+        class="mr-4 nav--search-type"
+        v-model="searchType"
+        label="Smart Search"
+        hide-details
+      ></v-checkbox>
+
       <!-- Search Bar -->
       <v-text-field
         class="mr-4 nav--search-bar"
@@ -116,11 +124,7 @@
           <ul>
             <PreviewCard
               v-for="video in filteredSortedVideos"
-              :key="
-                video.frame_no
-                  ? `${video.id}-${video.frame_no}`
-                  : video.id
-              "
+              :key="video.frame_no ? `${video.id}-${video.frame_no}` : video.id"
               :name="video.name"
               :video-id="video.id"
               :metadata="video.metadata"
@@ -142,6 +146,7 @@ import { getSortFunction } from '@/utils/Sorts'
 
 const sortReversed = ref(false)
 const videos = ref([])
+const searchType = ref(false)
 const searchQuery = ref('')
 const searchDialog = ref(false)
 const resultsLoading = ref(false)
@@ -157,6 +162,7 @@ const imageSearchResults = ref([])
 const filteredSortedVideos = ref([])
 watch(sortType, getFilteredAndSortedVideoList)
 watch(searchQuery, getFilteredAndSortedVideoList)
+watch(searchType, getFilteredAndSortedVideoList)
 
 function deleteCard(video) {
   const index = videos.value.indexOf(video)
@@ -217,6 +223,14 @@ async function filterVideos(videoList) {
     return videoList
   }
 
+  if (searchType.value) {
+    return await semanticSearch(videoList)
+  } else {
+    return textSearch(videoList)
+  }
+}
+
+async function semanticSearch(videoList) {
   // filter by semantic search
   const nResults = 4
   const text = searchQuery.value.toLowerCase()
@@ -229,7 +243,7 @@ async function filterVideos(videoList) {
     body,
   }).then((res) => res.json())
   // Filter results
-  const results =  res.metadatas[0].map((video) => {
+  const results = res.metadatas[0].map((video) => {
     const v = videoList.find((v) => v.id === video.video_id)
     return {
       id: v.id,
@@ -239,10 +253,13 @@ async function filterVideos(videoList) {
     }
   })
   return results
-  // filter by exact name
-  // return videoList.filter((video) =>
-  //   video.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  // )
+}
+
+function textSearch(videoList) {
+  // filter by text search
+  return videoList.filter((video) =>
+    video.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
 }
 
 function clearSearch() {
@@ -294,6 +311,7 @@ async function imageSearch() {
       frame_no: video.frame_no,
     }
   })
+  getFilteredAndSortedVideoList()
 }
 
 onMounted(() => {
@@ -320,6 +338,10 @@ ul {
 
 .gallery {
   padding: 2em;
+}
+
+.nav--search-type {
+  max-width: 150px;
 }
 .nav--search-bar {
   max-width: 300px;

@@ -193,7 +193,6 @@ export default class BaseAction {
       })
     )
     // Increment the frame position
-    // position++
     this._revertActionPreChildren()
 
     // Iterate through the independent actions and capture them.
