@@ -37,5 +37,7 @@ RUN yarn build
 WORKDIR /opt/run
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 RUN python3.11 get-pip.py
-RUN pip install -r requirements.txt
-RUN python3.11 -m spacy download en_core_web_sm
+RUN pip install pipenv
+RUN pipenv --python /usr/bin/python3.11
+RUN pipenv sync -d
+RUN pipenv run spacy download en_core_web_sm
