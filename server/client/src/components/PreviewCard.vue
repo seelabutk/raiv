@@ -1,5 +1,5 @@
 <template>
-  <v-card min-width="300" class="ma-4">
+  <v-card min-width="300" max-width="300" class="ma-4">
     <router-link
       :to="
         props.frameNo === undefined

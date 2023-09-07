@@ -109,12 +109,12 @@ def zipfiles(file_list):
 	with zipfile.ZipFile(io, mode='w', compression=zipfile.ZIP_DEFLATED) as zip:
 		for fpath in file_list:
 			zip.write(fpath, os.path.basename(fpath))
-		#close zip
+		# close zip
 		zip.close()
 	return StreamingResponse(
 		iter([io.getvalue()]),
 		media_type="application/x-zip-compressed",
-		headers = { "Content-Disposition": f"attachment;filename={zip_filename}" }
+		headers={"Content-Disposition": f"attachment;filename={zip_filename}"}
 	)
 
 
@@ -124,13 +124,13 @@ def scale_video(video_id, devicePixelRatio):
 		return
 
 	cwd = os.getcwd()
-	
+
 	path = os.path.join(VIDEO_DIR, video_id)
 	if not os.path.exists(path):
 		return
 
 	os.chdir(path)
-	#ffmpeg -i video.mp4 -vf scale="iw/2:-2" video.cpy.mp4
+	# ffmpeg -i video.mp4 -vf scale="iw/2:-2" video.cpy.mp4
 	subprocess.run([
 		'ffmpeg',
 		'-y',

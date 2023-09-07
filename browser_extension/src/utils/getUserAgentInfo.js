@@ -3,6 +3,7 @@ export default function getUserAgentInfo() {
     userAgent: window.navigator.userAgent,
     // canvas capture seems to resolve this issue
     devicePixelRatio: 1,
+    documentTitle: document.title,
     // devicePixelRatio: window.devicePixelRatio,
     isHighDensity: isHighDensity(),
     isRetina: isRetina(),

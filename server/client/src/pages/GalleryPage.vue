@@ -6,6 +6,14 @@
 
       <v-spacer></v-spacer>
 
+      <!-- Search Type -->
+      <v-checkbox
+        class="mr-4 nav--search-type"
+        v-model="searchType"
+        label="Smart Search"
+        hide-details
+      ></v-checkbox>
+
       <!-- Search Bar -->
       <v-text-field
         class="mr-4 nav--search-bar"
@@ -39,12 +47,7 @@
         location="bottom"
       >
         <template v-slot:activator="{ props }">
-          <v-btn
-            icon
-            class="mr-4"
-            v-bind="props"
-            @click="sortReversed = !sortReversed"
-          >
+          <v-btn icon class="mr-4" v-bind="props" @click="toggleSortDirection">
             <v-icon v-if="sortReversed">mdi-arrow-up</v-icon>
             <v-icon v-if="!sortReversed">mdi-arrow-down</v-icon>
           </v-btn>
@@ -120,15 +123,8 @@
         <v-row>
           <ul>
             <PreviewCard
-              v-for="video in getFilteredAndSortedVideoList(
-                sortType,
-                sortReversed
-              )"
-              :key="
-                imageSearchResults.length
-                  ? `${video.id}-${video.frame_no}`
-                  : video.id
-              "
+              v-for="video in filteredSortedVideos"
+              :key="video.frame_no ? `${video.id}-${video.frame_no}` : video.id"
               :name="video.name"
               :video-id="video.id"
               :metadata="video.metadata"
@@ -143,15 +139,17 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import PreviewCard from '@/components/PreviewCard'
 import 'tippy.js/dist/tippy.css'
 import { getSortFunction } from '@/utils/Sorts'
 
 const sortReversed = ref(false)
 const videos = ref([])
+const searchType = ref(false)
 const searchQuery = ref('')
 const searchDialog = ref(false)
+const resultsLoading = ref(false)
 const orderByOptions = ref([
   { text: 'Created', value: 'created' },
   { text: 'Updated', value: 'updated' },
@@ -161,6 +159,10 @@ const orderByOptions = ref([
 const sortType = ref({ text: 'Created', value: 'created' })
 const imageSearchFile = ref([])
 const imageSearchResults = ref([])
+const filteredSortedVideos = ref([])
+watch(sortType, getFilteredAndSortedVideoList)
+watch(searchQuery, getFilteredAndSortedVideoList)
+watch(searchType, getFilteredAndSortedVideoList)
 
 function deleteCard(video) {
   const index = videos.value.indexOf(video)
@@ -169,6 +171,10 @@ function deleteCard(video) {
     videos.value.splice(index, 1)
   }
 }
+function toggleSortDirection() {
+  sortReversed.value = !sortReversed.value
+  getFilteredAndSortedVideoList()
+}
 
 function getVideoList() {
   if (imageSearchResults.value.length > 0) {
@@ -176,20 +182,22 @@ function getVideoList() {
   }
   return videos.value
 }
-function getFilteredAndSortedVideoList(
-  sortType = { text: 'Created', value: 'created' },
-  reversed = false
-) {
+
+async function getFilteredAndSortedVideoList() {
+  resultsLoading.value = true
   // retreive the proper video list
   let videoList = getVideoList()
 
   // filter videos
-  videoList = filterVideos(videoList)
+  videoList = await filterVideos(videoList)
 
   // sort videos
-  if (sortType) {
-    videoList = sortVideoList(videoList, sortType.value, reversed)
+  if (sortType.value) {
+    videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
   }
+  filteredSortedVideos.value = videoList
+  resultsLoading.value = false
+
   return videoList
 }
 
@@ -210,7 +218,45 @@ function toggleDialog(value = undefined) {
   }
 }
 
-function filterVideos(videoList) {
+async function filterVideos(videoList) {
+  if (searchQuery.value.length === 0) {
+    return videoList
+  }
+
+  if (searchType.value) {
+    return await semanticSearch(videoList)
+  } else {
+    return textSearch(videoList)
+  }
+}
+
+async function semanticSearch(videoList) {
+  // filter by semantic search
+  const nResults = 4
+  const text = searchQuery.value.toLowerCase()
+  const body = JSON.stringify({ text, nResults: nResults })
+  const res = await fetch('/search/text/', {
+    method: 'POST',
+    headers: {
+      'Content-type': 'application/json; charset=UTF-8',
+    },
+    body,
+  }).then((res) => res.json())
+  // Filter results
+  const results = res.metadatas[0].map((video) => {
+    const v = videoList.find((v) => v.id === video.video_id)
+    return {
+      id: v.id,
+      name: v.name,
+      metadata: v.metadata,
+      frame_no: video.frame_no,
+    }
+  })
+  return results
+}
+
+function textSearch(videoList) {
+  // filter by text search
   return videoList.filter((video) =>
     video.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
@@ -265,6 +311,7 @@ async function imageSearch() {
       frame_no: video.frame_no,
     }
   })
+  getFilteredAndSortedVideoList()
 }
 
 onMounted(() => {
@@ -272,6 +319,7 @@ onMounted(() => {
     .then((response) => response.json())
     .then((data) => {
       videos.value = data
+      getFilteredAndSortedVideoList()
     })
 })
 </script>
@@ -290,6 +338,10 @@ ul {
 
 .gallery {
   padding: 2em;
+}
+
+.nav--search-type {
+  max-width: 150px;
 }
 .nav--search-bar {
   max-width: 300px;

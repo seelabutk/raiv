@@ -1,15 +1,16 @@
-from base64 import b64decode
 import json
+import spacy
 import os
-from shutil import copy, rmtree
+import requests
 import subprocess
 from uuid import uuid4
 from datetime import datetime
-import requests
+from base64 import b64decode
+from shutil import copy, rmtree
 
 from fastapi import (
-    Depends, FastAPI, Header, HTTPException, 
-    Request, BackgroundTasks
+	Depends, FastAPI, Header, HTTPException,
+	Request, BackgroundTasks
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
@@ -18,18 +19,24 @@ from pydantic import BaseModel
 
 
 from .util import (
-	encode_video, 
-	merge_frames, 
-	scale_video, 
-	zipfiles, 
+	encode_video,
+	merge_frames,
+	scale_video,
+	zipfiles,
 	stat_video
 )
 from .vector_db import (
-	get_embedder_model,
-	populate_vec_db,
-	query_vec_db,
+	get_image_embedder_model,
+	populate_image_vec_db,
+	populate_text_vec_db,
+	query_image_vec_db,
+	query_text_vec_db,
+	add_videos_to_vec_db,
+	add_text_to_vec_db,
 	image_from_bin,
- 	add_videos_to_vec_db,
+)
+from .text_processing import (
+	cleanActionMapTags
 )
 
 
@@ -60,9 +67,9 @@ class Video(BaseModel):
 
 
 class Query(BaseModel):
-    image: str = None
-    text: str = None
-    nResults: int = 1
+	image: str = None
+	text: str = ""
+	nResults: int = 1
 
 
 app = FastAPI()
@@ -81,8 +88,15 @@ if os.path.exists(API_KEY_FILE):
 		api_keys = json.load(f)
 
 # get the embedder model and populate the db (if any videos exist)
-get_embedder_model(VIDEO_DIR)
-populate_vec_db(VIDEO_DIR)
+IMAGE_VEC_COLLECTION_NAME = "raiv-image"
+TEXT_VEC_COLLECTION_NAME = "raiv-text"
+get_image_embedder_model(VIDEO_DIR)
+populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
+populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
+
+# get the spacy nlp model
+nlp = spacy.load("en_core_web_sm")
+
 
 def validate_token(token: str = Depends(oauth2_scheme)):
 	if token not in api_keys:
@@ -179,11 +193,11 @@ async def video__post(video: Video, token: str = Depends(oauth2_scheme)):
 	with open(fpath, 'w', encoding='utf-8') as file:
 		json.dump(video.actionMap, file)
 	_update_metadata(uuid, {
-			'complete': video.complete,
-			'id': uuid,
-			'created': datetime.now().isoformat(),
-			'updated': datetime.now().isoformat(),
-			'size': 0
+		'complete': video.complete,
+		'id': uuid,
+		'created': datetime.now().isoformat(),
+		'updated': datetime.now().isoformat(),
+		'size': 0
 	})
 
 	fpath = os.path.join(path, 'api_key.txt')
@@ -221,21 +235,34 @@ def _compose_video(video_id, video):
 		'updated': datetime.now().isoformat(),
 		'size': video_stat.st_size
 	})
- 
+
 	# add the video to the vector db
 	add_videos_to_vec_db(
-		VIDEO_DIR, 
-		[video_id], 
-		[os.path.join(path, "video.mp4")]
+		VIDEO_DIR,
+		[video_id],
+		[os.path.join(path, "video.mp4")],
+		collection_name=IMAGE_VEC_COLLECTION_NAME
+	)
+
+	# clean the action map and update it
+	action_map = cleanActionMapTags(nlp, action_map)
+	_update_action_map(video_id, action_map)
+
+	# add the tags to the vector db
+	add_text_to_vec_db(
+		VIDEO_DIR,
+		[video_id],
+		[os.path.join(path, "action_map.json")],
+		collection_name=TEXT_VEC_COLLECTION_NAME
 	)
 
 
 @app.patch('/video/{video_id}/', dependencies=[Depends(validate_token)])
 async def video__patch(
-	video_id,
-	video: Video,
-	background_tasks: BackgroundTasks,
-	token: str = Depends(oauth2_scheme)
+		video_id,
+		video: Video,
+		background_tasks: BackgroundTasks,
+		token: str = Depends(oauth2_scheme)
 ):
 	""" Encode the video once the front-end is done sending frames. """
 	verify_token(video_id, token)
@@ -255,9 +282,10 @@ async def video__get__list():
 	objects = []
 	for video_id in video_list:
 		path = os.path.join(VIDEO_DIR, video_id)
-		if os.path.isdir(path) and not video_id == "embeddings": # and not os.path.exists(os.path.join(path, 'frames')):
+		# and not os.path.exists(os.path.join(path, 'frames')):
+		if os.path.isdir(path) and not video_id == "embeddings":
 			with open(
-				os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
+					os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
 			) as action_file:
 				actionMap = json.load(action_file)
 				objects.append({
@@ -289,6 +317,7 @@ def _get_video_file(video_id, filename):
 
 	return path
 
+
 def _update_action_map(video_id, action_map_new):
 	""" Updates the action map for a video. """
 	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
@@ -312,6 +341,7 @@ def _update_action_map(video_id, action_map_new):
 		json.dump(action_map, file, indent=2)
 	return action_map
 
+
 def _update_metadata(video_id, data):
 	""" Updates the metadata file for a video. """
 	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
@@ -321,13 +351,14 @@ def _update_metadata(video_id, data):
 
 	with open(path, 'r', encoding='utf-8') as file:
 		actionMap = json.load(file)
-	
+
 	if 'metadata' not in actionMap:
 		actionMap['metadata'] = {}
 	actionMap['metadata'].update(data)
 
 	with open(path, 'w', encoding='utf-8') as file:
 		json.dump(actionMap, file)
+
 
 @app.get('/video/{video_id}/meta/')
 async def metadata__get__detail(video_id):
@@ -391,11 +422,19 @@ async def video__get__detail(video_id, range: str = Header(None)):  # pylint: di
 
 
 @app.post('/search/image/')
-async def video_reverse_search(query:Query):
-    frame_data = b64decode(query.image.split(',')[1])
-    image = image_from_bin(frame_data)
-    results = query_vec_db(VIDEO_DIR, image, n_results=query.nResults)
-    return results
+async def video_reverse_image_search(query: Query):
+	frame_data = b64decode(query.image.split(',')[1])
+	image = image_from_bin(frame_data)
+	results = query_image_vec_db(
+		VIDEO_DIR, image, n_results=query.nResults, collection_name=IMAGE_VEC_COLLECTION_NAME)
+	return results
+
+
+@app.post('/search/text/')
+async def video_text_search(query: Query):
+	results = query_text_vec_db(
+		VIDEO_DIR, query.text, n_results=query.nResults, collection_name=TEXT_VEC_COLLECTION_NAME)
+	return results
 
 
 @app.get('/{path:path}')
