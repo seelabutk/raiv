@@ -30,17 +30,17 @@ def get_vec_db(video_dir, collection_name="raiv"):
 	""" Get or create the chrome collection. """
 	path = os.path.join(video_dir, 'embeddings')
 	os.makedirs(path, exist_ok=True)
- 
+
 	# get the chroma client
 	client = chromadb.PersistentClient(path=path)
 
 	# get or create the collection
 	collection = client.get_or_create_collection(collection_name)
-
 	return collection
 
+
 def populate_text_vec_db(video_dir, collection_name="raiv"):
-    # get list of video directories
+	# get list of video directories
 	video_dirs = [
 		name
 		for name in os.listdir(video_dir)
@@ -51,10 +51,11 @@ def populate_text_vec_db(video_dir, collection_name="raiv"):
 	video_fns = [
 		os.path.join(video_dir, name, "action_map.json")
 		for name in video_dirs
-		if os.path.exists(os.path.join(video_dir, name, "action_map.json")) 
+		if os.path.exists(os.path.join(video_dir, name, "action_map.json"))
 	]
- 
-	add_text_to_vec_db(video_dir, video_dirs, video_fns, collection_name=collection_name)
+
+	add_text_to_vec_db(video_dir, video_dirs, video_fns,
+					   collection_name=collection_name)
 
 
 def add_text_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv"):
@@ -63,7 +64,7 @@ def add_text_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv")
 	for id, video_fn in zip(video_dirs, video_fns):
 		with open(video_fn, 'r') as f:
 			action_map = json.load(f)
-   
+
 		def dfs(action):
 			# add the tags to the collection
 			document = action.get('tags', '')
@@ -79,18 +80,20 @@ def add_text_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv")
 			for child in action.get('children', []):
 				dfs(child)
 		dfs(action_map)
-     
+
 
 def query_text_vec_db(video_dir, query_text, collection_name="raiv", n_results=2):
 	# get the collection
 	collection = get_vec_db(video_dir, collection_name)
- 
+
 	# query the collection
 	results = collection.query(
 		query_texts=query_text,
 		n_results=n_results,
 	)
+
 	return results
+
 
 def populate_image_vec_db(video_dir, collection_name="raiv"):
 	# get list of video directories
@@ -106,15 +109,16 @@ def populate_image_vec_db(video_dir, collection_name="raiv"):
 		for name in video_dirs
 		if os.path.exists(os.path.join(video_dir, name, "video.mp4"))
 	]
-	
-	add_videos_to_vec_db(video_dir, video_dirs, video_fns, collection_name=collection_name)
+
+	add_videos_to_vec_db(video_dir, video_dirs, video_fns,
+						 collection_name=collection_name)
 
 
 def add_videos_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv"):
 	# get the collection
 	collection = get_vec_db(video_dir, collection_name)
- 
-    # get the embedder model
+
+	# get the embedder model
 	options = get_image_embedder_options(video_dir)
 	with vision.ImageEmbedder.create_from_options(options) as embedder:
 		# iterate over videos
@@ -133,6 +137,7 @@ def add_videos_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv
 					},
 					ids=f'{id}-{frame_no}',
 				)
+
 
 def query_image_vec_db(video_dir, query_image, collection_name="raiv", n_results=2):
 	# get the collection
