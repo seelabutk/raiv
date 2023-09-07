@@ -3,6 +3,7 @@ FROM ubuntu:jammy
 RUN apt-get update --fix-missing && apt-get install -y --fix-missing build-essential
 RUN apt update && apt full-upgrade -y && apt install -y \
   curl \
+  wget \
   ffmpeg \
   imagemagick \
   software-properties-common 
