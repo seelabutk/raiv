@@ -41,5 +41,6 @@ jobs:
         with:
           context: server
           file: server/Dockerfile
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
