@@ -29,13 +29,12 @@ def read_video(path):
 def get_vec_db(video_dir, collection_name="raiv"):
 	""" Get or create the chrome collection. """
 	path = os.path.join(video_dir, 'embeddings')
-	os.makedirs(path, exist_ok=True)
 
 	# get the chroma client
 	client = chromadb.PersistentClient(path=path)
 
 	# get or create the collection
-	collection = client.get_or_create_collection(collection_name)
+	collection = client.get_collection(collection_name)
 	return collection
 
 
@@ -168,18 +167,6 @@ def get_image_embedder_options(video_dir, model_asset_name="embedder.tflite"):
 	options = vision.ImageEmbedderOptions(
 		base_options=base_options, l2_normalize=l2_normalize, quantize=quantize)
 	return options
-
-
-def get_image_embedder_model(video_dir, model_asset_name="embedder.tflite"):
-	model_asset_path = os.path.join(video_dir, model_asset_name)
-	if not os.path.exists(model_asset_path):
-		subprocess.run([
-			"wget",
-			"-O",
-			model_asset_path,
-			"-q",
-			"https://storage.googleapis.com/mediapipe-models/image_embedder/mobilenet_v3_small/float32/1/mobilenet_v3_small.tflite"
-		], check=True)
 
 
 def get_image_embedding(embedder, frame):

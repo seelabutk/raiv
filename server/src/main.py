@@ -26,7 +26,6 @@ from .util import (
 	stat_video
 )
 from .vector_db import (
-	get_image_embedder_model,
 	populate_image_vec_db,
 	populate_text_vec_db,
 	query_image_vec_db,
@@ -90,7 +89,6 @@ if os.path.exists(API_KEY_FILE):
 # get the embedder model and populate the db (if any videos exist)
 IMAGE_VEC_COLLECTION_NAME = "raiv-image"
 TEXT_VEC_COLLECTION_NAME = "raiv-text"
-get_image_embedder_model(VIDEO_DIR)
 populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
 populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
 
@@ -283,7 +281,7 @@ async def video__get__list():
 	for video_id in video_list:
 		path = os.path.join(VIDEO_DIR, video_id)
 		# and not os.path.exists(os.path.join(path, 'frames')):
-		if os.path.isdir(path) and not video_id == "embeddings":
+		if os.path.isdir(path) and not video_id == "embeddings" and not video_id == "global_swarm_lock":
 			with open(
 					os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
 			) as action_file:

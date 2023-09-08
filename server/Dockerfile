@@ -28,6 +28,7 @@ COPY requirements.txt /opt/run/requirements.txt
 COPY src /opt/run/src
 COPY client /opt/run/client
 COPY policy.xml /etc/ImageMagick-6/policy.xml
+COPY entrypoint.sh /opt/run/entrypoint.sh
 
 RUN npm install --global yarn
 WORKDIR /opt/run/client
