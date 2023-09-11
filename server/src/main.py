@@ -89,8 +89,8 @@ if os.path.exists(API_KEY_FILE):
 # get the embedder model and populate the db (if any videos exist)
 IMAGE_VEC_COLLECTION_NAME = "raiv-image"
 TEXT_VEC_COLLECTION_NAME = "raiv-text"
-populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
-populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
+# populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
+# populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
 
 # get the spacy nlp model
 nlp = spacy.load("en_core_web_sm")
