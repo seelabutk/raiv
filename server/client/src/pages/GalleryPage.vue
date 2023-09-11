@@ -267,6 +267,7 @@ function clearSearch() {
   searchQuery.value = ''
   // clear image search
   imageSearchResults.value = []
+  getFilteredAndSortedVideoList()
 }
 
 async function imageSearch() {
