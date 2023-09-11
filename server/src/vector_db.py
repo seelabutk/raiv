@@ -34,7 +34,7 @@ def get_vec_db(video_dir, collection_name="raiv"):
 	client = chromadb.PersistentClient(path=path)
 
 	# get or create the collection
-	collection = client.get_collection(collection_name)
+	collection = client.get_or_create_collection(collection_name)
 	return collection
 
 

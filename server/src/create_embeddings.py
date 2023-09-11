@@ -2,7 +2,7 @@ import os
 
 import chromadb
 
-from .vector_db import (
+from vector_db import (
     get_vec_db,
 	populate_image_vec_db,
 	populate_text_vec_db,
