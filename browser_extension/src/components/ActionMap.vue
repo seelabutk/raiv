@@ -109,7 +109,7 @@ function render() {
   d3.tree().nodeSize([options.dx, options.dy])(tree)
 
   // Resets the viewBox on a new render
-  svg.attr('viewBox', viewBox)
+  // svg.attr('viewBox', viewBox)
 
   // Draw the links between nodes
   svg
