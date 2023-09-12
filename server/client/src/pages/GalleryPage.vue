@@ -170,6 +170,8 @@ function deleteCard(video) {
   if (index >= 0) {
     videos.value.splice(index, 1)
   }
+
+  getFilteredAndSortedVideoList()
 }
 function toggleSortDirection() {
   sortReversed.value = !sortReversed.value
