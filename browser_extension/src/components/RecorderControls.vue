@@ -6,9 +6,18 @@
   >
     <div id="controls-handle" class="handle">
       <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
+      <span>RAIV Recorder</span>
+
+      <div class="spacer"></div>
+
+      <font-awesome-icon
+        class="settings-btn fa-fw fa-lg"
+        icon="fa-solid fa-cog"
+        @click="toggleSettings"
+      />
     </div>
 
-    <div class="controls" v-if="isControlsShown">
+    <div class="controls">
       <div class="recording-controls">
         <tippy :content="recordPauseTooltipText" content-class="tippy-tooltip">
           <button type="button" @click="recordToggle">
@@ -38,21 +47,21 @@
           :store="props.store"
         />
       </div>
-      <div v-if="totalFrameCount > 1" class="capture-settings">
+      <div class="capture-settings">
         <p>
           {{ props.store.actionMap.value.independentActions.length }}
-          Independent Actions.
+          independent actions.
         </p>
         <p>
           {{ props.store.actionMap.value.root.frameCount }}
-          Normal Actions.
+          normal actions.
         </p>
         <p>
           {{ totalFrameCount }}
           total frames will be captured.
         </p>
 
-        <div>
+        <div v-if="settingsShown">
           <label>Server Location</label>
 
           <select
@@ -86,6 +95,18 @@
           />
         </div>
 
+        <div class="api-key" v-if="settingsShown">
+          <label>
+            API Key
+            <input
+              class="api-key-input"
+              type="text"
+              :value="props.store.apiKey.value"
+              @input="(event) => props.store.set('apiKey', event.target.value)"
+            />
+          </label>
+        </div>
+
         <div>
           <label class="input">
             Video Name
@@ -99,29 +120,16 @@
           </label>
         </div>
 
-        <div class="api-key">
-          <label>
-            API Key
-            <input
-              class="api-key-input"
-              type="text"
-              :value="props.store.apiKey.value"
-              @input="(event) => props.store.set('apiKey', event.target.value)"
-            />
-          </label>
-        </div>
-
         <button
+          v-if="isControlsShown"
           type="button"
           :disabled="props.store.recording.value"
           @click="capture"
         >
           Capture
         </button>
+        <p v-else>Recording in {{ recordCountdown }}...</p>
       </div>
-    </div>
-    <div class="countdown" v-if="!isControlsShown">
-      <p>Recording in {{ recordCountdown }}...</p>
     </div>
   </div>
 </template>
@@ -147,6 +155,7 @@ const independentActionsComponent = ref(null)
 const isModalShown = ref(true)
 const isControlsShown = ref(true)
 const recordCountdown = ref(initCountdown)
+const settingsShown = ref(false)
 
 const totalFrameCount = computed(() => {
   return (
@@ -161,6 +170,10 @@ const recordPauseIcon = computed(() =>
 const recordPauseTooltipText = computed(() =>
   props.store.recording.value ? 'Pause Recording' : 'Start Recording'
 )
+
+function toggleSettings() {
+  settingsShown.value = !settingsShown.value
+}
 
 function onClick(event) {
   const raivWidget = document.querySelector('#raiv')
@@ -299,8 +312,21 @@ button {
   border-radius: 4px;
 }
 
-.controls,
-.countdown {
+.controls-handle {
+  display: flex;
+}
+
+.spacer {
+  flex: 1 1;
+}
+
+.handle span {
+  font-weight: 600;
+  height: 16px; /* This is weird. */
+  padding-left: 1em;
+}
+
+.controls {
   padding: 1em;
   overflow: visible;
 }
@@ -347,5 +373,9 @@ button {
   height: 100%;
   width: 100%;
   gap: 0 1em;
+}
+
+.settings-btn {
+  cursor: pointer;
 }
 </style>
