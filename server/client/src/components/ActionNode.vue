@@ -1,7 +1,7 @@
 <template>
   <div
     class="node"
-    :class="{ selected: selected }"
+    :class="{ selected: selected, 'is-path': isPath }"
     :style="nodeStyles"
     data-testid="node"
   >
@@ -103,10 +103,11 @@ export default defineComponent(
     watch(props.data.currentAction, (newVal) => {
       selected.value = newVal === action
     })
-
+    let isPath = ref(action.isPath)
     return {
       action,
-      selected
+      selected,
+      isPath
     }
   },
   methods: {
@@ -135,7 +136,6 @@ export default defineComponent(
       }
     },
     onSelect() {
-      console.log('onselect', this.action)
       this.data.setCurrentAction(this.action)
     }
   },
@@ -167,14 +167,14 @@ export default defineComponent(
 @import './vars';
 
 .node {
-  background: rgba(110, 136, 255, 0.8);
-  border: 2px solid #4e58bf;
+  background: #E1F5FE;
+  border: 2px solid #81D4FA;
   border-radius: 10px;
   cursor: pointer;
   box-sizing: border-box;
   width: $node-width;
   height: auto;
-  padding-bottom: 6px;
+  padding-top: 6px;
   position: relative;
   user-select: none;
 
@@ -184,19 +184,25 @@ export default defineComponent(
     padding: 0;
   }
   &:hover {
-    background: rgba(130, 153, 255, 0.8);
+    background: #81D4FA;
   }
 
   &.selected {
-    background: #ffd92c;
+    background: #ffe46e !important;
     border-color: #e3c000;
   }
 
   .title {
-    color: white;
+    color: black;
     font-family: sans-serif;
     font-size: 18px;
+    font-weight: bolder;
     padding: 8px;
+  }
+
+  &.is-path {
+    border: 2px solid #EF9A9A;
+    background: #FFCDD2;
   }
 
   .output {

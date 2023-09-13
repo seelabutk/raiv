@@ -18,6 +18,7 @@
       :actionMap="props.actionMap"
       :currentAction="props.currentAction"
       :setCurrentAction="props.setCurrentAction"
+      :showPath="props.showPath"
     />
   </section>
 </template>
@@ -37,6 +38,11 @@ const props = defineProps({
   setCurrentAction: {
     required: true,
     type: Function,
+  },
+  showPath: {
+    required: false,
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -67,7 +73,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to right, transparent 50%, rgba(0, 0, 0, 0.5) 50%)
+  background: linear-gradient(to right, transparent 50%, rgba(0, 0, 0, 0.6) 50%)
     left;
   z-index: 100;
   background-size: 200%;

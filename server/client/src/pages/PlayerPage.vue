@@ -1,12 +1,12 @@
 <template>
   <div>
-    <!--
     <ActionExplorer
       ref="actionExplorer"
       :actionMap="actionMap"
       :currentAction="activeAction"
       :setCurrentAction="setCurrentAction"
-    /> -->
+      :showPath="showPath"
+    />
     <div class="player">
       <video id="loom-video" class="video-js" preload="auto" muted>
         <source :src="`/video/${videoId}/video/`" type="video/mp4" />
@@ -21,25 +21,31 @@ import 'video.js/dist/video-js.css'
 import videojs from 'video.js'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-// import ActionExplorer from '@/components/ActionExplorer'
+import ActionExplorer from '@/components/ActionExplorer'
 
 let actionMap = ref({})
 let activeAction = ref({})
 let oldIndependentAction = null
 let independentActions = []
-// const actionExplorer = ref(null)
+const showPath = ref(false)
+const actionExplorer = ref(null)
 const fps = 1
 let player
 const route = useRoute()
 const videoId = ref(route.params.id)
 const initFrameNo = ref(route.params.frameNo)
 
-// function setCurrentAction(action) {
-//   if (action !== undefined) {
-//     activeAction.value = action
-//     seekToFrame(action.position)
-//   }
-// }
+function setCurrentAction(action) {
+  if (action !== undefined) {
+    if (action.independent) {
+      oldIndependentAction = action
+      seekToFrame(activeAction.value.position + action.idx)
+    } else {
+      activeAction.value = action
+      seekToFrame(action.position)
+    }
+  }
+}
 
 function seekToFrame(frame) {
   if (player !== undefined) {
@@ -298,6 +304,7 @@ onMounted(() => {
         if (initFrameNo.value !== undefined) {
           findActionByFrame(parseInt(initFrameNo.value))
           seekToFrame(parseInt(initFrameNo.value))
+          showPath.value = true
         }
       })
     })
