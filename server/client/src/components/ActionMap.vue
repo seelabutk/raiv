@@ -7,16 +7,15 @@
 /* global chrome */
 import { NodeEditor, ClassicPreset } from 'rete'
 import { AreaPlugin, AreaExtensions } from 'rete-area-plugin'
-import {
-  ConnectionPlugin,
-  Presets as ConnectionPresets,
-} from 'rete-connection-plugin'
+// import {
+//   ConnectionPlugin,
+//   Presets as ConnectionPresets,
+// } from 'rete-connection-plugin'
 import { VuePlugin, Presets } from 'rete-vue-plugin'
 import { ReadonlyPlugin } from 'rete-readonly-plugin'
-import { MinimapPlugin } from 'rete-minimap-plugin'
+// import { MinimapPlugin } from 'rete-minimap-plugin'
 import * as d3 from 'd3'
 import {
-  defineExpose,
   defineProps,
   onMounted,
   computed,
@@ -37,6 +36,11 @@ const props = defineProps({
   setCurrentAction: {
     required: true,
     type: Function,
+  },
+  showPath: {
+    required: false,
+    type: Boolean,
+    default: false,
   },
 })
 
@@ -59,9 +63,9 @@ async function createEditor(container) {
   // const connection = new ConnectionPlugin()  // disable changing connections
   const render = new VuePlugin()
   const readonly = new ReadonlyPlugin()
-  const minimap = new MinimapPlugin({
-    boundViewport: true,
-  })
+  // const minimap = new MinimapPlugin({
+  //   boundViewport: true,
+  // })
   const selector = AreaExtensions.selector()
   const accumulating = AreaExtensions.accumulateOnCtrl()
   AreaExtensions.selectableNodes(area, selector, { accumulating })
@@ -78,7 +82,7 @@ async function createEditor(container) {
   )
 
   render.addPreset(Presets.classic.setup())
-  render.addPreset(Presets.minimap.setup({ size: 200 }))
+  // render.addPreset(Presets.minimap.setup({ size: 200 }))
   // connection.addPreset(ConnectionPresets.classic.setup())  // disable changing connections
 
   editor.use(readonly.root)
@@ -87,13 +91,44 @@ async function createEditor(container) {
   area.use(readonly.area)
   // area.use(connection)  // disable changing connections
   area.use(render)
-  area.use(minimap)
+  // area.use(minimap)
 
   AreaExtensions.simpleNodesOrder(area)
 
   // Use d3's layout algorithm to calculate node positions
   const tree = d3.hierarchy(props.actionMap)
   d3.tree().nodeSize([options.dx, options.dy])(tree)
+
+  // Calculate the provenance path
+  function determineProvenance(node) {
+    if (node === null || null === undefined || node.data === undefined) {
+      return false
+    }
+
+    // if at the current action, then it is part of the path, return up the stack
+    if (node.data.position === currentAction.value.position) {
+      node.data.isPath = true
+      return true
+    }
+
+    if (node.data.children === undefined) {
+      // node.data.isPath = false
+      return false
+    }
+
+    for (let i = 0; i < node.data.children.length; i++) {
+      const child = node.children[i]
+      if (determineProvenance(child)) {
+        node.data.isPath = true
+        return true
+      }
+    }
+    // node.data.isPath = false
+    return false
+  }
+  if (props.showPath) {
+    determineProvenance(tree)
+  }
 
   // Helper function to create rete node
   function createNode(node) {
@@ -107,13 +142,15 @@ async function createEditor(container) {
     if (position != 0) {
       n.addInput('port', new ClassicPreset.Input(socket))
     }
-    if (position != length - 1) {
+    // if (position != length - 1) {
+    if (length != 0) {
       n.addOutput('port', new ClassicPreset.Output(socket))
     }
 
     // Add relevant props
     n.action = node.data
     n.currentAction = currentAction
+    n.showPath = props.showPath
     return n
   }
 
@@ -159,7 +196,6 @@ onMounted(() => {
 onUnmounted(() => {
   area.destroy()
 })
-
 </script>
 
 <style scoped>

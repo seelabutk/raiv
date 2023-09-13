@@ -18,6 +18,7 @@
       :actionMap="props.actionMap"
       :currentAction="props.currentAction"
       :setCurrentAction="props.setCurrentAction"
+      :showPath="props.showPath"
     />
   </section>
 </template>
@@ -37,6 +38,11 @@ const props = defineProps({
   setCurrentAction: {
     required: true,
     type: Function,
+  },
+  showPath: {
+    required: false,
+    type: Boolean,
+    default: false,
   },
 })
 

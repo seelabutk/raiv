@@ -1,7 +1,7 @@
 <template>
   <div
     class="node"
-    :class="{ selected: selected }"
+    :class="{ selected: selected, 'is-path': isPath }"
     :style="nodeStyles"
     data-testid="node"
   >
@@ -103,10 +103,11 @@ export default defineComponent(
     watch(props.data.currentAction, (newVal) => {
       selected.value = newVal === action
     })
-
+    let isPath = ref(action.isPath)
     return {
       action,
-      selected
+      selected,
+      isPath
     }
   },
   methods: {
@@ -135,7 +136,6 @@ export default defineComponent(
       }
     },
     onSelect() {
-      console.log('onselect', this.action)
       this.data.setCurrentAction(this.action)
     }
   },
@@ -188,7 +188,7 @@ export default defineComponent(
   }
 
   &.selected {
-    background: #ffd92c;
+    background: #ffd92c !important;
     border-color: #e3c000;
   }
 
@@ -197,6 +197,11 @@ export default defineComponent(
     font-family: sans-serif;
     font-size: 18px;
     padding: 8px;
+  }
+
+  &.is-path {
+    border: 2px solid #ff0000;
+    background: #ff0000;
   }
 
   .output {
