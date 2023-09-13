@@ -38,6 +38,15 @@ def get_vec_db(video_dir, collection_name="raiv"):
 	return collection
 
 
+def delete_id_vec_db(video_dir, id, collection_name="raiv"):
+	collection = get_vec_db(video_dir, collection_name)
+	collection.delete(
+		where={
+			"video_id": id,
+		},
+	)
+
+
 def populate_text_vec_db(video_dir, collection_name="raiv"):
 	# get list of video directories
 	video_dirs = [

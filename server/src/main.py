@@ -32,6 +32,7 @@ from .vector_db import (
 	query_text_vec_db,
 	add_videos_to_vec_db,
 	add_text_to_vec_db,
+	delete_id_vec_db,
 	image_from_bin,
 )
 from .text_processing import (
@@ -257,10 +258,10 @@ def _compose_video(video_id, video):
 
 @app.patch('/video/{video_id}/', dependencies=[Depends(validate_token)])
 async def video__patch(
-		video_id,
-		video: Video,
-		background_tasks: BackgroundTasks,
-		token: str = Depends(oauth2_scheme)
+	video_id,
+	video: Video,
+	background_tasks: BackgroundTasks,
+	token: str = Depends(oauth2_scheme)
 ):
 	""" Encode the video once the front-end is done sending frames. """
 	verify_token(video_id, token)
@@ -283,7 +284,7 @@ async def video__get__list():
 		# and not os.path.exists(os.path.join(path, 'frames')):
 		if os.path.isdir(path) and not video_id == "embeddings" and not video_id == "global_swarm_lock":
 			with open(
-					os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
+				os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
 			) as action_file:
 				actionMap = json.load(action_file)
 				objects.append({
@@ -304,6 +305,10 @@ async def video__delete(video_id, token: str = Depends(oauth2_scheme)):
 
 	if os.path.exists(path):
 		rmtree(path)
+		delete_id_vec_db(VIDEO_DIR, video_id,
+						 collection_name=IMAGE_VEC_COLLECTION_NAME)
+		delete_id_vec_db(VIDEO_DIR, video_id,
+						 collection_name=TEXT_VEC_COLLECTION_NAME)
 
 
 def _get_video_file(video_id, filename):
