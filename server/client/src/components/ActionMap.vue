@@ -93,24 +93,24 @@ async function createEditor(container) {
   let actionMap = props.actionMap
 
   // Add indpendent actions to the action map if they exist
-  if (actionMap.independentActions && actionMap.independentActions.length > 0) {
-    function addIndependentActions(node) {
-      if (node.children === undefined) {
-        node.children = []
-      }
-      for (let i = 0; i < node.children.length; i++) {
-        addIndependentActions(node.children[i])
-      }
-
-      node.children = [
-        ...actionMap.independentActions.map((action) => {
-          let indAction = { ...action }
-          indAction.position = node.position + indAction.idx
-          return indAction
-        }),
-        ...node.children,
-      ]
+  function addIndependentActions(node) {
+    if (node.children === undefined) {
+      node.children = []
     }
+    for (let i = 0; i < node.children.length; i++) {
+      addIndependentActions(node.children[i])
+    }
+
+    node.children = [
+      ...actionMap.independentActions.map((action) => {
+        let indAction = { ...action }
+        indAction.position = node.position + indAction.idx
+        return indAction
+      }),
+      ...node.children,
+    ]
+  }
+  if (actionMap.independentActions && actionMap.independentActions.length > 0) {
     addIndependentActions(actionMap)
   }
 
