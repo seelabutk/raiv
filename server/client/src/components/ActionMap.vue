@@ -15,12 +15,7 @@ import { VuePlugin, Presets } from 'rete-vue-plugin'
 import { ReadonlyPlugin } from 'rete-readonly-plugin'
 // import { MinimapPlugin } from 'rete-minimap-plugin'
 import * as d3 from 'd3'
-import {
-  defineProps,
-  onMounted,
-  computed,
-  onUnmounted,
-} from 'vue'
+import { defineProps, onMounted, computed, onUnmounted } from 'vue'
 import Node from '@/components/ActionNode'
 
 // Props
@@ -95,8 +90,32 @@ async function createEditor(container) {
 
   AreaExtensions.simpleNodesOrder(area)
 
+  let actionMap = props.actionMap
+
+  // Add indpendent actions to the action map if they exist
+  if (actionMap.independentActions && actionMap.independentActions.length > 0) {
+    function addIndependentActions(node) {
+      if (node.children === undefined) {
+        node.children = []
+      }
+      for (let i = 0; i < node.children.length; i++) {
+        addIndependentActions(node.children[i])
+      }
+
+      node.children = [
+        ...actionMap.independentActions.map((action) => {
+          let indAction = { ...action }
+          indAction.position = node.position + indAction.idx
+          return indAction
+        }),
+        ...node.children,
+      ]
+    }
+    addIndependentActions(actionMap)
+  }
+
   // Use d3's layout algorithm to calculate node positions
-  const tree = d3.hierarchy(props.actionMap)
+  const tree = d3.hierarchy(actionMap)
   d3.tree().nodeSize([options.dx, options.dy])(tree)
 
   // Calculate the provenance path

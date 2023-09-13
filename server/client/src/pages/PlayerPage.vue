@@ -37,8 +37,13 @@ const initFrameNo = ref(route.params.frameNo)
 
 function setCurrentAction(action) {
   if (action !== undefined) {
-    activeAction.value = action
-    seekToFrame(action.position)
+    if (action.independent) {
+      oldIndependentAction = action
+      seekToFrame(activeAction.value.position + action.idx)
+    } else {
+      activeAction.value = action
+      seekToFrame(action.position)
+    }
   }
 }
 
