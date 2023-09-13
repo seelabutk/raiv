@@ -167,14 +167,14 @@ export default defineComponent(
 @import './vars';
 
 .node {
-  background: rgba(110, 136, 255, 0.8);
-  border: 2px solid #4e58bf;
+  background: #E1F5FE;
+  border: 2px solid #81D4FA;
   border-radius: 10px;
   cursor: pointer;
   box-sizing: border-box;
   width: $node-width;
   height: auto;
-  padding-bottom: 6px;
+  padding-top: 6px;
   position: relative;
   user-select: none;
 
@@ -184,24 +184,25 @@ export default defineComponent(
     padding: 0;
   }
   &:hover {
-    background: rgba(130, 153, 255, 0.8);
+    background: #81D4FA;
   }
 
   &.selected {
-    background: #ffd92c !important;
+    background: #ffe46e !important;
     border-color: #e3c000;
   }
 
   .title {
-    color: white;
+    color: black;
     font-family: sans-serif;
     font-size: 18px;
+    font-weight: bolder;
     padding: 8px;
   }
 
   &.is-path {
-    border: 2px solid #ff0000;
-    background: #ff0000;
+    border: 2px solid #EF9A9A;
+    background: #FFCDD2;
   }
 
   .output {
