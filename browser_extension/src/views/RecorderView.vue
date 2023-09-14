@@ -73,14 +73,13 @@ const store = new Store()
   box-sizing: border-box;
   display: flex;
   height: 3em;
-  padding-left: 1em;
+  padding: 0 1em;
   width: 100%;
 }
 
 #raiv-container:deep(.handle .close-btn) {
   align-items: center;
   display: flex;
-  margin-right: 0.5em;
   margin-left: auto;
 }
 </style>

@@ -3,6 +3,7 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
   faCircle,
+  faCog,
   faGrip,
   faPause,
   faStop,
@@ -17,6 +18,7 @@ import App from '@/views/RecorderView'
 
 library.add(
   faCircle,
+  faCog,
   faGrip,
   faPause,
   faStop,
