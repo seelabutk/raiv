@@ -1,6 +1,10 @@
 <template>
-  <dialog class="node-options-dialog" v-drag="'#node-options-handle'">
-    <div id="node-options-handle" class="handle">
+  <dialog
+    :class="props.optionsClass"
+    id="node-options-dialog"
+    v-drag="`#${props.optionsClass}-handle`"
+  >
+    <div :id="`#${props.optionsClass}-handle`" class="handle">
       <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
 
       <button class="close-btn" type="button" @click="close">
@@ -12,15 +16,15 @@
       <h3>{{ props.title }}</h3>
       <div>
         <label>
-          Wait time (ms) before capture:
+          Wait time (s) before capture:
 
           <input
-            :value="props.action.waitTime"
+            :value="props.action.waitTime / 1000"
             min="0"
             type="number"
             @change="
               (event) => {
-                props.action.set('waitTime', event.target.value)
+                props.action.set('waitTime', event.target.value * 1000)
                 props.store.save()
               }
             "
@@ -173,7 +177,13 @@ const props = defineProps({
     required: true,
     type: String,
   },
+
+  optionsClass: {
+    required: true,
+    type: String,
+  },
 })
+
 
 const isCanvas = computed(
   () =>
@@ -221,14 +231,14 @@ function deleteAction() {
 }
 
 onMounted(() => {
-  dialog = document.querySelector('.node-options-dialog')
+  dialog = document.querySelector(`.${props.optionsClass}`)
 })
 
 defineExpose({ open, isChangeParent })
 </script>
 
 <style scoped>
-.node-options-dialog {
+#node-options-dialog {
   right: 1em;
   top: 1em;
   width: 30em !important;

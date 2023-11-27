@@ -19,17 +19,27 @@
         </button>
       </div>
 
+      <NodeOptions
+        ref="independentNodeOptions"
+        :store="props.store"
+        :action="currentAction"
+        :title="nodeTitle"
+        optionsClass="indpedendent-node-options-dialog"
+        @render="render"
+      />
+
       <div class="independent-action-contents">
         <table class="styled-table">
           <thead>
             <tr>
               <th class="table-header-title">Label</th>
               <th class="table-header-title">Type</th>
-              <th class="table-header-title">Wait Time</th>
+              <th class="table-header-title">Options</th>
+              <!-- <th class="table-header-title">Wait Time</th>
               <th class="table-header-title">Manual Capture</th>
               <th class="table-header-title">Disable Siblings</th>
               <th class="table-header-title">Canvas Rows</th>
-              <th class="table-header-title">Canvas Columns</th>
+              <th class="table-header-title">Canvas Columns</th> -->
               <th></th>
             </tr>
           </thead>
@@ -42,6 +52,17 @@
               </td>
               <td>{{ action.type }}</td>
               <td>
+                <tippy content="Action Options">
+                  <button
+                    class="action-options-btn"
+                    type="button"
+                    @click="modifyActions(action)"
+                  >
+                    <font-awesome-icon icon="fa-solid fa-trash" class="fa-sm" />
+                  </button>
+                </tippy>
+              </td>
+              <!-- <td>
                 <input
                   class="number-input"
                   :value="independentActions[i].waitTime"
@@ -104,7 +125,7 @@
                     }
                   "
                 />
-              </td>
+              </td> -->
               <td>
                 <tippy content="Delete Action">
                   <button
@@ -124,14 +145,20 @@
   </div>
 </template>
 <script setup>
-import { defineProps, onMounted, computed } from 'vue'
+import { defineProps, defineExpose, onMounted, computed, ref } from 'vue'
 import 'tippy.js/dist/tippy.css'
+import NodeOptions from '@/components/NodeOptions'
+
 const props = defineProps({
   store: {
     required: true,
     type: Object,
   },
 })
+
+let currentAction = ref(props.store.actionMap.value.root)
+const independentNodeOptions = ref(null)
+const nodeTitle = ref('')
 
 let dialog
 
@@ -169,8 +196,16 @@ function crop(label, length = 50) {
   }
   return label
 }
+/*
 function isCanvas(action) {
   return action.target && action.target.tagName.toLowerCase() === 'canvas'
+}
+*/
+
+function modifyActions(action) {
+  currentAction.value = action
+  nodeTitle.value = label(action)
+  independentNodeOptions.value.open()
 }
 
 function deleteAction(action) {
@@ -178,6 +213,10 @@ function deleteAction(action) {
   props.store.save()
 }
 
+function render() {
+  // no-op
+}
+/*
 function toggleDisableSiblings(action) {
   action.set('disableSiblings', !action.disableSiblings)
   props.store.save()
@@ -192,6 +231,7 @@ function handleWaitTimeChange(e, action) {
   action.set('waitTime', event.target.value)
   props.store.save()
 }
+*/
 
 function open() {
   dialog.show()
@@ -203,7 +243,10 @@ function close() {
 
 onMounted(() => {
   dialog = document.querySelector('.independent-action-dialog')
+  render()
 })
+
+defineExpose({ render })
 </script>
 
 <style scoped>

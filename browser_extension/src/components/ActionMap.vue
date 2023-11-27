@@ -22,6 +22,7 @@
         :store="props.store"
         :action="currentAction"
         :title="nodeTitle"
+        optionsClass="node-options-dialog"
         @render="render"
       />
     </dialog>
