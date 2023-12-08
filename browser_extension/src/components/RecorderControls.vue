@@ -156,7 +156,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -191,7 +190,6 @@ const independentActions = computed(() => {
     ? props.store.actionMap.value.independentActions
     : []
 })
-
 
 const totalFrameCount = computed(() => {
   return (

@@ -322,6 +322,9 @@ input {
   max-width: 10em !important;
 }
 
+h3 {
+  color: black;
+}
 
 .contents {
   padding: 1em;
