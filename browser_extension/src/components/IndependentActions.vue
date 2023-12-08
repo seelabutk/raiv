@@ -18,9 +18,12 @@
       <div id="independent-action-handle" class="handle">
         <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
 
-        <button class="close-btn" type="button" @click="close">
-          <font-awesome-icon icon="fa-solid fa-xmark" class="fa-lg" />
-        </button>
+        <font-awesome-icon
+          icon="fa-solid fa-xmark"
+          class="fa-lg close-btn"
+          style="font-size: 1.5em"
+          @click="close"
+        />
       </div>
 
       <div class="independent-action-contents">
@@ -182,7 +185,8 @@ defineExpose({ open, close, render })
 }
 .action-type-icon {
   min-height: 1em !important;
-  max-height: 1em !important;
+  max-height: 1.3em !important;
+  min-width: 1em !important;
   padding-right: 0;
 }
 

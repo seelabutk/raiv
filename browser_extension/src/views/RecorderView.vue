@@ -80,6 +80,7 @@ const store = new Store()
   align-items: center;
   display: flex;
   margin-left: auto;
+  cursor: pointer;
 }
 </style>
 

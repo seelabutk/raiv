@@ -7,9 +7,12 @@
     <div :id="`${props.optionsClass}-handle`" class="handle">
       <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
 
-      <button class="close-btn" type="button" @click="close">
-        <font-awesome-icon icon="fa-solid fa-xmark" class="fa-lg" />
-      </button>
+      <font-awesome-icon
+        icon="fa-solid fa-xmark"
+        class="fa-lg close-btn"
+        style="font-size: 1.5em"
+        @click="close"
+      />
     </div>
 
     <div class="contents">
