@@ -25,111 +25,37 @@
 
       <div class="independent-action-contents">
         <table class="styled-table">
-          <thead>
-            <tr>
-              <th class="table-header-title">Label</th>
-              <th class="table-header-title">Type</th>
-              <th class="table-header-title">Options</th>
-              <!-- <th class="table-header-title">Wait Time</th>
-              <th class="table-header-title">Manual Capture</th>
-              <th class="table-header-title">Disable Siblings</th>
-              <th class="table-header-title">Canvas Rows</th>
-              <th class="table-header-title">Canvas Columns</th> -->
-              <th></th>
-            </tr>
-          </thead>
+          <thead></thead>
           <tbody>
             <tr v-for="(action, i) in independentActions" :key="i">
-              <td>
+              <td style="min-width: 1.5em; padding-right: 0">
+                <img :src="getIconHref(action)" class="action-type-icon" />
+              </td>
+              <td style="width: 100%; padding-left: 0.5em">
                 <tippy v-bind:content="label(action)">
-                  {{ crop(label(action), 10) }}
+                  <div style="display: flex; flex-direction: row">
+                    {{ crop(label(action), 30) }}
+                  </div>
                 </tippy>
               </td>
-              <td>{{ action.type }}</td>
-              <td>
-                <tippy content="Action Options">
-                  <button
-                    class="action-options-btn"
-                    type="button"
+              <td style="width: 1.5em">
+                <tippy content="Edit Action">
+                  <font-awesome-icon
+                    id="edit-action-icon"
+                    class="fa-md"
+                    icon="fa-solid fa-pen"
                     @click="modifyActions(action)"
-                  >
-                    <font-awesome-icon icon="fa-solid fa-trash" class="fa-sm" />
-                  </button>
+                  />
                 </tippy>
               </td>
-              <!-- <td>
-                <input
-                  class="number-input"
-                  :value="independentActions[i].waitTime"
-                  min="0"
-                  step="100"
-                  type="number"
-                  @change="
-                    (event) => {
-                      handleWaitTimeChange(event, action)
-                    }
-                  "
-                />
-              </td>
-              <td>
-                <input
-                  class="toggle-input"
-                  :checked="action.manualCapture"
-                  type="checkbox"
-                  @input="toggleManualCapture(action)"
-                />
-              </td>
-              <td>
-                <input
-                  class="toggle-input"
-                  :checked="action.disableSiblings"
-                  type="checkbox"
-                  @input="toggleDisableSiblings(action)"
-                />
-              </td>
-              <td>
-                <input
-                  v-if="isCanvas(action)"
-                  :value="action.canvasRanges[0]"
-                  min="1"
-                  type="number"
-                  @change="
-                    (event) => {
-                      action.set('canvasRanges', [
-                        event.target.value,
-                        action.canvasRanges[1],
-                      ])
-                      props.store.save()
-                    }
-                  "
-                />
-              </td>
-              <td>
-                <input
-                  v-if="isCanvas(action)"
-                  :value="action.canvasRanges[1]"
-                  min="1"
-                  type="number"
-                  @change="
-                    (event) => {
-                      action.set('canvasRanges', [
-                        action.canvasRanges[0],
-                        event.target.value,
-                      ])
-                      props.store.save()
-                    }
-                  "
-                />
-              </td> -->
-              <td>
+              <td style="width: 1.5em">
                 <tippy content="Delete Action">
-                  <button
-                    class="delete-action-btn"
-                    type="button"
+                  <font-awesome-icon
+                    id="delete-action-icon"
+                    class="fa-sd"
+                    icon="fa-solid fa-trash"
                     @click="deleteAction(action)"
-                  >
-                    <font-awesome-icon icon="fa-solid fa-trash" class="fa-sm" />
-                  </button>
+                  />
                 </tippy>
               </td>
             </tr>
@@ -140,6 +66,7 @@
   </div>
 </template>
 <script setup>
+/* global chrome */
 import { defineProps, defineExpose, onMounted, computed, ref } from 'vue'
 import 'tippy.js/dist/tippy.css'
 import NodeOptions from '@/components/NodeOptions'
@@ -183,6 +110,23 @@ function label(action) {
   }
 
   return tagName
+}
+
+function getIconHref(action) {
+  const type = action.type
+  let href = ''
+  if (type === 'click') {
+    href = chrome.runtime.getURL('/icons/hand-pointer-solid.svg')
+  } else if (type === 'hover') {
+    href = chrome.runtime.getURL('/icons/arrow-pointer-solid.svg')
+  } else if (type === 'toggle') {
+    href = chrome.runtime.getURL('/icons/toggle-on-solid.svg')
+  } else if (type === 'toggle-off') {
+    href = chrome.runtime.getURL('/icons/toggle-off-solid.svg')
+  } else if (type === 'slider') {
+    href = chrome.runtime.getURL('/icons/sliders-solid.svg')
+  }
+  return href
 }
 
 function crop(label, length = 50) {
@@ -233,20 +177,27 @@ defineExpose({ open, close, render })
   left: -10em;
   top: 1em;
   z-index: 10001;
-  width: 600px !important;
+  width: 300px !important;
   max-height: 600px;
+}
+.action-type-icon {
+  min-width: 1em !important;
+  padding-right: 0;
 }
 
 .styled-table {
   border-collapse: collapse;
   font-size: 0.9em;
-  font-family: sans-serif;
   border: 1px solid #000;
   overflow-y: auto;
   max-height: 500px;
-  max-width: fit-content;
   width: 100%;
   display: block;
+}
+
+.styled-table thead {
+  position: sticky !important;
+  top: 0;
 }
 
 .styled-table thead tr {
@@ -255,42 +206,22 @@ defineExpose({ open, close, render })
   text-align: left;
   height: 50px !important;
   max-height: 50px !important;
+  width: 100%;
 }
 
-.table-header-title {
-  color: #ffffff !important;
-}
-
-.styled-table thead {
-  position: sticky !important;
-  top: 0;
-}
-
-.styled-table th {
-  height: 75px !important;
-}
-.styled-table th,
 .styled-table td {
   padding: 6px 9px;
   height: 50px !important;
 }
 
 td {
-  width: 50px !important;
   height: 50px !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: no-wrap !important;
 }
-.delete-action-btn {
-  background-color: #ff0000 !important;
-  color: white !important;
-  height: 20px !important;
-  width: 20px !important;
-  padding: 0px !important;
-}
+
 .styled-table tbody tr {
-  height: 50px !important;
   max-height: 50px !important;
 }
 
@@ -309,11 +240,15 @@ td {
   justify-content: center;
   padding: 1em;
   width: 100%;
+  max-height: 300px;
 }
 
-input[type='checkbox'] {
-  width: 1em !important;
-  height: 1em !important;
+#edit-action-icon {
+  color: #ffc107 !important;
+}
+
+#delete-action-icon {
+  color: #e34724 !important;
 }
 
 /* Hide number input arrows */
@@ -326,8 +261,10 @@ input::-webkit-inner-spin-button {
 }
 
 /* Firefox */
+/*
 input[type='number'] {
-  width: 60px !important;
-  -moz-appearance: textfield;
+    width: 60px !important;
+    -moz-appearance: textfield;
 }
+  */
 </style>

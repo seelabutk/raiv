@@ -28,7 +28,6 @@ const store = new Store()
 }
 
 #raiv-container:deep(*) {
-  color: black;
 }
 
 /* This is a hack. Basically, Vue will mount inside of a div and that
