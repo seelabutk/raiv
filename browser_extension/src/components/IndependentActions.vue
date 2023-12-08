@@ -31,7 +31,7 @@
               <td style="min-width: 1.5em; padding-right: 0">
                 <img :src="getIconHref(action)" class="action-type-icon" />
               </td>
-              <td style="width: 100%; padding-left: 0.5em">
+              <td style="width: 100%; padding-left: 0.75em">
                 <tippy v-bind:content="label(action)">
                   <div style="display: flex; flex-direction: row">
                     {{ crop(label(action), 30) }}
@@ -52,7 +52,7 @@
                 <tippy content="Delete Action">
                   <font-awesome-icon
                     id="delete-action-icon"
-                    class="fa-sd"
+                    class="fa-md"
                     icon="fa-solid fa-trash"
                     @click="deleteAction(action)"
                   />
@@ -181,7 +181,8 @@ defineExpose({ open, close, render })
   max-height: 600px;
 }
 .action-type-icon {
-  min-width: 1em !important;
+  min-height: 1em !important;
+  max-height: 1em !important;
   padding-right: 0;
 }
 
