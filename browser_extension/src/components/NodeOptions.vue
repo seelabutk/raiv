@@ -117,37 +117,6 @@
             </td>
           </tr>
         </table>
-
-        <!-- <label>
-          Orientation
-          <select
-            :value="props.action.sliderOrientation"
-            @change="
-              (event) => {
-                props.action.set('sliderOrientation', event.target.value)
-                props.store.save()
-              }
-            "
-          >
-            <option value="horizontal">Horizontal</option>
-            <option value="vertical">Vertical</option>
-          </select>
-        </label> -->
-
-        <!-- <label>
-          Steps
-          <input
-            :value="props.action.sliderSteps"
-            min="1"
-            type="number"
-            @change="
-              (event) => {
-                props.action.set('sliderSteps', event.target.value)
-                props.store.save()
-              }
-            "
-          />
-        </label> -->
       </div>
 
       <div style="width: 100%" v-if="isCanvas">
