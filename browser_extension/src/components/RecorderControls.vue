@@ -1,5 +1,13 @@
 <template>
   <div>
+    <div style="position:fixed; margin 0; z-index: 10002">
+      <!-- Child Dialogues -->
+      <ActionMap ref="actionMapComponent" :store="props.store" />
+      <IndependentActions
+        ref="independentActionsComponent"
+        :store="props.store"
+      />
+    </div>
     <div
       class="control-container"
       v-drag="'#controls-handle'"
@@ -148,12 +156,7 @@
         </div>
       </div>
     </div>
-    <!-- Child Dialogues -->
-    <ActionMap ref="actionMapComponent" :store="props.store" />
-    <IndependentActions
-      ref="independentActionsComponent"
-      :store="props.store"
-    />
+
   </div>
 </template>
 

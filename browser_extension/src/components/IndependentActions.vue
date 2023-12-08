@@ -1,5 +1,16 @@
 <template>
   <div>
+    <div style="position:fixed; margin 0; z-index: 10002">
+      <!-- Child Dialogues -->
+      <NodeOptions
+        ref="independentNodeOptions"
+        :store="props.store"
+        :action="currentAction"
+        :title="nodeTitle"
+        optionsClass="indpedendent-node-options-dialog"
+        @render="render"
+      />
+    </div>
     <dialog
       class="independent-action-dialog"
       v-drag="'#independent-action-handle'"
@@ -11,8 +22,6 @@
           <font-awesome-icon icon="fa-solid fa-xmark" class="fa-lg" />
         </button>
       </div>
-
-
 
       <div class="independent-action-contents">
         <table class="styled-table">
@@ -128,14 +137,6 @@
         </table>
       </div>
     </dialog>
-    <NodeOptions
-      ref="independentNodeOptions"
-      :store="props.store"
-      :action="currentAction"
-      :title="nodeTitle"
-      optionsClass="indpedendent-node-options-dialog"
-      @render="render"
-    />
   </div>
 </template>
 <script setup>

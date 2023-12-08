@@ -1,5 +1,16 @@
 <template>
   <div>
+    <div style="position:fixed; margin 0; z-index: 10002">
+      <!-- Child Dialogues -->
+      <NodeOptions
+        ref="nodeOptions"
+        :store="props.store"
+        :action="currentAction"
+        :title="nodeTitle"
+        optionsClass="node-options-dialog"
+        @render="render"
+      />
+    </div>
     <dialog class="action-map-dialog" v-drag="'#action-map-handle'">
       <div id="action-map-handle" class="handle">
         <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
@@ -9,15 +20,6 @@
         </button>
       </div>
     </dialog>
-    <!-- Child Dialogues -->
-    <NodeOptions
-      ref="nodeOptions"
-      :store="props.store"
-      :action="currentAction"
-      :title="nodeTitle"
-      optionsClass="node-options-dialog"
-      @render="render"
-    />
   </div>
 </template>
 
@@ -102,7 +104,7 @@ function render() {
   d3.tree().nodeSize([options.dx, options.dy])(tree)
 
   // Resets the viewBox on a new render
-  // svg.attr('viewBox', viewBox)
+  svg.attr('viewBox', viewBox)
 
   // Draw the links between nodes
   svg
@@ -239,7 +241,6 @@ function onPointerMove(event) {
 // Panning clean up
 function onPointerUp() {
   dragging = false
-
   newViewBox = svg
     .attr('viewBox')
     .split(',')

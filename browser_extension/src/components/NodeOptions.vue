@@ -4,7 +4,7 @@
     id="node-options-dialog"
     v-drag="`#${props.optionsClass}-handle`"
   >
-    <div :id="`#${props.optionsClass}-handle`" class="handle">
+    <div :id="`${props.optionsClass}-handle`" class="handle">
       <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
 
       <button class="close-btn" type="button" @click="close">
@@ -317,6 +317,11 @@ defineExpose({ open, isChangeParent })
   display: flex;
   justify-content: space-between;
 }
+
+input {
+  max-width: 10em !important;
+}
+
 
 .contents {
   padding: 1em;
