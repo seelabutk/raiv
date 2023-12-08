@@ -1,12 +1,5 @@
 <template>
   <div>
-    <button
-      type="button"
-      :disabled="independentActions.length < 1"
-      @click="open"
-    >
-      View Independent Actions
-    </button>
     <dialog
       class="independent-action-dialog"
       v-drag="'#independent-action-handle'"
@@ -19,14 +12,7 @@
         </button>
       </div>
 
-      <NodeOptions
-        ref="independentNodeOptions"
-        :store="props.store"
-        :action="currentAction"
-        :title="nodeTitle"
-        optionsClass="indpedendent-node-options-dialog"
-        @render="render"
-      />
+
 
       <div class="independent-action-contents">
         <table class="styled-table">
@@ -142,6 +128,14 @@
         </table>
       </div>
     </dialog>
+    <NodeOptions
+      ref="independentNodeOptions"
+      :store="props.store"
+      :action="currentAction"
+      :title="nodeTitle"
+      optionsClass="indpedendent-node-options-dialog"
+      @render="render"
+    />
   </div>
 </template>
 <script setup>
@@ -216,22 +210,6 @@ function deleteAction(action) {
 function render() {
   // no-op
 }
-/*
-function toggleDisableSiblings(action) {
-  action.set('disableSiblings', !action.disableSiblings)
-  props.store.save()
-}
-
-function toggleManualCapture(action) {
-  action.set('manualCapture', !action.manualCapture)
-  props.store.save()
-}
-
-function handleWaitTimeChange(e, action) {
-  action.set('waitTime', event.target.value)
-  props.store.save()
-}
-*/
 
 function open() {
   dialog.show()
@@ -246,7 +224,7 @@ onMounted(() => {
   render()
 })
 
-defineExpose({ render })
+defineExpose({ open, close, render })
 </script>
 
 <style scoped>

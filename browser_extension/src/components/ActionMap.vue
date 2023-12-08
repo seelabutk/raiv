@@ -1,13 +1,5 @@
 <template>
   <div>
-    <button
-      type="button"
-      :disabled="props.store.actionMap.value.root.frameCount < 2"
-      @click="open"
-    >
-      View Action Map
-    </button>
-
     <dialog class="action-map-dialog" v-drag="'#action-map-handle'">
       <div id="action-map-handle" class="handle">
         <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
@@ -16,16 +8,16 @@
           <font-awesome-icon icon="fa-solid fa-xmark" class="fa-lg" />
         </button>
       </div>
-
-      <NodeOptions
-        ref="nodeOptions"
-        :store="props.store"
-        :action="currentAction"
-        :title="nodeTitle"
-        optionsClass="node-options-dialog"
-        @render="render"
-      />
     </dialog>
+    <!-- Child Dialogues -->
+    <NodeOptions
+      ref="nodeOptions"
+      :store="props.store"
+      :action="currentAction"
+      :title="nodeTitle"
+      optionsClass="node-options-dialog"
+      @render="render"
+    />
   </div>
 </template>
 
@@ -276,7 +268,7 @@ onMounted(() => {
 // Object passed in. Even if reactivity can be properly established, this
 // render likely needs to be throttled to avoid many render calls when
 // performing an action that affects many nodes.
-defineExpose({ render })
+defineExpose({ open, close, render })
 </script>
 
 <style scoped>

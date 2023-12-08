@@ -14,55 +14,111 @@
 
     <div class="contents">
       <h3>{{ props.title }}</h3>
-      <div>
-        <label>
-          Wait time (s) before capture:
+      <table class="form-table">
+        <tr>
+          <td class="form-label">
+            <label for="wait-time">Wait time (s) before capture</label>
+          </td>
+          <td class="form-divider"></td>
 
-          <input
-            :value="props.action.waitTime / 1000"
-            min="0"
-            type="number"
-            @change="
-              (event) => {
-                props.action.set('waitTime', event.target.value * 1000)
-                props.store.save()
-              }
-            "
-          />
-        </label>
-      </div>
+          <td class="form-input">
+            <input
+              :value="props.action.waitTime / 1000"
+              min="0"
+              type="number"
+              id="wait-time"
+              @change="
+                (event) => {
+                  props.action.set('waitTime', event.target.value * 1000)
+                  props.store.save()
+                }
+              "
+            />
+          </td>
+        </tr>
+        <tr>
+          <td class="form-label">
+            <label for="manual-capture">Manual capture</label>
+          </td>
+          <td class="form-divider"></td>
 
-      <div>
-        <label>
-          Manual capture:
+          <td class="form-input">
+            <input
+              id="manual-capture"
+              :checked="props.action.manualCapture"
+              type="checkbox"
+              @input="toggleManualCapture"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td class="form-label">
+            <label for="disables-siblings">Disables siblings</label>
+          </td>
+          <td class="form-divider"></td>
 
-          <input
-            :checked="props.action.manualCapture"
-            type="checkbox"
-            @input="toggleManualCapture"
-          />
-        </label>
-      </div>
+          <td class="form-input">
+            <input
+              id="disables-siblings"
+              :checked="props.action.disableSiblings"
+              type="checkbox"
+              @input="toggleDisableSiblings"
+            />
+          </td>
+        </tr>
+      </table>
 
-      <div>
-        <label>
-          Disables siblings:
-
-          <input
-            :checked="props.action.disableSiblings"
-            type="checkbox"
-            @input="toggleDisableSiblings"
-          />
-        </label>
-      </div>
-
-      <div v-if="isSlider">
+      <div style="width: 100%" v-if="isSlider">
         <p>
           The targeted element is a slider. Choose the orientation of the
           slider, and the number of discrete steps to record.
         </p>
+        <table class="form-table">
+          <tr>
+            <td class="form-label">
+              <label for="slider-orientation">Orientation</label>
+            </td>
+            <td class="form-divider"></td>
+            <td class="form-input">
+              <select
+                id="slider-orientation"
+                :value="props.action.sliderOrientation"
+                @change="
+                  (event) => {
+                    props.action.set('sliderOrientation', event.target.value)
+                    props.store.save()
+                  }
+                "
+              >
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td class="form-label">
+              <label for="slider-steps">Steps</label>
+            </td>
+            <td class="form-divider"></td>
+            <td class="form-input">
+              <input
+                class="slider-steps"
+                :value="props.action.sliderSteps"
+                min="1"
+                type="number"
+                @change="
+                  (event) => {
+                    console.log('here?')
+                    props.action.set('sliderSteps', event.target.value)
+                    props.store.save()
+                  }
+                "
+              />
+            </td>
+          </tr>
+        </table>
 
-        <label>
+        <!-- <label>
           Orientation
           <select
             :value="props.action.sliderOrientation"
@@ -76,9 +132,9 @@
             <option value="horizontal">Horizontal</option>
             <option value="vertical">Vertical</option>
           </select>
-        </label>
+        </label> -->
 
-        <label>
+        <!-- <label>
           Steps
           <input
             :value="props.action.sliderSteps"
@@ -91,51 +147,65 @@
               }
             "
           />
-        </label>
+        </label> -->
       </div>
 
-      <div v-if="isCanvas">
+      <div style="width: 100%" v-if="isCanvas">
         <p>
           The targeted element is a canvas. If there are interactions inside the
           canvas you want to capture then this tool can repeat this Action
           throughout the canvas. Choose the number of rows and columns of
           repeated Actions to perform on this canvas.
         </p>
+        <table class="form-table">
+          <tr>
+            <td class="form-label">
+              <label for="canvas-rows">rows</label>
+            </td>
+            <td class="form-divider"></td>
+            <td class="form-input">
+              <input
+                id="canvas-rows"
+                :value="props.action.canvasRanges[0]"
+                min="1"
+                type="number"
+                @change="
+                  (event) => {
+                    props.action.set('canvasRanges', [
+                      event.target.value,
+                      props.action.canvasRanges[1],
+                    ])
+                    props.store.save()
+                  }
+                "
+              />
+            </td>
+          </tr>
+          <tr>
+            <td class="form-label">
+              <label for="canvas-cols">cols</label>
+            </td>
+            <td class="form-divider"></td>
 
-        <label>
-          Rows
-          <input
-            :value="props.action.canvasRanges[0]"
-            min="1"
-            type="number"
-            @change="
-              (event) => {
-                props.action.set('canvasRanges', [
-                  event.target.value,
-                  props.action.canvasRanges[1],
-                ])
-                props.store.save()
-              }
-            "
-          />
-        </label>
-        <label>
-          Columns
-          <input
-            :value="props.action.canvasRanges[1]"
-            min="1"
-            type="number"
-            @change="
-              (event) => {
-                props.action.set('canvasRanges', [
-                  props.action.canvasRanges[0],
-                  event.target.value,
-                ])
-                props.store.save()
-              }
-            "
-          />
-        </label>
+            <td class="form-input">
+              <input
+                id="canvas-cols"
+                :value="props.action.canvasRanges[1]"
+                min="1"
+                type="number"
+                @change="
+                  (event) => {
+                    props.action.set('canvasRanges', [
+                      props.action.canvasRanges[0],
+                      event.target.value,
+                    ])
+                    props.store.save()
+                  }
+                "
+              />
+            </td>
+          </tr>
+        </table>
       </div>
 
       <div class="node-options-actions">
@@ -183,7 +253,6 @@ const props = defineProps({
     type: String,
   },
 })
-
 
 const isCanvas = computed(
   () =>
@@ -251,6 +320,23 @@ defineExpose({ open, isChangeParent })
 
 .contents {
   padding: 1em;
+}
+
+.form-table {
+  width: 100%;
+  margin-top: 1em;
+  table-layout: fixed;
+}
+.form-label {
+  text-align: right;
+  width: 49%;
+}
+.form-divider {
+  width: 2%;
+}
+.form-input {
+  text-align: left;
+  width: 49%;
 }
 
 .contents div:not(:first-child) {
