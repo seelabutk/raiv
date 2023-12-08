@@ -193,7 +193,6 @@ defineExpose({ open, close, render })
 .styled-table {
   border-collapse: collapse;
   font-size: 0.9em;
-  border: 1px solid #000;
   overflow-y: auto;
   max-height: 500px;
   width: 100%;
@@ -243,7 +242,6 @@ td {
   flex-direction: column;
   align-items: left;
   justify-content: center;
-  padding: 1em;
   width: 100%;
   max-height: 300px;
 }
