@@ -5,8 +5,10 @@ name = "pypi"
 
 [packages]
 anyio = "*"
+asyncpg = "*"
 chardet = "*"
 fastapi = "*"
+"fastapi-users[sqlalchemy]" = "*"
 gunicorn = "*"
 pydantic = "*"
 "uvicorn[standard]" = "*"
