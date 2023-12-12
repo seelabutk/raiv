@@ -1,21 +1,23 @@
-import json
-import spacy
+from base64 import b64decode
+from datetime import datetime
 import os
-import requests
+import json
+from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
-from datetime import datetime
-from base64 import b64decode
-from shutil import copy, rmtree
 
 from fastapi import (
-	Depends, FastAPI, Header, HTTPException,
-	Request, BackgroundTasks
+	BackgroundTasks,
+	FastAPI,
+	Header,
+	HTTPException,
+	Request
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
-from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
+import requests
+import spacy
 
 
 from .util import (
@@ -26,8 +28,6 @@ from .util import (
 	stat_video
 )
 from .vector_db import (
-	populate_image_vec_db,
-	populate_text_vec_db,
 	query_image_vec_db,
 	query_text_vec_db,
 	add_videos_to_vec_db,
@@ -79,13 +79,7 @@ app.add_middleware(
 	allow_methods=['*'],
 	allow_origins=['*']
 )
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-API_KEY_FILE = os.path.join(os.getcwd(), 'data', 'api_keys.json')
-api_keys = []
-if os.path.exists(API_KEY_FILE):
-	with open(API_KEY_FILE, encoding='utf-8') as f:
-		api_keys = json.load(f)
 
 # get the embedder model and populate the db (if any videos exist)
 IMAGE_VEC_COLLECTION_NAME = "raiv-image"
@@ -97,61 +91,39 @@ TEXT_VEC_COLLECTION_NAME = "raiv-text"
 nlp = spacy.load("en_core_web_sm")
 
 
-def validate_token(token: str = Depends(oauth2_scheme)):
-	if token not in api_keys:
-		raise HTTPException(
-			detail='This endpoint requires a valid API Key.',
-			status_code=401
-		)
-
-
-def verify_token(video_id, token):
-	fpath = os.path.join(VIDEO_DIR, video_id, 'api_key.txt')
-	with open(fpath, 'r', encoding='utf-8') as file:
-		target = file.read().strip()
-
-		if target != token:
-			raise HTTPException(
-				detail='This endpoint requires a valid API Key.',
-				status_code=401
-			)
-
-
 # Proxy endpoints
-
 def get_proxy_url(request: Request):
 	"""
 	Get the URL to proxy to.
 	Find the right most instance of http:// or https:// to avoid any issues
 	"""
 	url = request.url.path
-	i, j = url.rfind('http://'), url.rfind('https://')
-	if i == -1 and j == -1:
+	http, https = url.rfind('http://'), url.rfind('https://')
+	if http == -1 and https == -1:
 		raise HTTPException(status_code=400)
-	return f"{request.url.path[max(i, j):]}?{request.url.query}"
+	return f"{request.url.path[max(http, https):]}?{request.url.query}"
 
 
 @app.get('/proxy/{path:path}')
 async def proxy__get(request: Request):
 	""" Proxy requests to the target URL. """
 	t_resp = requests.request(
-		method=request.method,
-		url=get_proxy_url(request),
 		allow_redirects=False,
+		method=request.method,
+		timeout=65,
+		url=get_proxy_url(request),
 	)
 	return Response(content=t_resp.content, status_code=t_resp.status_code)
 
 # Recording endpoints
 
 
-@app.post('/frame/', dependencies=[Depends(validate_token)])
-async def frame__post(frame: Frame, token: str = Depends(oauth2_scheme)):
+@app.post('/frame/')
+async def frame__post(frame: Frame):
 	""" Adds a frame to a video and prepares the frame for encoding. """
 	path = os.path.join(VIDEO_DIR, frame.video)
 	if not frame.video or not os.path.exists(path):
 		raise HTTPException(status_code=404)
-
-	verify_token(frame.video, token)
 
 	frames_dir = os.path.join(path, 'frames')
 	if not os.path.exists(frames_dir):
@@ -177,8 +149,8 @@ async def frame__post(frame: Frame, token: str = Depends(oauth2_scheme)):
 		], check=True)
 
 
-@app.post('/video/', dependencies=[Depends(validate_token)])
-async def video__post(video: Video, token: str = Depends(oauth2_scheme)):
+@app.post('/video/')
+async def video__post(video: Video):
 	""" Creates a new video with no associated frames. """
 	uuid = uuid4().hex
 
@@ -198,10 +170,6 @@ async def video__post(video: Video, token: str = Depends(oauth2_scheme)):
 		'updated': datetime.now().isoformat(),
 		'size': 0
 	})
-
-	fpath = os.path.join(path, 'api_key.txt')
-	with open(fpath, 'w', encoding='utf-8') as file:
-		file.write(f'{token}\n')
 
 	return uuid
 
@@ -223,9 +191,9 @@ def _compose_video(video_id, video):
 	encode_video(video_id, action_map)
 
 	# scale the video if necessary
-	devicePixelRatio = action_map.get(
-		'metadata', {}).get('devicePixelRatio', 1)
-	scale_video(video_id, devicePixelRatio)
+	device_pixel_ratio = action_map.get(
+		'metadata', {}).get('device_pixel_ratio', 1)
+	scale_video(video_id, device_pixel_ratio)
 
 	# update the metadata
 	video_stat = stat_video(video_id)
@@ -256,16 +224,13 @@ def _compose_video(video_id, video):
 	)
 
 
-@app.patch('/video/{video_id}/', dependencies=[Depends(validate_token)])
+@app.patch('/video/{video_id}/')
 async def video__patch(
 	video_id,
 	video: Video,
-	background_tasks: BackgroundTasks,
-	token: str = Depends(oauth2_scheme)
+	background_tasks: BackgroundTasks
 ):
 	""" Encode the video once the front-end is done sending frames. """
-	verify_token(video_id, token)
-
 	if video.complete:
 		background_tasks.add_task(_compose_video, video_id, video)
 
@@ -282,33 +247,40 @@ async def video__get__list():
 	for video_id in video_list:
 		path = os.path.join(VIDEO_DIR, video_id)
 		# and not os.path.exists(os.path.join(path, 'frames')):
-		if os.path.isdir(path) and not video_id == "embeddings" and not video_id == "global_swarm_lock":
+		if os.path.isdir(path) and \
+			not video_id == "embeddings" and \
+			not video_id == "global_swarm_lock":
+
 			with open(
 				os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
 			) as action_file:
-				actionMap = json.load(action_file)
+				action_map = json.load(action_file)
 				objects.append({
 					'id': video_id,
-					'name': actionMap.get('name', 'Unnamed Video'),
-					'metadata': actionMap.get('metadata', {}),
+					'name': action_map.get('name', 'Unnamed Video'),
+					'metadata': action_map.get('metadata', {}),
 				})
 
 	return objects
 
 
-@app.delete('/video/{video_id}/', dependencies=[Depends(validate_token)])
-async def video__delete(video_id, token: str = Depends(oauth2_scheme)):
+@app.delete('/video/{video_id}/')
+async def video__delete(video_id):
 	""" Deletes a video from the server. """
-	verify_token(video_id, token)
-
 	path = os.path.join(VIDEO_DIR, video_id)
 
 	if os.path.exists(path):
 		rmtree(path)
-		delete_id_vec_db(VIDEO_DIR, video_id,
-						 collection_name=IMAGE_VEC_COLLECTION_NAME)
-		delete_id_vec_db(VIDEO_DIR, video_id,
-						 collection_name=TEXT_VEC_COLLECTION_NAME)
+		delete_id_vec_db(
+			VIDEO_DIR,
+			video_id,
+			collection_name=IMAGE_VEC_COLLECTION_NAME
+		)
+		delete_id_vec_db(
+			VIDEO_DIR,
+			video_id,
+			collection_name=TEXT_VEC_COLLECTION_NAME
+		)
 
 
 def _get_video_file(video_id, filename):
@@ -353,14 +325,14 @@ def _update_metadata(video_id, data):
 		raise HTTPException(status_code=404, detail='File not found')
 
 	with open(path, 'r', encoding='utf-8') as file:
-		actionMap = json.load(file)
+		action_map = json.load(file)
 
-	if 'metadata' not in actionMap:
-		actionMap['metadata'] = {}
-	actionMap['metadata'].update(data)
+	if 'metadata' not in action_map:
+		action_map['metadata'] = {}
+	action_map['metadata'].update(data)
 
 	with open(path, 'w', encoding='utf-8') as file:
-		json.dump(actionMap, file)
+		json.dump(action_map, file)
 
 
 @app.get('/video/{video_id}/meta/')
@@ -429,14 +401,22 @@ async def video_reverse_image_search(query: Query):
 	frame_data = b64decode(query.image.split(',')[1])
 	image = image_from_bin(frame_data)
 	results = query_image_vec_db(
-		VIDEO_DIR, image, n_results=query.nResults, collection_name=IMAGE_VEC_COLLECTION_NAME)
+		VIDEO_DIR,
+		image,
+		n_results=query.nResults,
+		collection_name=IMAGE_VEC_COLLECTION_NAME
+	)
 	return results
 
 
 @app.post('/search/text/')
 async def video_text_search(query: Query):
 	results = query_text_vec_db(
-		VIDEO_DIR, query.text, n_results=query.nResults, collection_name=TEXT_VEC_COLLECTION_NAME)
+		VIDEO_DIR,
+		query.text,
+		n_results=query.nResults,
+		collection_name=TEXT_VEC_COLLECTION_NAME
+	)
 	return results
 
 
