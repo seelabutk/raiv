@@ -17,6 +17,7 @@
     "d3": "^7.8.5",
     "elkjs": "^0.8.2",
     "fortawesome": "^0.0.1-security",
+    "js-cookie": "^3.0.5",
     "lodash.throttle": "^4.1.1",
     "rete": "^2.0.2",
     "rete-area-plugin": "^2.0.0",

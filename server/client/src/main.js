@@ -21,7 +21,9 @@ import VueTippy from 'vue-tippy'
 
 import App from '@/App.vue'
 import GalleryPage from '@/pages/GalleryPage.vue'
+import LoginPage from '@/pages/LoginPage.vue'
 import PlayerPage from '@/pages/PlayerPage.vue'
+import RegisterPage from '@/pages/RegisterPage.vue'
 
 library.add(
   faTrash,
@@ -40,6 +42,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: GalleryPage },
+    { path: '/account/login', component: LoginPage },
+    { path: '/account/signup', component: RegisterPage },
     { path: '/player/:id', component: PlayerPage },
     { path: '/player/:id/:frameNo', component: PlayerPage },
   ],

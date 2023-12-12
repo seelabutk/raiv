@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  postgres:
+    container_name: raiv-postgres
+    image: postgres:15.3-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - database:/var/lib/postgresql/data
+
+volumes:
+  database:

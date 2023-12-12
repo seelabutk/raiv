@@ -47,7 +47,7 @@
         location="bottom"
       >
         <template v-slot:activator="{ props }">
-          <v-btn icon class="mr-4" v-bind="props" @click="toggleSortDirection">
+          <v-btn icon v-bind="props" @click="toggleSortDirection">
             <v-icon v-if="sortReversed">mdi-arrow-up</v-icon>
             <v-icon v-if="!sortReversed">mdi-arrow-down</v-icon>
           </v-btn>
