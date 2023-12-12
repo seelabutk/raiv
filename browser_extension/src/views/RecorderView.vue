@@ -28,7 +28,6 @@ const store = new Store()
 }
 
 #raiv-container:deep(*) {
-  color: black;
 }
 
 /* This is a hack. Basically, Vue will mount inside of a div and that
@@ -81,6 +80,7 @@ const store = new Store()
   align-items: center;
   display: flex;
   margin-left: auto;
+  cursor: pointer;
 }
 </style>
 

@@ -1,134 +1,159 @@
 <template>
-  <div
-    class="control-container"
-    v-drag="'#controls-handle'"
-    v-show="isModalShown"
-  >
-    <div id="controls-handle" class="handle">
-      <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
-      <span>RAIV Recorder</span>
-
-      <div class="spacer"></div>
-
-      <font-awesome-icon
-        class="settings-btn fa-fw fa-lg"
-        icon="fa-solid fa-cog"
-        @click="toggleSettings"
-      />
-    </div>
-
-    <div class="controls">
-      <div class="recording-controls">
-        <tippy :content="recordPauseTooltipText" content-class="tippy-tooltip">
-          <button type="button" @click="recordToggle">
-            <font-awesome-icon :icon="recordPauseIcon" />
-          </button>
-        </tippy>
-
-        <tippy content="Reset Recording">
-          <button
-            type="button"
-            :hidden="totalFrameCount <= 1"
-            @click="resetRecording"
-          >
-            <font-awesome-icon icon="fa-solid fa-arrow-rotate-left" />
-          </button>
-        </tippy>
-      </div>
-
-      <InteractionToolbar
-        :hidden="!props.store.recording.value"
+  <div>
+    <div style="position:fixed; margin 0; z-index: 10002">
+      <!-- Child Dialogues -->
+      <ActionMap ref="actionMapComponent" :store="props.store" />
+      <IndependentActions
+        ref="independentActionsComponent"
         :store="props.store"
       />
-      <div class="recording-dialogs" v-show="totalFrameCount > 1">
-        <ActionMap ref="actionMapComponent" :store="props.store" />
-        <IndependentActions
-          ref="independentActionsComponent"
-          :store="props.store"
+    </div>
+    <div
+      class="control-container"
+      v-drag="'#controls-handle'"
+      v-show="isModalShown"
+    >
+      <div id="controls-handle" class="handle">
+        <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
+        <span>RAIV Recorder</span>
+
+        <div class="spacer"></div>
+
+        <font-awesome-icon
+          class="settings-btn fa-fw fa-lg"
+          icon="fa-solid fa-cog"
+          @click="toggleSettings"
         />
       </div>
-      <div class="capture-settings">
-        <p>
-          {{ props.store.actionMap.value.independentActions.length }}
-          independent actions.
-        </p>
-        <p>
-          {{ props.store.actionMap.value.root.frameCount }}
-          normal actions.
-        </p>
-        <p>
-          {{ totalFrameCount }}
-          total frames will be captured.
-        </p>
 
-        <div v-if="settingsShown">
-          <label>Server Location</label>
-
-          <select
-            :value="props.store.serverScheme.value"
-            @change="
-              (event) => props.store.set('serverScheme', event.target.value)
-            "
+      <div class="controls">
+        <div class="recording-controls">
+          <tippy
+            :content="recordPauseTooltipText"
+            content-class="tippy-tooltip"
           >
-            <option>http</option>
-            <option>https</option>
-          </select>
+            <button type="button" @click="recordToggle">
+              <font-awesome-icon :icon="recordPauseIcon" />
+            </button>
+          </tippy>
 
-          <span>://</span>
-
-          <input
-            type="text"
-            :value="props.store.serverAddress.value"
-            @input="
-              (event) => props.store.set('serverAddress', event.target.value)
-            "
-          />
-
-          <span>:</span>
-
-          <input
-            type="text"
-            :value="props.store.serverPort.value"
-            @input="
-              (event) => props.store.set('serverPort', event.target.value)
-            "
-          />
+          <tippy content="Reset Recording">
+            <button
+              type="button"
+              :hidden="totalFrameCount <= 1"
+              @click="resetRecording"
+            >
+              <font-awesome-icon icon="fa-solid fa-arrow-rotate-left" />
+            </button>
+          </tippy>
         </div>
 
-        <div class="api-key" v-if="settingsShown">
-          <label>
-            API Key
-            <input
-              class="api-key-input"
-              type="text"
-              :value="props.store.apiKey.value"
-              @input="(event) => props.store.set('apiKey', event.target.value)"
-            />
-          </label>
-        </div>
+        <InteractionToolbar
+          :hidden="!props.store.recording.value"
+          :store="props.store"
+        />
+        <div class="recording-dialogs" v-show="totalFrameCount > 1">
+          <button
+            type="button"
+            :disabled="props.store.actionMap.value.root.frameCount < 2"
+            @click="openActionMap"
+          >
+            View Action Map
+          </button>
 
-        <div>
-          <label class="input">
-            Video Name
+          <button
+            type="button"
+            :disabled="independentActions.length < 1"
+            @click="openIndependentActions"
+          >
+            View Independent Actions
+          </button>
+        </div>
+        <div class="capture-settings">
+          <p>
+            {{ props.store.actionMap.value.independentActions.length }}
+            independent actions.
+          </p>
+          <p>
+            {{ props.store.actionMap.value.root.frameCount }}
+            normal actions.
+          </p>
+          <p>
+            {{ totalFrameCount }}
+            total frames will be captured.
+          </p>
+
+          <div v-if="settingsShown">
+            <label>Server Location</label>
+
+            <select
+              :value="props.store.serverScheme.value"
+              @change="
+                (event) => props.store.set('serverScheme', event.target.value)
+              "
+            >
+              <option>http</option>
+              <option>https</option>
+            </select>
+
+            <span>://</span>
+
             <input
               type="text"
-              :value="props.store.videoName.value"
+              :value="props.store.serverAddress.value"
               @input="
-                (event) => props.store.set('videoName', event.target.value)
+                (event) => props.store.set('serverAddress', event.target.value)
               "
             />
-          </label>
-        </div>
 
-        <button
-          v-if="isControlsShown"
-          type="button"
-          :disabled="props.store.recording.value"
-          @click="capture"
-        >
-          Capture
-        </button>
-        <p v-else>Recording in {{ recordCountdown }}...</p>
+            <span>:</span>
+
+            <input
+              type="text"
+              :value="props.store.serverPort.value"
+              @input="
+                (event) => props.store.set('serverPort', event.target.value)
+              "
+            />
+          </div>
+
+          <div class="api-key" v-if="settingsShown">
+            <label>
+              API Key
+              <input
+                class="api-key-input"
+                type="text"
+                :value="props.store.apiKey.value"
+                @input="
+                  (event) => props.store.set('apiKey', event.target.value)
+                "
+              />
+            </label>
+          </div>
+
+          <div>
+            <label class="input">
+              Video Name
+              <input
+                type="text"
+                :value="props.store.videoName.value"
+                @input="
+                  (event) => props.store.set('videoName', event.target.value)
+                "
+              />
+            </label>
+          </div>
+
+          <button
+            v-if="isControlsShown"
+            type="button"
+            :disabled="props.store.recording.value"
+            @click="capture"
+          >
+            Capture
+          </button>
+          <p v-else>Recording in {{ recordCountdown }}...</p>
+        </div>
       </div>
     </div>
   </div>
@@ -156,6 +181,15 @@ const isModalShown = ref(true)
 const isControlsShown = ref(true)
 const recordCountdown = ref(initCountdown)
 const settingsShown = ref(false)
+
+const independentActions = computed(() => {
+  return props.store.actionMap &&
+    props.store.actionMap.value &&
+    props.store.actionMap.value.independentActions &&
+    props.store.actionMap.value.independentActions.length > 0
+    ? props.store.actionMap.value.independentActions
+    : []
+})
 
 const totalFrameCount = computed(() => {
   return (
@@ -247,6 +281,14 @@ function stopRecording() {
 function resetRecording() {
   stopRecording()
   props.store.reset()
+}
+
+function openActionMap() {
+  actionMapComponent.value.open()
+}
+
+function openIndependentActions() {
+  independentActionsComponent.value.open()
 }
 
 function toggleControlPanel(value) {

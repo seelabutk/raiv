@@ -10,6 +10,7 @@ import {
   faXmark,
   faArrowRotateLeft,
   faTrash,
+  faPen,
 } from '@fortawesome/free-solid-svg-icons'
 import drag from 'v-drag'
 import VueTippy from 'vue-tippy'
@@ -24,7 +25,8 @@ library.add(
   faStop,
   faXmark,
   faArrowRotateLeft,
-  faTrash
+  faTrash,
+  faPen
 )
 
 function toggleUI() {
