@@ -4,6 +4,7 @@ from fastapi_users import schemas
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
+	api_key: str
 	first_name: str
 	last_name: str
 
@@ -14,5 +15,4 @@ class UserCreate(schemas.BaseUserCreate):
 
 
 class UserUpdate(schemas.BaseUserUpdate):
-	first_name: str
-	last_name: str
+	api_key: str

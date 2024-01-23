@@ -2,6 +2,7 @@ from base64 import b64decode
 from datetime import datetime
 import os
 import json
+import secrets
 from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
@@ -152,7 +153,7 @@ async def proxy__get(request: Request):
 
 
 @app.post('/frame/')
-async def frame__post(frame: Frame):
+async def frame__post(frame: Frame, _: User = Depends(current_active_user)):
 	""" Adds a frame to a video and prepares the frame for encoding. """
 	path = os.path.join(VIDEO_DIR, frame.video)
 	if not frame.video or not os.path.exists(path):
@@ -183,7 +184,7 @@ async def frame__post(frame: Frame):
 
 
 @app.post('/video/')
-async def video__post(video: Video, user: User = Depends(current_active_user)):
+async def video__post(video: Video, _: User = Depends(current_active_user)):
 	""" Creates a new video with no associated frames. """
 	uuid = uuid4().hex
 
@@ -261,7 +262,8 @@ def _compose_video(video_id, video):
 async def video__patch(
 	video_id,
 	video: Video,
-	background_tasks: BackgroundTasks
+	background_tasks: BackgroundTasks,
+	_: User = Depends(current_active_user)
 ):
 	""" Encode the video once the front-end is done sending frames. """
 	if video.complete:
@@ -274,13 +276,19 @@ async def video__patch(
 @app.get('/user/')
 async def user__get(user: User = Depends(current_active_user)):
 	""" Retrieves a User object. """
+	key = user.api_key
+	if not key:
+		key = secrets.token_urlsafe(16)
+
 	return {
-		'first_name': user.first_name
+		'api_key': key,
+		'save_key': not user.api_key,
+		'first_name': user.first_name,
 	}
 
 
 @app.get('/video/')
-async def video__get__list(user: User = Depends(current_active_user)):
+async def video__get__list(_: User = Depends(current_active_user)):
 	""" Retrieve the list of available videos for the gallery. """
 	video_list = os.listdir(VIDEO_DIR)
 
@@ -306,7 +314,7 @@ async def video__get__list(user: User = Depends(current_active_user)):
 
 
 @app.delete('/video/{video_id}/')
-async def video__delete(video_id):
+async def video__delete(video_id, _: User = Depends(current_active_user)):
 	""" Deletes a video from the server. """
 	path = os.path.join(VIDEO_DIR, video_id)
 

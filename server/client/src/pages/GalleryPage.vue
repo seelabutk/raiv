@@ -111,6 +111,7 @@
         </template>
 
         <v-list>
+          <v-list-item>API Key: {{ api_key }}</v-list-item>
           <v-list-item @click="logout">Logout</v-list-item>
         </v-list>
       </v-menu>
@@ -179,6 +180,7 @@ const imageSearchFile = ref([])
 const imageSearchResults = ref([])
 const filteredSortedVideos = ref([])
 const first_name = ref('')
+const api_key = ref('')
 watch(sortType, getFilteredAndSortedVideoList)
 watch(searchQuery, getFilteredAndSortedVideoList)
 watch(searchType, getFilteredAndSortedVideoList)
@@ -353,7 +355,21 @@ onMounted(() => {
       }
     })
     .then((data) => {
+      api_key.value = data.api_key
       first_name.value = data.first_name
+
+      if (data.save_key) {
+        fetch('/users/me/', {
+          body: JSON.stringify({
+            api_key: api_key.value,
+          }),
+          headers: {
+            Authorization: `Bearer ${Cookies.get('raivauthtoken')}`,
+            'Content-Type': 'application/json',
+          },
+          method: 'PATCH',
+        })
+      }
     })
 
   fetch('/video/', {

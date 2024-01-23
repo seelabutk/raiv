@@ -6,12 +6,13 @@ from fastapi_users.db import (
 	SQLAlchemyBaseUserTableUUID,
 	SQLAlchemyUserDatabase
 )
+from sqlalchemy import String
 from sqlalchemy.ext.asyncio import (
 	AsyncSession,
 	async_sessionmaker,
 	create_async_engine
 )
-from sqlalchemy.orm import DeclarativeBase, Mapped
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
@@ -19,6 +20,7 @@ class Base(DeclarativeBase):
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
+	api_key: Mapped[str] = mapped_column(String, nullable=True)
 	first_name: Mapped[str]
 	last_name: Mapped[str]
 
