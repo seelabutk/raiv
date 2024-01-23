@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
 	async_sessionmaker,
 	create_async_engine
 )
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Mapped
 
 
 class Base(DeclarativeBase):
@@ -19,7 +19,8 @@ class Base(DeclarativeBase):
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
-	pass
+	first_name: Mapped[str]
+	last_name: Mapped[str]
 
 
 DB_USER = os.environ['POSTGRES_USER']

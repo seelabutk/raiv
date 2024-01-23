@@ -2,7 +2,9 @@
   <v-layout>
     <v-app-bar elevation="0" color="grey-lighten-3">
       <!-- Title  -->
-      <v-toolbar-title class="font-weight-bold">RAIV Gallery</v-toolbar-title>
+      <v-toolbar-title v-if="first_name.length > 0" class="font-weight-bold">
+        Hi, {{ first_name }}
+      </v-toolbar-title>
 
       <v-spacer></v-spacer>
 
@@ -176,6 +178,7 @@ const sortType = ref({ text: 'Created', value: 'created' })
 const imageSearchFile = ref([])
 const imageSearchResults = ref([])
 const filteredSortedVideos = ref([])
+const first_name = ref('')
 watch(sortType, getFilteredAndSortedVideoList)
 watch(searchQuery, getFilteredAndSortedVideoList)
 watch(searchType, getFilteredAndSortedVideoList)
@@ -339,6 +342,20 @@ function logout() {
 }
 
 onMounted(() => {
+  fetch('/user/', {
+    headers: { Authorization: `Bearer ${Cookies.get('raivauthtoken')}` },
+  })
+    .then((response) => {
+      if (response.status === 401) {
+        router.push('/account/login/')
+      } else {
+        return response.json()
+      }
+    })
+    .then((data) => {
+      first_name.value = data.first_name
+    })
+
   fetch('/video/', {
     headers: { Authorization: `Bearer ${Cookies.get('raivauthtoken')}` },
   })

@@ -271,6 +271,14 @@ async def video__patch(
 
 
 # Player endpoints
+@app.get('/user/')
+async def user__get(user: User = Depends(current_active_user)):
+	""" Retrieves a User object. """
+	return {
+		'first_name': user.first_name
+	}
+
+
 @app.get('/video/')
 async def video__get__list(user: User = Depends(current_active_user)):
 	""" Retrieve the list of available videos for the gallery. """

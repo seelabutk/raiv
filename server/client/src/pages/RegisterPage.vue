@@ -6,6 +6,8 @@
         <v-card-text>
           <v-form @submit.prevent>
             <v-text-field v-model="email" label="Email address" type="email" />
+            <v-text-field v-model="first_name" label="First name" type="text" />
+            <v-text-field v-model="last_name" label="Last name" type="text" />
             <v-text-field
               v-model="password1"
               label="Password"
@@ -33,6 +35,8 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 const email = ref('')
+const first_name = ref('')
+const last_name = ref('')
 const password1 = ref('')
 const password2 = ref('')
 const error = ref('')
@@ -46,6 +50,8 @@ function submit() {
   fetch('/auth/register', {
     body: JSON.stringify({
       email: email.value,
+      first_name: first_name.value,
+      last_name: last_name.value,
       password: password1.value,
     }),
     headers: { 'Content-Type': 'application/json' },
