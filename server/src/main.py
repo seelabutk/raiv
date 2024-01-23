@@ -272,7 +272,7 @@ async def video__patch(
 
 # Player endpoints
 @app.get('/video/')
-async def video__get__list():
+async def video__get__list(user: User = Depends(current_active_user)):
 	""" Retrieve the list of available videos for the gallery. """
 	video_list = os.listdir(VIDEO_DIR)
 

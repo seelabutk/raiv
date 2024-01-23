@@ -8,8 +8,18 @@
             <v-text-field v-model="email" label="Email address" type="email" />
             <v-text-field v-model="password" label="Password" type="password" />
 
+            <p class="mb-4">
+              Don't have an account?
+              <router-link
+                to="/account/signup"
+                class="text-decoration-underline text-blue-darken-4"
+              >
+                Sign up
+              </router-link>
+            </p>
+
             <v-alert v-if="error" :text="error" class="mb-4" color="warning" />
-            <v-btn @click="submit">Sign Up</v-btn>
+            <v-btn @click="submit">Login</v-btn>
           </v-form>
         </v-card-text>
       </v-card>

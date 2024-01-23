@@ -100,6 +100,18 @@
           </v-btn>
         </template>
       </v-tooltip>
+
+      <v-menu open-on-hover>
+        <template v-slot:activator="{ props }">
+          <v-btn icon v-bind="props">
+            <v-icon>mdi-account-circle</v-icon>
+          </v-btn>
+        </template>
+
+        <v-list>
+          <v-list-item @click="logout">Logout</v-list-item>
+        </v-list>
+      </v-menu>
     </v-app-bar>
 
     <!--Video Preview Gallery  -->
@@ -139,10 +151,14 @@
 </template>
 
 <script setup>
+import Cookies from 'js-cookie'
 import { onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import PreviewCard from '@/components/PreviewCard'
 import 'tippy.js/dist/tippy.css'
 import { getSortFunction } from '@/utils/Sorts'
+
+const router = useRouter()
 
 const sortReversed = ref(false)
 const videos = ref([])
@@ -317,9 +333,22 @@ async function imageSearch() {
   getFilteredAndSortedVideoList()
 }
 
+function logout() {
+  Cookies.remove('raivauthtoken')
+  router.go()
+}
+
 onMounted(() => {
-  fetch('/video/')
-    .then((response) => response.json())
+  fetch('/video/', {
+    headers: { Authorization: `Bearer ${Cookies.get('raivauthtoken')}` },
+  })
+    .then((response) => {
+      if (response.status === 401) {
+        router.push('/account/login/')
+      } else {
+        return response.json()
+      }
+    })
     .then((data) => {
       videos.value = data
       getFilteredAndSortedVideoList()
