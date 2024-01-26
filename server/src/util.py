@@ -1,19 +1,19 @@
-from fastapi.responses import StreamingResponse
 from glob import glob
-from shutil import rmtree
 from io import BytesIO
 import subprocess
 import zipfile
 import os
 
+from fastapi.responses import StreamingResponse
+
 
 VIDEO_DIR = os.path.join(os.getcwd(), 'data')
 
 
-def merge_frames(video_id):
+def merge_frames(video_id, api_key):
 	""" Stitch together multiple screen captures into a single frame for handling
 	vertical scrolling. """
-	path = os.path.join(VIDEO_DIR, video_id, 'frames')
+	path = os.path.join(VIDEO_DIR, api_key, video_id, 'frames')
 	if not os.path.exists(path):
 		return
 
@@ -56,11 +56,11 @@ def get_max_wh(action_map):
 	return max_w, max_h
 
 
-def encode_video(video_id, action_map):
+def encode_video(video_id, action_map, api_key):
 	""" Creates an mp4 from the frames sent to the server. """
 	cwd = os.getcwd()
 
-	path = os.path.join(VIDEO_DIR, video_id, 'frames')
+	path = os.path.join(VIDEO_DIR, api_key, video_id, 'frames')
 	if not os.path.exists(path):
 		return
 
@@ -92,9 +92,9 @@ def encode_video(video_id, action_map):
 	# rmtree(path)
 
 
-def stat_video(video_id):
+def stat_video(video_id, api_key):
 	""" Returns the information on the videofile. """
-	path = os.path.join(VIDEO_DIR, video_id, 'video.mp4')
+	path = os.path.join(VIDEO_DIR, api_key, video_id, 'video.mp4')
 	if not os.path.exists(path):
 		return None
 
@@ -105,12 +105,12 @@ def zipfiles(file_list):
 	""" Zip a list of files and stream the resulting archive. """
 	io = BytesIO()
 	zip_sub_dir = "final_archive"
-	zip_filename = "%s.zip" % zip_sub_dir
-	with zipfile.ZipFile(io, mode='w', compression=zipfile.ZIP_DEFLATED) as zip:
+	zip_filename = f"{zip_sub_dir}.zip"
+	with zipfile.ZipFile(io, mode='w', compression=zipfile.ZIP_DEFLATED) as _zip:
 		for fpath in file_list:
-			zip.write(fpath, os.path.basename(fpath))
+			_zip.write(fpath, os.path.basename(fpath))
 		# close zip
-		zip.close()
+		_zip.close()
 	return StreamingResponse(
 		iter([io.getvalue()]),
 		media_type="application/x-zip-compressed",
@@ -118,14 +118,14 @@ def zipfiles(file_list):
 	)
 
 
-def scale_video(video_id, devicePixelRatio):
+def scale_video(video_id, device_pixel_ratio, api_key):
 	""" Scales the video down to the devicePixelRatio. """
-	if devicePixelRatio == 1:
+	if device_pixel_ratio == 1:
 		return
 
 	cwd = os.getcwd()
 
-	path = os.path.join(VIDEO_DIR, video_id)
+	path = os.path.join(VIDEO_DIR, api_key, video_id)
 	if not os.path.exists(path):
 		return
 
@@ -137,7 +137,7 @@ def scale_video(video_id, devicePixelRatio):
 		'-i',
 		'video.mp4',
 		'-vf',
-		f'scale=iw/{devicePixelRatio}:-2',
+		f'scale=iw/{device_pixel_ratio}:-2',
 		'video.tmp.mp4',
 	], check=True)
 	subprocess.run([
@@ -146,8 +146,3 @@ def scale_video(video_id, devicePixelRatio):
 		'video.mp4',
 	], check=True)
 	os.chdir(cwd)
-
-
-if __name__ == '__main__':
-	for video in os.listdir(VIDEO_DIR):
-		encode_video(video)

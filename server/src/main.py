@@ -178,7 +178,7 @@ async def frame__post(frame: Frame):
 	if not user:
 		raise HTTPException(status_code=401)
 
-	path = os.path.join(VIDEO_DIR, frame.video)
+	path = os.path.join(VIDEO_DIR, api_key, frame.video)
 	if not frame.video or not os.path.exists(path):
 		raise HTTPException(status_code=404)
 
@@ -216,10 +216,10 @@ async def video__post(video: Video):
 
 	uuid = uuid4().hex
 
-	path = os.path.join(VIDEO_DIR, uuid)
+	path = os.path.join(VIDEO_DIR, api_key, uuid)
 	while os.path.exists(path):
 		uuid = uuid4().hex
-		path = os.path.join(VIDEO_DIR, uuid)
+		path = os.path.join(VIDEO_DIR, api_key, uuid)
 
 	os.makedirs(path)
 	fpath = os.path.join(path, 'action_map.json')
@@ -231,39 +231,39 @@ async def video__post(video: Video):
 		'created': datetime.now().isoformat(),
 		'updated': datetime.now().isoformat(),
 		'size': 0
-	})
+	}, api_key)
 
 	return uuid
 
 
-def _compose_video(video_id, video):
+def _compose_video(video_id, video, api_key):
 	# update the action map if anything has changed
-	action_map = _update_action_map(video_id, video.actionMap)
+	action_map = _update_action_map(video_id, video.actionMap, api_key)
 
 	# merge frames from scroll if necessary
-	merge_frames(video_id)
+	merge_frames(video_id, api_key)
 
-	path = os.path.join(VIDEO_DIR, video_id)
+	path = os.path.join(VIDEO_DIR, api_key, video_id)
 	copy(
 		os.path.join(path, 'frames', '00000.png'),
 		os.path.join(path, 'first_frame.png')
 	)
 
 	# encode the frames into a video
-	encode_video(video_id, action_map)
+	encode_video(video_id, action_map, api_key)
 
 	# scale the video if necessary
 	device_pixel_ratio = action_map.get(
 		'metadata', {}).get('device_pixel_ratio', 1)
-	scale_video(video_id, device_pixel_ratio)
+	scale_video(video_id, device_pixel_ratio, api_key)
 
 	# update the metadata
-	video_stat = stat_video(video_id)
+	video_stat = stat_video(video_id, api_key)
 	_update_metadata(video_id, {
 		'complete': video.complete,
 		'updated': datetime.now().isoformat(),
 		'size': video_stat.st_size
-	})
+	}, api_key)
 
 	# add the video to the vector db
 	add_videos_to_vec_db(
@@ -275,7 +275,7 @@ def _compose_video(video_id, video):
 
 	# clean the action map and update it
 	action_map = cleanActionMapTags(nlp, action_map)
-	_update_action_map(video_id, action_map)
+	_update_action_map(video_id, action_map, api_key)
 
 	# add the tags to the vector db
 	add_text_to_vec_db(
@@ -299,7 +299,7 @@ async def video__patch(
 		raise HTTPException(status_code=401)
 
 	if video.complete:
-		background_tasks.add_task(_compose_video, video_id, video)
+		background_tasks.add_task(_compose_video, video_id, video, api_key)
 
 	return video_id
 
@@ -320,13 +320,13 @@ async def user__get(user: User = Depends(current_active_user)):
 
 
 @app.get('/video/')
-async def video__get__list(_: User = Depends(current_active_user)):
+async def video__get__list(user: User = Depends(current_active_user)):
 	""" Retrieve the list of available videos for the gallery. """
-	video_list = os.listdir(VIDEO_DIR)
+	video_list = os.listdir(os.path.join(VIDEO_DIR, user.api_key))
 
 	objects = []
 	for video_id in video_list:
-		path = os.path.join(VIDEO_DIR, video_id)
+		path = os.path.join(VIDEO_DIR, user.api_key, video_id)
 		# and not os.path.exists(os.path.join(path, 'frames')):
 		if os.path.isdir(path) and \
 			not video_id == "embeddings" and \
@@ -346,9 +346,9 @@ async def video__get__list(_: User = Depends(current_active_user)):
 
 
 @app.delete('/video/{video_id}/')
-async def video__delete(video_id, _: User = Depends(current_active_user)):
+async def video__delete(video_id, user: User = Depends(current_active_user)):
 	""" Deletes a video from the server. """
-	path = os.path.join(VIDEO_DIR, video_id)
+	path = os.path.join(VIDEO_DIR, user.api_key, video_id)
 
 	if os.path.exists(path):
 		rmtree(path)
@@ -364,9 +364,9 @@ async def video__delete(video_id, _: User = Depends(current_active_user)):
 		)
 
 
-def _get_video_file(video_id, filename):
+def _get_video_file(video_id, filename, api_key):
 	""" Gets the path to a file within a video's directory. """
-	path = os.path.join(VIDEO_DIR, video_id, filename)
+	path = os.path.join(VIDEO_DIR, api_key, video_id, filename)
 
 	if not os.path.exists(path):
 		raise HTTPException(status_code=404, detail='File not found')
@@ -374,9 +374,9 @@ def _get_video_file(video_id, filename):
 	return path
 
 
-def _update_action_map(video_id, action_map_new):
+def _update_action_map(video_id, action_map_new, api_key):
 	""" Updates the action map for a video. """
-	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
+	path = os.path.join(VIDEO_DIR, api_key, video_id, 'action_map.json')
 	action_map = {}
 	if os.path.exists(path):
 		with open(path, 'r', encoding='utf-8') as file:
@@ -398,9 +398,9 @@ def _update_action_map(video_id, action_map_new):
 	return action_map
 
 
-def _update_metadata(video_id, data):
+def _update_metadata(video_id, data, api_key):
 	""" Updates the metadata file for a video. """
-	path = os.path.join(VIDEO_DIR, video_id, 'action_map.json')
+	path = os.path.join(VIDEO_DIR, api_key, video_id, 'action_map.json')
 
 	if not os.path.exists(path):
 		raise HTTPException(status_code=404, detail='File not found')
@@ -417,40 +417,56 @@ def _update_metadata(video_id, data):
 
 
 @app.get('/video/{video_id}/meta/')
-async def metadata__get__detail(video_id):
+async def metadata__get__detail(
+	video_id,
+	user: User = Depends(current_active_user)
+):
 	""" Retrieve the action map for a video. """
-	return FileResponse(_get_video_file(video_id, 'meta.json'))
+	return FileResponse(_get_video_file(video_id, 'meta.json', user.api_key))
 
 
 @app.get('/video/{video_id}/action-map/')
-async def action_map__get__detail(video_id):
+async def action_map__get__detail(
+	video_id,
+	user: User = Depends(current_active_user)
+):
 	""" Retrieve the action map for a video. """
-	return FileResponse(_get_video_file(video_id, 'action_map.json'))
+	return FileResponse(
+		_get_video_file(video_id, 'action_map.json', user.api_key)
+	)
 
 
 @app.get('/video/{video_id}/preview/')
-async def preview__get__detail(video_id):
+async def preview__get__detail(
+	video_id,
+	user: User = Depends(current_active_user)
+):
 	""" Retrieve the preview frame for a video for the gallery. """
-	return FileResponse(_get_video_file(video_id, 'first_frame.png'))
+	return FileResponse(
+		_get_video_file(video_id, 'first_frame.png', user.api_key)
+	)
 
 
 @app.get('/video/{video_id}/download/')
-async def archive__get_download(video_id):
+async def archive__get_download(
+	video_id,
+	user: User = Depends(current_active_user)
+):
 	""" Retrieve a zipfile of the RAIV archive. """
 	return zipfiles([
-		_get_video_file(video_id, 'video.mp4'),
-		_get_video_file(video_id, 'action_map.json'),
+		_get_video_file(video_id, 'video.mp4', user.api_key),
+		_get_video_file(video_id, 'action_map.json', user.api_key),
 	])
 
 
 @app.get('/video/{video_id}/video/')
-async def video__get__detail(video_id, range: str = Header(None)):  # pylint: disable=redefined-builtin # noqa: E501
+async def video__get__detail(video_id, range: str = Header(None), user: User = Depends(current_active_user)):  # pylint: disable=redefined-builtin # noqa: E501
 	""" Stream the video file back to the client. """
 	if not range:
 		raise HTTPException(
 			status_code=404, detail='Video range not specified')
 
-	video_path = _get_video_file(video_id, 'video.mp4')
+	video_path = _get_video_file(video_id, 'video.mp4', user.api_key)
 	filesize = os.path.getsize(video_path)
 
 	start, end = range.replace('bytes=', '').split('-')
