@@ -111,7 +111,9 @@
         </template>
 
         <v-list>
-          <v-list-item>API Key: {{ api_key }}</v-list-item>
+          <v-list-item class="copyable" @click="copyApiKey">
+            API Key (click to copy): {{ api_key }}
+          </v-list-item>
           <v-list-item @click="logout">Logout</v-list-item>
         </v-list>
       </v-menu>
@@ -338,6 +340,10 @@ async function imageSearch() {
   getFilteredAndSortedVideoList()
 }
 
+function copyApiKey() {
+  navigator.clipboard.writeText(api_key.value)
+}
+
 function logout() {
   Cookies.remove('raivauthtoken')
   router.go()
@@ -359,7 +365,7 @@ onMounted(() => {
       first_name.value = data.first_name
 
       if (data.save_key) {
-        fetch('/users/me/', {
+        fetch('/users/me', {
           body: JSON.stringify({
             api_key: api_key.value,
           }),
@@ -413,5 +419,9 @@ ul {
 }
 .nav--sort-by {
   max-width: 150px;
+}
+
+.copyable {
+  cursor: pointer;
 }
 </style>

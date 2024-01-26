@@ -1,10 +1,11 @@
+from typing import Optional
 import uuid
 
 from fastapi_users import schemas
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
-	api_key: str
+	api_key: Optional[str]
 	first_name: str
 	last_name: str
 
