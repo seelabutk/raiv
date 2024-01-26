@@ -15,6 +15,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
         fetch(`${serverLocation}video/`, {
           body: JSON.stringify({
+            apiKey,
             actionMap: Object.assign(
               {
                 name: message.videoName,
@@ -22,10 +23,7 @@ chrome.runtime.onConnect.addListener((port) => {
               message.actionMap
             ),
           }),
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           method: 'POST',
         }).then((response) => {
           if (response.status >= 200 && response.status <= 299) {
@@ -39,6 +37,7 @@ chrome.runtime.onConnect.addListener((port) => {
         })
       } else if (message.capture) {
         const request = {
+          apiKey,
           frame: message.image,
           position: message.position,
           scrollPosition: message.scroll,
@@ -48,10 +47,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
         fetch(`${serverLocation}frame/`, {
           body: JSON.stringify(request),
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           method: 'POST',
         }).then(() => {
           port.postMessage({ captured: true })
@@ -59,13 +55,11 @@ chrome.runtime.onConnect.addListener((port) => {
       } else if (message.complete) {
         fetch(`${serverLocation}video/${videoId}/`, {
           body: JSON.stringify({
+            apiKey,
             complete: true,
             actionMap: message.actionMap,
           }),
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           method: 'PATCH',
         })
       }

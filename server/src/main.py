@@ -1,4 +1,5 @@
 from base64 import b64decode
+import contextlib
 from datetime import datetime
 import os
 import json
@@ -20,9 +21,10 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 import requests
 import spacy
+from sqlalchemy import select
 
 
-from .db import User, create_db_and_tables
+from .db import User, create_db_and_tables, get_async_session, get_user_db
 from .schemas import UserCreate, UserRead, UserUpdate
 from .text_processing import (
 	cleanActionMapTags
@@ -59,6 +61,7 @@ if not os.path.exists(VIDEO_DIR):
 
 
 class Frame(BaseModel):
+	apiKey: str
 	frame: str
 	position: int
 	scrollOffset: int = 0
@@ -67,6 +70,7 @@ class Frame(BaseModel):
 
 
 class Video(BaseModel):
+	apiKey: str
 	actionMap: object
 	complete: bool = False
 
@@ -109,6 +113,9 @@ app.include_router(
 	tags=["users"],
 )
 
+get_async_session_context = contextlib.asynccontextmanager(get_async_session)
+get_user_db_context = contextlib.asynccontextmanager(get_user_db)
+
 
 # get the embedder model and populate the db (if any videos exist)
 IMAGE_VEC_COLLECTION_NAME = "raiv-image"
@@ -149,12 +156,28 @@ async def proxy__get(request: Request):
 	)
 	return Response(content=t_resp.content, status_code=t_resp.status_code)
 
+
+# API key auth
+async def verify(api_key):
+	user = None
+
+	async with get_async_session_context() as session:
+		result = await session.execute(select(User).where(User.api_key == api_key))
+		for row in result:
+			user = row[0]
+
+	return user
+
+
 # Recording endpoints
-
-
 @app.post('/frame/')
-async def frame__post(frame: Frame, _: User = Depends(current_active_user)):
+async def frame__post(frame: Frame):
 	""" Adds a frame to a video and prepares the frame for encoding. """
+	api_key = frame.apiKey
+	user = await verify(api_key)
+	if not user:
+		raise HTTPException(status_code=401)
+
 	path = os.path.join(VIDEO_DIR, frame.video)
 	if not frame.video or not os.path.exists(path):
 		raise HTTPException(status_code=404)
@@ -184,8 +207,13 @@ async def frame__post(frame: Frame, _: User = Depends(current_active_user)):
 
 
 @app.post('/video/')
-async def video__post(video: Video, _: User = Depends(current_active_user)):
+async def video__post(video: Video):
 	""" Creates a new video with no associated frames. """
+	api_key = video.apiKey
+	user = await verify(api_key)
+	if not user:
+		raise HTTPException(status_code=401)
+
 	uuid = uuid4().hex
 
 	path = os.path.join(VIDEO_DIR, uuid)
@@ -262,10 +290,14 @@ def _compose_video(video_id, video):
 async def video__patch(
 	video_id,
 	video: Video,
-	background_tasks: BackgroundTasks,
-	_: User = Depends(current_active_user)
+	background_tasks: BackgroundTasks
 ):
 	""" Encode the video once the front-end is done sending frames. """
+	api_key = video.apiKey
+	user = await verify(api_key)
+	if not user:
+		raise HTTPException(status_code=401)
+
 	if video.complete:
 		background_tasks.add_task(_compose_video, video_id, video)
 
