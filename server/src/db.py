@@ -28,8 +28,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 DB_USER = os.environ['POSTGRES_USER']
 DB_PASSWORD = os.environ['POSTGRES_PASSWORD']
 DB_PORT = os.environ['POSTGRES_PORT']
+DB_URL = os.environ['POSTGRES_URL']
 DATABASE_URL = (
-	f'postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@localhost:'
+	f'postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_URL}:'
 	f'{DB_PORT}/{DB_USER}'
 )
 

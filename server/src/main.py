@@ -7,6 +7,7 @@ import secrets
 from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
+import sys
 
 from fastapi import (
 	BackgroundTasks,
@@ -47,7 +48,7 @@ from .vector_db import (
 )
 
 
-VIDEO_DIR = os.path.join(os.getcwd(), 'data')
+VIDEO_DIR = os.path.join(os.getcwd(), '../data')
 if not os.path.exists(VIDEO_DIR):
 	try:
 		os.mkdir(VIDEO_DIR, mode=0o744)
@@ -322,11 +323,15 @@ async def user__get(user: User = Depends(current_active_user)):
 @app.get('/video/')
 async def video__get__list(user: User = Depends(current_active_user)):
 	""" Retrieve the list of available videos for the gallery. """
-	video_list = os.listdir(os.path.join(VIDEO_DIR, user.api_key))
+
+	user_dir = os.path.join(VIDEO_DIR, user.api_key)
+	if not os.path.exists(user_dir):
+		os.makedirs(user_dir)
+	video_list = os.listdir(user_dir)
 
 	objects = []
 	for video_id in video_list:
-		path = os.path.join(VIDEO_DIR, user.api_key, video_id)
+		path = os.path.join(user_dir, video_id)
 		# and not os.path.exists(os.path.join(path, 'frames')):
 		if os.path.isdir(path) and \
 			not video_id == "embeddings" and \
@@ -367,6 +372,9 @@ async def video__delete(video_id, user: User = Depends(current_active_user)):
 def _get_video_file(video_id, filename, api_key):
 	""" Gets the path to a file within a video's directory. """
 	path = os.path.join(VIDEO_DIR, api_key, video_id, filename)
+
+	print(f'path: {path}', file=sys.stderr)
+	print('test', file=sys.stderr)
 
 	if not os.path.exists(path):
 		raise HTTPException(status_code=404, detail='File not found')
@@ -520,12 +528,12 @@ async def video_text_search(query: Query):
 @app.get('/{path:path}')
 async def client(path):
 	""" All other requests should be forwarded to the client. """
-	full_path = os.path.join(os.getcwd(), 'client', 'dist', path)
+	full_path = os.path.join(os.getcwd(), '../client', 'dist', path)
 
 	if os.path.isdir(full_path):
 		full_path = os.path.join(full_path, 'index.html')
 
 	if not os.path.exists(full_path):
-		full_path = os.path.join(os.getcwd(), 'client', 'dist', 'index.html')
+		full_path = os.path.join(os.getcwd(), '../client', 'dist', 'index.html')
 
 	return FileResponse(full_path)

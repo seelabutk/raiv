@@ -1,5 +1,41 @@
-version: "3.8"
 services:
+  client:
+    build:
+      context: ./client
+      dockerfile: docker/dev.Dockerfile
+    volumes:
+      - frontend-files:/opt/run/client
+    develop:
+      watch:
+        - action: sync
+          path: ./client
+          target: /opt/run/client
+          ignore:
+            - node_modules
+        - action: rebuild
+          path: ./client/package.json
+          
+  server:
+    env_file:
+      - .env
+    build:
+      context: ./server
+      dockerfile: docker/dev.Dockerfile
+    volumes:
+      - frontend-files:/opt/run/client
+    depends_on:
+        postgres:
+          condition: service_healthy
+    ports:
+      - "9000:9000"
+    environment:
+      POSTGRES_URL: "postgres"
+    develop:
+      watch:
+        - action: sync
+          path: ./server
+          target: /opt/run/server
+  
   postgres:
     container_name: raiv-postgres
     image: postgres:15.3-alpine
@@ -8,9 +44,15 @@ services:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "5432:${POSTGRES_PORT}"
     volumes:
       - database:/var/lib/postgresql/data
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
 
 volumes:
+  frontend-files:
   database:

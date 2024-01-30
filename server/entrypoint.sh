@@ -1,11 +1,13 @@
+#!/bin/sh
+
 # Create the data directory if needed
 mkdir -p /opt/run/data
 
 # Volume-based lock to allow all workers to wait for embeddings before launching
-while [ -d /opt/run/data/global_swarm_lock ]; do
-	sleep 1
-done
-mkdir /opt/run/data/global_swarm_lock
+#while [ -d /opt/run/data/global_swarm_lock ]; do
+#	sleep 1
+#done
+#mkdir /opt/run/data/global_swarm_lock
 
 # Pull model weights for tensorflow if needed
 if [ ! -f /opt/run/data/embedder.tflite ]; then
@@ -18,7 +20,7 @@ if [ ! -d /opt/run/data/embeddings ]; then
 fi
 
 # Release the lock
-rm -r /opt/run/data/global_swarm_lock
+#rm -r /opt/run/data/global_swarm_lock
 
 # Start the server
-pipenv run gunicorn src.main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:80
+#pipenv run gunicorn src.main:app --reload --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:9000
