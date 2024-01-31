@@ -114,7 +114,6 @@ function deleteVideo() {
   }
 
   fetch(`/video/${props.videoId}/`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
     method: 'DELETE',
   }).then((response) => {
     if (response.status >= 200 && response.status <= 299) {
