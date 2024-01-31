@@ -7,7 +7,7 @@ import secrets
 from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
-import sys
+
 
 from fastapi import (
 	BackgroundTasks,
@@ -30,7 +30,7 @@ from .schemas import UserCreate, UserRead, UserUpdate
 from .text_processing import (
 	cleanActionMapTags
 )
-from .users import auth_backend, current_active_user, fastapi_users
+from .users import auth_backend_cookie, current_active_user, fastapi_users
 from .util import (
 	encode_video,
 	merge_frames,
@@ -82,16 +82,17 @@ class Query(BaseModel):
 	nResults: int = 1
 
 
-app = FastAPI()
+app = FastAPI(debug=True)
 app.add_middleware(
 	CORSMiddleware,
 	allow_headers=['*'],
 	allow_methods=['*'],
-	allow_origins=['*']
+	allow_origins=['*'],
+	allow_credentials=True
 )
 
 app.include_router(
-	fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
+	fastapi_users.get_auth_router(auth_backend_cookie), prefix="/auth/jwt", tags=["auth"]
 )
 app.include_router(
 	fastapi_users.get_register_router(UserRead, UserCreate),
@@ -372,9 +373,6 @@ async def video__delete(video_id, user: User = Depends(current_active_user)):
 def _get_video_file(video_id, filename, api_key):
 	""" Gets the path to a file within a video's directory. """
 	path = os.path.join(VIDEO_DIR, api_key, video_id, filename)
-
-	print(f'path: {path}', file=sys.stderr)
-	print('test', file=sys.stderr)
 
 	if not os.path.exists(path):
 		raise HTTPException(status_code=404, detail='File not found')
