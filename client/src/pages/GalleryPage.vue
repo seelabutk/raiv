@@ -341,18 +341,33 @@ async function imageSearch() {
 }
 
 function copyApiKey() {
-  navigator.clipboard.writeText(api_key.value)
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(api_key.value)
+  } else {
+    // no https workaround
+    const textArea = document.createElement("textarea");
+    textArea.style = "opacity: 0;";
+    document.body.appendChild(textArea);
+    textArea.value = api_key.value;
+    textArea.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Unable to copy to clipboard', err);
+    }
+    document.body.removeChild(textArea);
+  }
 }
 
 function logout() {
-  Cookies.remove('raivauthtoken')
+  fetch('/auth/jwt/logout',
+    { method: 'POST' }
+  );
   router.go()
 }
 
 onMounted(() => {
-  fetch('/user/', {
-    headers: { Authorization: `Bearer ${Cookies.get('raivauthtoken')}` },
-  })
+  fetch('/user/')
     .then((response) => {
       if (response.status === 401) {
         router.push('/account/login/')
@@ -370,7 +385,6 @@ onMounted(() => {
             api_key: api_key.value,
           }),
           headers: {
-            Authorization: `Bearer ${Cookies.get('raivauthtoken')}`,
             'Content-Type': 'application/json',
           },
           method: 'PATCH',
@@ -378,9 +392,7 @@ onMounted(() => {
       }
     })
 
-  fetch('/video/', {
-    headers: { Authorization: `Bearer ${Cookies.get('raivauthtoken')}` },
-  })
+  fetch('/video/')
     .then((response) => {
       if (response.status === 401) {
         router.push('/account/login/')

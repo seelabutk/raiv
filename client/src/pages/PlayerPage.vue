@@ -7,7 +7,7 @@
       :setCurrentAction="setCurrentAction"
       :showPath="showPath"
     />
-    <div class="player">
+    <div class="player" ref="playRegion">
       <video id="loom-video" class="video-js" preload="auto" muted>
         <source :src="`/video/${videoId}/video/`" type="video/mp4" />
       </video>
@@ -23,17 +23,18 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import ActionExplorer from '@/components/ActionExplorer'
 
-let actionMap = ref({})
-let activeAction = ref({})
-let oldIndependentAction = null
-let independentActions = []
-const showPath = ref(false)
-const actionExplorer = ref(null)
-const fps = 1
-let player
-const route = useRoute()
-const videoId = ref(route.params.id)
-const initFrameNo = ref(route.params.frameNo)
+let actionMap = ref({});
+let activeAction = ref({});
+let oldIndependentAction = null;
+let independentActions = [];
+const showPath = ref(false);
+const actionExplorer = ref(null);
+const playRegion = ref(null);
+const fps = 1;
+let player;
+const route = useRoute();
+const videoId = ref(route.params.id);
+const initFrameNo = ref(route.params.frameNo);
 
 function setCurrentAction(action) {
   if (action !== undefined) {
@@ -173,7 +174,13 @@ function onClick(event) {
 }
 
 function onHover(event) {
-  const newAction = findAction(event, activeAction.value)
+  const newAction = findAction(event, activeAction.value);
+
+  if(newAction !== undefined && ['click', 'toggle', 'hover'].includes(newAction.type)){
+    playRegion.value.style.cursor = 'pointer';
+  } else {
+    playRegion.value.style.cursor = 'default';
+  }
 
   // if there is a new action, and it is independent
   if (newAction !== undefined && newAction.independent) {
@@ -249,23 +256,6 @@ function addActionElements(action, parent, addIndependent = true) {
     action.parent = parent
   } else {
     activeAction.value = action
-  }
-
-  if (
-    action.boundingBox.length === 4 &&
-    (action.type === 'click' ||
-      action.type === 'toggle' ||
-      action.type === 'slider')
-  ) {
-    const div = document.createElement('div')
-    div.style.cursor = 'pointer'
-    div.style.position = 'absolute'
-    div.style.left = `${action.boundingBox[0]}px`
-    div.style.top = `${action.boundingBox[1]}px`
-    div.style.height = `${action.boundingBox[3] - action.boundingBox[1]}px`
-    div.style.width = `${action.boundingBox[2] - action.boundingBox[0]}px`
-
-    document.body.appendChild(div)
   }
 
   for (let index = 0; index < action.children.length; index++) {

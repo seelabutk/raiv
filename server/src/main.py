@@ -8,6 +8,7 @@ from shutil import copy, rmtree
 import subprocess
 from uuid import uuid4
 
+
 from fastapi import (
 	BackgroundTasks,
 	Depends,
@@ -29,7 +30,7 @@ from .schemas import UserCreate, UserRead, UserUpdate
 from .text_processing import (
 	cleanActionMapTags
 )
-from .users import auth_backend, current_active_user, fastapi_users
+from .users import auth_backend_cookie, current_active_user, fastapi_users
 from .util import (
 	encode_video,
 	merge_frames,
@@ -47,7 +48,7 @@ from .vector_db import (
 )
 
 
-VIDEO_DIR = os.path.join(os.getcwd(), 'data')
+VIDEO_DIR = os.path.join(os.getcwd(), '../data')
 if not os.path.exists(VIDEO_DIR):
 	try:
 		os.mkdir(VIDEO_DIR, mode=0o744)
@@ -81,16 +82,17 @@ class Query(BaseModel):
 	nResults: int = 1
 
 
-app = FastAPI()
+app = FastAPI(debug=True)
 app.add_middleware(
 	CORSMiddleware,
 	allow_headers=['*'],
 	allow_methods=['*'],
-	allow_origins=['*']
+	allow_origins=['*'],
+	allow_credentials=True
 )
 
 app.include_router(
-	fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
+	fastapi_users.get_auth_router(auth_backend_cookie), prefix="/auth/jwt", tags=["auth"]
 )
 app.include_router(
 	fastapi_users.get_register_router(UserRead, UserCreate),
@@ -322,11 +324,15 @@ async def user__get(user: User = Depends(current_active_user)):
 @app.get('/video/')
 async def video__get__list(user: User = Depends(current_active_user)):
 	""" Retrieve the list of available videos for the gallery. """
-	video_list = os.listdir(os.path.join(VIDEO_DIR, user.api_key))
+
+	user_dir = os.path.join(VIDEO_DIR, user.api_key)
+	if not os.path.exists(user_dir):
+		os.makedirs(user_dir)
+	video_list = os.listdir(user_dir)
 
 	objects = []
 	for video_id in video_list:
-		path = os.path.join(VIDEO_DIR, user.api_key, video_id)
+		path = os.path.join(user_dir, video_id)
 		# and not os.path.exists(os.path.join(path, 'frames')):
 		if os.path.isdir(path) and \
 			not video_id == "embeddings" and \
@@ -520,12 +526,12 @@ async def video_text_search(query: Query):
 @app.get('/{path:path}')
 async def client(path):
 	""" All other requests should be forwarded to the client. """
-	full_path = os.path.join(os.getcwd(), 'client', 'dist', path)
+	full_path = os.path.join(os.getcwd(), '../client', 'dist', path)
 
 	if os.path.isdir(full_path):
 		full_path = os.path.join(full_path, 'index.html')
 
 	if not os.path.exists(full_path):
-		full_path = os.path.join(os.getcwd(), 'client', 'dist', 'index.html')
+		full_path = os.path.join(os.getcwd(), '../client', 'dist', 'index.html')
 
 	return FileResponse(full_path)

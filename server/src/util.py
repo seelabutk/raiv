@@ -7,7 +7,7 @@ import os
 from fastapi.responses import StreamingResponse
 
 
-VIDEO_DIR = os.path.join(os.getcwd(), 'data')
+VIDEO_DIR = os.path.join(os.getcwd(), '../data')
 
 
 def merge_frames(video_id, api_key):

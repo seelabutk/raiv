@@ -9,7 +9,7 @@ from vector_db import (
 )
 
 if __name__ == '__main__':
-	VIDEO_DIR = os.path.join(os.getcwd(), 'data')
+	VIDEO_DIR = os.path.join(os.getcwd(), '../data')
 	IMAGE_VEC_COLLECTION_NAME = "raiv-image"
 	TEXT_VEC_COLLECTION_NAME = "raiv-text"
 

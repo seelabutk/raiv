@@ -46,12 +46,10 @@ function submit() {
   fetch('/auth/jwt/login', {
     body: formData,
     method: 'POST',
+    credentials: 'include',
   }).then((response) => {
-    if (response.status === 200) {
-      response.json().then((data) => {
-        Cookies.set('raivauthtoken', data.access_token)
-        router.push('/')
-      })
+    if (response.status === 204) {
+      router.push('/')
     } else {
       error.value = 'Unable to login, please check your email and password'
     }
