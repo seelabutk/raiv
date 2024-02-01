@@ -1,16 +1,18 @@
 <template>
-  <section class="actionExplorerOverlay">
-    <!-- open/close -->
-    <div class="toggleExplorer">
-      <div class="toggleIcon">
-        <font-awesome-icon
-          v-if="!explorerIsShown"
-          class="fa-fw fa-lg"
-          icon="fa-solid fa-bars"
-        />
-        <font-awesome-icon v-else class="fa-fw fa-lg" icon="fa-solid fa-x" />
-      </div>
+  <!-- open/close -->
+  <div class="toggleExplorer">
+    <div class="toggleIcon">
+      <font-awesome-icon
+        v-if="!explorerIsShown"
+        class="fa-fw fa-lg"
+        icon="fa-solid fa-bars"
+      />
+      <font-awesome-icon v-else class="fa-fw fa-lg" icon="fa-solid fa-x" />
     </div>
+  </div>
+  <section class="actionExplorerOverlay" 
+    v-show="explorerIsShown"
+  >
     <!-- nodes -->
     <ActionMap
       v-if="explorerIsShown && props.actionMap !== undefined"
@@ -83,8 +85,8 @@ onMounted(() => {
 .toggleExplorer {
   background: white;
   position: absolute;
-  top: 1px;
-  right: 1px;
+  top: 10px;
+  right: 10px;
   width: 40px;
   height: 40px;
   -webkit-border-radius: 25px;
