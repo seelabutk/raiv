@@ -156,7 +156,6 @@
 </template>
 
 <script setup>
-import Cookies from 'js-cookie'
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import PreviewCard from '@/components/PreviewCard'

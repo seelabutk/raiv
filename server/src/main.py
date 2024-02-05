@@ -46,6 +46,7 @@ from .vector_db import (
 	delete_id_vec_db,
 	image_from_bin,
 )
+from .versioning import convertToLatest
 
 
 VIDEO_DIR = os.path.join(os.getcwd(), '../data')
@@ -237,7 +238,6 @@ async def video__post(video: Video):
 
 	return uuid
 
-
 def _compose_video(video_id, video, api_key):
 	# update the action map if anything has changed
 	action_map = _update_action_map(video_id, video.actionMap, api_key)
@@ -277,6 +277,7 @@ def _compose_video(video_id, video, api_key):
 
 	# clean the action map and update it
 	action_map = cleanActionMapTags(nlp, action_map)
+	action_map = convertToLatest(action_map)
 	_update_action_map(video_id, action_map, api_key)
 
 	# add the tags to the vector db

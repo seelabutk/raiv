@@ -40,10 +40,10 @@ function setCurrentAction(action) {
   if (action !== undefined) {
     if (action.independent) {
       oldIndependentAction = action
-      seekToFrame(activeAction.value.position + action.idx)
+      seekToFrame(activeAction.value.ID + action.idx)
     } else {
       activeAction.value = action
-      seekToFrame(action.position)
+      seekToFrame(action.ID)
     }
   }
 }
@@ -166,17 +166,17 @@ function onClick(event) {
 
   if (newAction.independent) {
     oldIndependentAction = newAction
-    seekToFrame(activeAction.value.position + newAction.idx)
+    seekToFrame(activeAction.value.ID + newAction.idx)
   } else {
     activeAction.value = newAction
-    seekToFrame(activeAction.value.position)
+    seekToFrame(activeAction.value.ID)
   }
 }
 
 function onHover(event) {
   const newAction = findAction(event, activeAction.value);
 
-  if(newAction !== undefined && ['click', 'toggle', 'hover'].includes(newAction.type)){
+  if(newAction !== undefined && ['click', 'toggle', 'toggle-off', 'hover', 'slider'].includes(newAction.type)){
     playRegion.value.style.cursor = 'pointer';
   } else {
     playRegion.value.style.cursor = 'default';
@@ -186,7 +186,7 @@ function onHover(event) {
   if (newAction !== undefined && newAction.independent) {
     if (newAction.type === 'hover') {
       oldIndependentAction = newAction
-      seekToFrame(activeAction.value.position + newAction.idx)
+      seekToFrame(activeAction.value.ID + newAction.idx)
     }
   }
   // if not an independent action
@@ -194,12 +194,12 @@ function onHover(event) {
     // if there is a new action, and it is a hover
     if (newAction !== undefined && newAction.type === 'hover') {
       activeAction.value = newAction
-      seekToFrame(activeAction.value.position)
+      seekToFrame(activeAction.value.ID)
     }
     // if there is no new action, and the current action is a hover
     else if (activeAction.value.type === 'hover') {
       activeAction.value = activeAction.value.parent
-      seekToFrame(activeAction.value.position)
+      seekToFrame(activeAction.value.ID)
     }
     // if there is no new action, and the current action is independent and a hover
     else if (
@@ -207,26 +207,26 @@ function onHover(event) {
       oldIndependentAction.type === 'hover'
     ) {
       oldIndependentAction = null
-      seekToFrame(activeAction.value.position)
+      seekToFrame(activeAction.value.ID)
     }
   }
 }
 const throttledHover = throttle(onHover, 100)
 
 function findActionByFrame(frame) {
-  const root = actionMap.value
+  const root = actionMap.value.root
   let minClosestFrame = 0
   let minClosestAction = root
 
   const dfs = (action) => {
-    if (action.position <= frame) {
-      if (action.position > minClosestFrame) {
-        minClosestFrame = action.position
+    if (action.ID <= frame) {
+      if (action.ID > minClosestFrame) {
+        minClosestFrame = action.ID
         minClosestAction = action
       }
     }
 
-    if (action.position === frame) {
+    if (action.ID === frame) {
       return action
     }
 
@@ -258,6 +258,13 @@ function addActionElements(action, parent, addIndependent = true) {
     activeAction.value = action
   }
 
+  //assign defaults if not present
+  if(action.children === undefined) action.children = [];
+  if(action.disableSiblings === undefined)  action.disableSiblings = false;
+  if(action.independent === false)  action.independent = false;
+
+  
+
   for (let index = 0; index < action.children.length; index++) {
     addActionElements(action.children[index], action)
   }
@@ -278,7 +285,7 @@ onMounted(() => {
       for (let index = 0; index < independentActions.length; index++) {
         independentActions[index].idx = index + 1
       }
-      addActionElements(actionMap.value)
+      addActionElements(actionMap.value.root);
 
       document.addEventListener('click', onClick)
       document.addEventListener('mousemove', throttledHover)
