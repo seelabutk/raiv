@@ -14,7 +14,7 @@
       v-show="isModalShown"
     >
       <div id="controls-handle" class="handle">
-        <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
+        <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip"/>
         <span>RAIV Recorder</span>
 
         <div class="spacer"></div>
@@ -284,11 +284,21 @@ function resetRecording() {
 }
 
 function openActionMap() {
-  actionMapComponent.value.open()
+  if(actionMapComponent.value.checkIsOpen()){
+    actionMapComponent.value.close()
+  }
+  else{
+    actionMapComponent.value.open()
+  }
 }
 
 function openIndependentActions() {
-  independentActionsComponent.value.open()
+  if(independentActionsComponent.value.checkIsOpen()){
+    independentActionsComponent.value.close()
+  }
+  else{
+    independentActionsComponent.value.open()
+  }
 }
 
 function toggleControlPanel(value) {
@@ -346,12 +356,19 @@ button {
   font-size: 1.5em;
   outline: 0;
   padding: 0 0.25em;
+  color: black;
+}
+
+input {
+  text-align: left;
+  color: black;
 }
 
 .control-container {
   background: white;
   border: 1px solid black;
   border-radius: 4px;
+  color: black;
 }
 
 .controls-handle {
@@ -404,6 +421,11 @@ button {
 
 .capture-settings label {
   margin-right: 0.25em;
+  position: static;
+}
+
+.capture-settings p {
+  color: black;
 }
 
 .api-key-input {

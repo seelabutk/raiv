@@ -257,7 +257,7 @@ debug "Starting browser extension build watch process"
 tmux__new_window extension "$PROJECT_HOME/browser_extension" yarn build-watch
 
 debug "Starting playback client build watch process"
-tmux__new_window client "$PROJECT_HOME/server/client" yarn build-watch
+tmux__new_window client "$PROJECT_HOME/client" yarn build-watch
 
 debug "Starting server"
 tmux__new_window server "$PROJECT_HOME/server" $PIPENV_BIN run uvicorn src.main:app --reload --port $SERVER_PORT

@@ -46,7 +46,7 @@ from .vector_db import (
 	delete_id_vec_db,
 	image_from_bin,
 )
-
+from .versioning import convertToLatest
 
 VIDEO_DIR = os.path.join(os.getcwd(), '../data')
 if not os.path.exists(VIDEO_DIR):
@@ -126,8 +126,8 @@ TEXT_VEC_COLLECTION_NAME = "raiv-text"
 # populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
 
 # get the spacy nlp model
-nlp = spacy.load("en_core_web_sm")
-
+#nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load('en_core_web_sm')
 
 @app.on_event("startup")
 async def on_startup():
@@ -277,6 +277,7 @@ def _compose_video(video_id, video, api_key):
 
 	# clean the action map and update it
 	action_map = cleanActionMapTags(nlp, action_map)
+	action_map = convertToLatest(action_map)
 	_update_action_map(video_id, action_map, api_key)
 
 	# add the tags to the vector db
@@ -458,12 +459,22 @@ async def archive__get_download(
 	video_id,
 	user: User = Depends(current_active_user)
 ):
+	'''
+	files = []
+	all_files = os.listdir(os.path.join(VIDEO_DIR, user.api_key, video_id))
+	for f in all_files:
+		files.append(os.path.join(VIDEO_DIR, user.api_key, video_id, f))
+
+	frames = os.listdir(os.path.join(VIDEO_DIR, user.api_key, video_id, 'frames'))
+	for frame in frames:
+		files.append(os.path.join(VIDEO_DIR, user.api_key, video_id, 'frames', frame))	
+	return zipfiles(files)
 	""" Retrieve a zipfile of the RAIV archive. """
+	'''
 	return zipfiles([
 		_get_video_file(video_id, 'video.mp4', user.api_key),
 		_get_video_file(video_id, 'action_map.json', user.api_key),
 	])
-
 
 @app.get('/video/{video_id}/video/')
 async def video__get__detail(video_id, range: str = Header(None), user: User = Depends(current_active_user)):  # pylint: disable=redefined-builtin # noqa: E501

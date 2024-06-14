@@ -20,7 +20,7 @@
       <table class="form-table">
         <tr>
           <td class="form-label">
-            <label for="wait-time">Wait time (s) before capture</label>
+            <label for="wait-time" style="left: 49% !important;">Wait time (s) before capture</label>
           </td>
           <td class="form-divider"></td>
 
@@ -41,7 +41,7 @@
         </tr>
         <tr>
           <td class="form-label">
-            <label for="manual-capture">Manual capture</label>
+            <label for="manual-capture" style="left: 49% !important;">Manual capture</label>
           </td>
           <td class="form-divider"></td>
 
@@ -56,7 +56,7 @@
         </tr>
         <tr>
           <td class="form-label">
-            <label for="disables-siblings">Disables siblings</label>
+            <label for="disables-siblings" style="left: 49% !important;">Disables siblings</label>
           </td>
           <td class="form-divider"></td>
 
@@ -292,6 +292,7 @@ defineExpose({ open, isChangeParent })
 
 input {
   max-width: 10em !important;
+  appearance: auto !important;
 }
 
 h3 {

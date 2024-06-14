@@ -115,7 +115,7 @@ async function createEditor(container) {
   }
 
   // Use d3's layout algorithm to calculate node positions
-  const tree = d3.hierarchy(actionMap)
+  const tree = d3.hierarchy(actionMap.root)
   d3.tree().nodeSize([options.dx, options.dy])(tree)
 
   // Calculate the provenance path

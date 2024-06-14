@@ -27,7 +27,7 @@ services:
         postgres:
           condition: service_healthy
     ports:
-      - "9000:9000"
+      - "127.23.133.219:40741:9000"
     environment:
       POSTGRES_URL: "postgres"
     develop:

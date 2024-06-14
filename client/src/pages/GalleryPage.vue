@@ -156,7 +156,7 @@
 </template>
 
 <script setup>
-import Cookies from 'js-cookie'
+// import Cookies from 'js-cookie'
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import PreviewCard from '@/components/PreviewCard'
@@ -341,28 +341,26 @@ async function imageSearch() {
 }
 
 function copyApiKey() {
-  if(navigator.clipboard) {
+  if (navigator.clipboard) {
     navigator.clipboard.writeText(api_key.value)
   } else {
     // no https workaround
-    const textArea = document.createElement("textarea");
-    textArea.style = "opacity: 0;";
-    document.body.appendChild(textArea);
-    textArea.value = api_key.value;
-    textArea.select();
+    const textArea = document.createElement('textarea')
+    textArea.style = 'opacity: 0;'
+    document.body.appendChild(textArea)
+    textArea.value = api_key.value
+    textArea.select()
     try {
-      document.execCommand('copy');
+      document.execCommand('copy')
     } catch (err) {
-      console.error('Unable to copy to clipboard', err);
+      console.error('Unable to copy to clipboard', err)
     }
-    document.body.removeChild(textArea);
+    document.body.removeChild(textArea)
   }
 }
 
 function logout() {
-  fetch('/auth/jwt/logout',
-    { method: 'POST' }
-  );
+  fetch('/auth/jwt/logout', { method: 'POST' })
   router.go()
 }
 
