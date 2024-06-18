@@ -51,6 +51,7 @@
               :checked="props.action.manualCapture"
               type="checkbox"
               @input="toggleManualCapture"
+              style="left: 49% !important;"
             />
           </td>
         </tr>
@@ -66,6 +67,7 @@
               :checked="props.action.disableSiblings"
               type="checkbox"
               @input="toggleDisableSiblings"
+              style="left: 49% !important;"
             />
           </td>
         </tr>
@@ -292,11 +294,22 @@ defineExpose({ open, isChangeParent })
 
 input {
   max-width: 10em !important;
+  max-height: 2em;
   appearance: auto !important;
+  visibility: visible !important;
 }
 
 h3 {
   color: black;
+}
+
+td {
+  border: none !important;
+  border-top: none !important;
+}
+
+label {
+  margin-top: 0em !important;
 }
 
 .contents {
@@ -307,6 +320,7 @@ h3 {
   width: 100%;
   margin-top: 1em;
   table-layout: fixed;
+  border: none !important;
 }
 .form-label {
   text-align: right;

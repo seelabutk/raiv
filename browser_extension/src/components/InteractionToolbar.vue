@@ -19,7 +19,7 @@
     <br />
     <label>
       Independent Action:
-      <input type="checkbox" v-model="actionMap.independentAction" style="appearance: auto;"/>
+      <input type="checkbox" v-model="actionMap.independentAction" style="appearance: auto; position: static;"/>
     </label>
   </div>
 </template>

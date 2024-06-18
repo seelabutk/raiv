@@ -469,8 +469,8 @@ async def archive__get_download(
 	for frame in frames:
 		files.append(os.path.join(VIDEO_DIR, user.api_key, video_id, 'frames', frame))	
 	return zipfiles(files)
-	""" Retrieve a zipfile of the RAIV archive. """
 	'''
+	""" Retrieve a zipfile of the RAIV archive. """
 	return zipfiles([
 		_get_video_file(video_id, 'video.mp4', user.api_key),
 		_get_video_file(video_id, 'action_map.json', user.api_key),
