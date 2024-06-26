@@ -118,14 +118,14 @@ export default class BaseAction {
         this._openConfirmCapture(resolve)
       })
     }
-    //If the webpage has height: 100% (height of screen), extend webpage's height to cover more
+    //If the webpage has height: 100% (height of screen), set body to have original height
     if(((document.body.clientHeight / window.innerHeight) * 100) === 100){
       document.body.style.height = 'initial';
     }
     //RAIV extension height cap that works is 4320px
-    if(document.body.clientHeight > 4320){
+    /*if(document.body.clientHeight > 4320){
       document.body.style.height = '4320px'; //the standard 8K height
-    }
+    }*/
     //Make the background white if background is transparent so capture is visible
     if(getComputedStyle(document.body).backgroundColor === 'rgba(0, 0, 0, 0)'){
       document.body.style.backgroundColor = 'white';
@@ -194,7 +194,7 @@ export default class BaseAction {
     }
 
     // Wait for service worker to respond
-    await new Promise((resolve) =>
+    await new Promise((resolve) => 
       port.onMessage.addListener((message) => {
         if (message.captured) {
           port.onMessage.removeListener()
