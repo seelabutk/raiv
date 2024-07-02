@@ -251,8 +251,8 @@ export default class ActionMap {
         : height / sliderSteps
 
     // if the tagName is an input we need to set the value directly
-    const deltaValue =
-      tagName === 'input' ? action.target.max - action.target.min : 0
+    const deltaValue = 
+      tagName === 'input' ? action.target.max - action.target.min : 0;
     const minValue = Number(action.target.min || 0)
 
     for (let i = 0; i < sliderSteps; i++) {
@@ -272,7 +272,13 @@ export default class ActionMap {
         action.boundingBox = newBoundingBox
         action.clickPosition = newClickPosition
         action.type = 'slider'
-        action.sliderValue = minValue + deltaValue * ((i + 0.5) / sliderSteps)
+        if(action.sliderValue == 0){
+          if(sliderSteps === 1)
+            action.sliderValue = minValue + i * ((deltaValue-minValue)/(sliderSteps))
+          else
+            action.sliderValue = minValue + i * ((deltaValue-minValue)/(sliderSteps-1))
+        }
+        //action.sliderValue = minValue + deltaValue * ((i + 0.5) / sliderSteps)
       } else {
         const newAction = getNewAction(parent, action.target, newBoundingBox, {
           type: 'slider',
@@ -280,9 +286,8 @@ export default class ActionMap {
         newAction.clickPosition = newClickPosition
         newAction.disableSiblings = action.disableSiblings
         newAction.manualCapture = action.manualCapture
-
-        newAction.sliderValue =
-          minValue + deltaValue * ((i + 0.5) / sliderSteps)
+        //newAction.sliderValue = minValue + deltaValue * ((i + 0.5) / sliderSteps)
+        newAction.sliderValue = minValue + i * ((deltaValue-minValue)/(sliderSteps-1))
         this._deepChildrenCopy(newAction, action)
         newActions.push(newAction)
       }

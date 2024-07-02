@@ -113,7 +113,6 @@
                 type="number"
                 @change="
                   (event) => {
-                    console.log('here?')
                     props.action.set('sliderSteps', event.target.value)
                     props.store.save()
                   }
@@ -310,6 +309,7 @@ td {
 
 label {
   margin-top: 0em !important;
+  position: static !important;
 }
 
 .contents {
