@@ -147,6 +147,7 @@
               :metadata="video.metadata"
               :frameNo="video.frame_no"
               @delete="deleteCard(video)"
+              @rename="(newName) => renameVideo(video, newName)"
             ></PreviewCard>
           </ul>
         </v-row>
@@ -196,6 +197,21 @@ function deleteCard(video) {
 
   getFilteredAndSortedVideoList()
 }
+
+function renameVideo(video, newName){
+  video.name = newName
+  fetch(`/video/${video.id}/action-map/${newName}/`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      apiKey: api_key.value,
+      newName: newName,
+    }),
+  })
+}
+
 function toggleSortDirection() {
   sortReversed.value = !sortReversed.value
   getFilteredAndSortedVideoList()

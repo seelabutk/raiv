@@ -432,6 +432,17 @@ async def metadata__get__detail(
 	return FileResponse(_get_video_file(video_id, 'meta.json', user.api_key))
 
 
+@app.patch('/video/{video_id}/action-map/{new_name}/')
+async def video__rename(video_id, new_name, user: User = Depends(current_active_user)):
+	""" Renames the video in the action map. """
+	path = os.path.join(VIDEO_DIR, user.api_key, video_id)
+	if os.path.exists(path):
+		path = _get_video_file(video_id, 'action_map.json', user.api_key)
+		with open(path, 'r') as file:
+			action_map_file = json.load(file)
+		action_map_file['name'] = new_name
+		_update_action_map(video_id, action_map_file, user.api_key)
+
 @app.get('/video/{video_id}/action-map/')
 async def action_map__get__detail(
 	video_id,

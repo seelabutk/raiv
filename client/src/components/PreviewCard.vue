@@ -27,6 +27,29 @@
       </span>
       <v-spacer />
 
+      <v-tooltip text="Rename" location="bottom">
+        <template v-slot:activator="{ props }">
+          <v-btn icon v-bind="props" size="small">
+            <v-icon>mdi-rename</v-icon>
+            <v-dialog v-model="renameDialog" activator="parent" width="400px">
+              <v-card>
+                <v-card-title>
+                  <span class="text-h5">Rename Video</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-text-field v-model="newName" label="Name" variant="outlined"></v-text-field>
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn color="blue-darken-1" variant="text" @click="toggleDialog(false)">Close</v-btn>
+                  <v-btn color="blue-darken-1" variant="text" @click="renameVideo(newName)">Rename</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </v-btn>
+        </template>
+      </v-tooltip>
+
       <v-tooltip :text="shareText" location="bottom">
         <template v-slot:activator="{ props }">
           <v-btn
@@ -86,8 +109,10 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['delete', 'rename'])
 const shareText = ref('Share')
+const renameDialog = ref(false)
+const newName = ref('')
 
 function shareVideo() {
   navigator.clipboard.writeText(
@@ -98,6 +123,19 @@ function shareVideo() {
   setTimeout(() => {
     shareText.value = 'Share'
   }, 2000)
+}
+
+function renameVideo(newName) {
+  emit('rename', newName)
+  renameDialog.value = false
+}
+
+function toggleDialog(value = undefined) {
+  if (value === undefined) {
+    renameDialog.value = !renameDialog.value
+  } else {
+    renameDialog.value = false
+  }
 }
 
 function downloadVideo() {
