@@ -131,6 +131,39 @@
             </label>
           </div>
 
+          <div class="user-name" v-if="settingsShown">
+            <label>
+              User Name
+              <input
+                class="name-input"
+                type="text"
+                :value="props.store.username.value"
+                @input="
+                  (event) => props.store.set('username', event.target.value)
+                "
+              />
+            </label>
+          </div>
+
+          <div class="group-name" v-if="settingsShown">
+            <label>
+              Group Name
+              <input
+                class="name-input"
+                type="text"
+                :value="props.store.groupName.value"
+                @input="
+                  (event) => props.store.set('groupName', event.target.value)
+                "
+              />
+            </label>
+          </div>
+
+          <!-- <div class="upload-action-map" v-if="settingsShown">
+            <input type="file" ref="fileInput" @change="handleFileUpload">
+            <button @click="confirmFileUpload">Upload Action Map</button>
+          </div> -->
+          
           <div>
             <label class="input">
               Video Name
@@ -262,6 +295,7 @@ function recordToggle() {
 
     document.addEventListener('click', onClick, true)
     document.addEventListener('mousemove', throttledMousemove, true)
+    //document.addEventListener('keydown', detectKeyDown, true)
   } else {
     stopRecording()
   }
@@ -270,6 +304,7 @@ function recordToggle() {
 function stopRecording() {
   document.removeEventListener('click', onClick, true)
   document.removeEventListener('mousemove', throttledMousemove, true)
+  //document.removeEventListener('keydown', detectKeyDown, true)
 
   if (hoveredElement !== undefined) {
     hoveredElement.classList.remove('raiv-hovered')
@@ -278,10 +313,72 @@ function stopRecording() {
   props.store.set('recording', false)
 }
 
+/*function detectKeyDown(){
+  let cKeyPressed = false
+  let rKeyPressed = false
+  let spacebarPressed = false
+  let keyTimeout = null
+
+  const keyDownHandler = (event) => {
+    if(event.key === 'c'){
+      cKeyPressed = true
+    }    
+    if(event.key === 'r'){
+      rKeyPressed = true
+    }    
+    if(event.key === ' ' || event.keyCode === 32){
+      event.preventDefault()  
+      spacebarPressed = true
+    }
+
+    if(((cKeyPressed && !rKeyPressed) || (!cKeyPressed && rKeyPressed)) && spacebarPressed){
+      if(rKeyPressed){
+        stopRecording()
+      }
+      else if(cKeyPressed){
+        capture()
+      }
+    }
+    else{
+      clearTimeout(keyTimeout)
+      keyTimeout = setTimeout(resetKeyStates, 500)
+    }
+  }
+  const resetKeyStates = () => {
+    cKeyPressed = false
+    rKeyPressed = false
+    spacebarPressed = false
+  }
+  return keyDownHandler
+}*/
+
 function resetRecording() {
   stopRecording()
   props.store.reset()
 }
+
+/*let jsonActionMap
+function handleFileUpload(){
+  const file = event.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      jsonActionMap = JSON.parse(e.target.result);
+      console.log('Action map:', jsonActionMap);
+    };
+    reader.readAsText(file);
+  }
+}
+
+function confirmFileUpload(){
+  console.log('Upload button clicked');
+  //Remember to do some security checking 
+  props.store.actionMap.value.uploadActionMap(jsonActionMap)
+  actionMapComponent.value.render()
+  console.log("finished render")
+  props.store.save()
+
+}*/
 
 function openActionMap() {
   if(actionMapComponent.value.checkIsOpen()){
@@ -339,7 +436,9 @@ function capture() {
     controls,
     serverLocation,
     props.store.apiKey.value,
-    props.store.videoName.value
+    props.store.videoName.value,
+    props.store.username.value,
+    props.store.groupName.value
   )
 }
 
@@ -431,6 +530,11 @@ input {
 .api-key-input {
   width: 20em !important;
 }
+
+.name-input {
+  width: 10em;
+}
+
 .recording-dialogs {
   display: flex;
   flex-direction: row;

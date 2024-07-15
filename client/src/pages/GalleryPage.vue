@@ -137,8 +137,42 @@
           </v-btn>
           <v-divider></v-divider>
         </v-row>
+
+        <v-row v-if="backToFoldersBtn">
+          <v-col cols="12">
+            <h1 v-if="showGroups" class="text-center" style="font-size: 30px;">Group {{ group_name }}</h1> 
+            <h1 v-if="showUsers" class="text-center" style="font-size: 30px;">User {{ user_name }}</h1> 
+          </v-col>
+        </v-row>
+        <v-row v-if="backToFoldersBtn">
+          <v-tooltip text="Go Back">
+            <template v-slot:activator="{ props }">
+              <v-btn icon @click="toggleBackToFolderGroups" v-bind="props" color="black">
+                <v-icon>mdi-arrow-left</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
+        </v-row>
         <v-row>
-          <ul>
+          <ul v-if="folderGroupsShown">
+            <FolderContainer 
+              v-if="showGroups"
+              v-for="videoList in groups"
+              :key="videoList[0].groupName"
+              :name="videoList[0].groupName"
+              :videoList="videoList"
+              @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList)"
+            ></FolderContainer>
+            <FolderContainer 
+              v-if="showUsers"
+              v-for="videoList in users"
+              :key="videoList[0].username"
+              :name="videoList[0].username"
+              :videoList="videoList"
+              @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList)"
+            ></FolderContainer>
+          </ul>
+          <ul v-else>
             <PreviewCard
               v-for="video in filteredSortedVideos"
               :key="video.frame_no ? `${video.id}-${video.frame_no}` : video.id"
@@ -161,6 +195,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import PreviewCard from '@/components/PreviewCard'
+import FolderContainer from '@/components/FolderContainer'
 import 'tippy.js/dist/tippy.css'
 import { getSortFunction } from '@/utils/Sorts'
 
@@ -177,8 +212,18 @@ const orderByOptions = ref([
   { text: 'Updated', value: 'updated' },
   { text: 'File Size', value: 'size' },
   { text: 'Title', value: 'title' },
+  { text: 'User Name', value: 'username' },
+  { text: 'Group Name', value: 'groupName' },
 ])
 const sortType = ref({ text: 'Created', value: 'created' })
+const folderGroupsShown = ref(false)
+const backToFoldersBtn = ref(false)
+const groups = ref([])
+const group_name = ref('')
+const showGroups = ref(false)
+const users = ref([])
+const user_name = ref('')
+const showUsers = ref(false)
 const imageSearchFile = ref([])
 const imageSearchResults = ref([])
 const filteredSortedVideos = ref([])
@@ -229,17 +274,71 @@ async function getFilteredAndSortedVideoList() {
   // retreive the proper video list
   let videoList = getVideoList()
 
-  // filter videos
-  videoList = await filterVideos(videoList)
-
   // sort videos
   if (sortType.value) {
-    videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
-  }
-  filteredSortedVideos.value = videoList
-  resultsLoading.value = false
+    switch(sortType.value.value){
+        case 'groupName':
+          folderGroupsShown.value = true
+          showUsers.value = false
+          showGroups.value = true
+          groups.value = []
+          break
+        case 'username':
+          folderGroupsShown.value = true
+          showUsers.value = true
+          showGroups.value = false
+          users.value = []
+          break
+        default:
+          folderGroupsShown.value = false
+          showUsers.value = false
+          showGroups.value = false
+    }
 
+    if(showUsers.value || showGroups.value){
+      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+      //Separates videos by user/group name
+      let nameList = getNames(videoList, sortType.value.value)
+      for(let i = 0; i < nameList.length; i++){
+        groups.value[i] = videoList.filter((video) => video.groupName.toLowerCase().includes(nameList[i]))
+        users.value[i] = videoList.filter((video) => video.username.toLowerCase().includes(nameList[i]))
+      }
+    }
+    else{
+      // filter videos
+      videoList = await filterVideos(videoList)
+      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+      filteredSortedVideos.value = videoList
+    }
+  }
+  resultsLoading.value = false
   return videoList
+}
+
+function getNames(videoList, sortTypeVal){
+  let vids = []
+  for(let i = 0; i < videoList.length; i++){
+      if(sortTypeVal == 'groupName' && !vids.includes(videoList[i].groupName)){
+        vids.push(videoList[i].groupName)
+      }
+      else if(sortTypeVal == 'username' && !vids.includes(videoList[i].username)){
+        vids.push(videoList[i].username)
+      }
+  }
+  return vids
+}
+
+function showGroupVideoListOnly(chosenGroupVideoList){
+  group_name.value = chosenGroupVideoList.value[0].groupName
+  user_name.value = chosenGroupVideoList.value[0].username
+  folderGroupsShown.value = false
+  backToFoldersBtn.value = true
+  filteredSortedVideos.value = chosenGroupVideoList.value
+}
+
+function toggleBackToFolderGroups(){
+  backToFoldersBtn.value = false
+  folderGroupsShown.value = true
 }
 
 function sortVideoList(videoList, sortType = 'created', reversed = false) {

@@ -96,6 +96,8 @@ export default class ActionMap {
       node.children[index].manualCapture = childObj.manualCapture
       node.children[index].scrollPosition = childObj.scrollPosition
       node.children[index].type = childObj.type
+      //node.children[index].tagName = childObj.tagName
+      //console.log("ActionMap.js - node.children[index].tagName = " + childObj.tagName)
       node.children[index].waitTime = childObj.waitTime
       node.children[index].independent = childObj.independent || false
       node.children[index].sliderOrientation =
@@ -126,6 +128,7 @@ export default class ActionMap {
       action.manualCapture = obj.manualCapture
       action.scrollPosition = obj.scrollPosition
       action.type = obj.type
+      //action.tagName = obj.tagName
       action.waitTime = obj.waitTime
       action.independent = obj.independent || true
       action.sliderOrientation = obj.sliderOrientation || 'horizontal'
@@ -143,6 +146,24 @@ export default class ActionMap {
     this._loadIndependentActions(storageObj.independentActions || [])
     window.scrollTo(0, 0)
   }
+
+  /*uploadActionMap(storageObj){
+    console.log("now loadActionMap inside ActionMap.js")    
+    this.root = storageObj.root
+    this.root.frameCount = storageObj.frameCount
+    this.root.children = storageObj.children
+    this.parentActions = [this.root] 
+
+    //console.log(storageObj.root)
+    //console.log(this.root)
+    //console.log(storageObj.children)
+    //console.log(this.root.children)
+
+    this._loadIndependentActions(storageObj.independentActions || [])
+    
+    window.scrollTo(0, 0)
+    console.log("end of function")
+  }*/
 
   _add(parent, target, boundingBox, event, type) {
     // const action = new Action(parent, target, boundingBox, {
@@ -413,7 +434,7 @@ export default class ActionMap {
     this.reset()
   }
 
-  async capture(controls, serverLocation, apiKey, videoName) {
+  async capture(controls, serverLocation, apiKey, videoName, username, groupName) {
     this._prepareStyles(serverLocation)
     this._prepareActions(this.root)
     this._preparePositions(this.root, 0)
@@ -423,6 +444,8 @@ export default class ActionMap {
       serverLocation,
       apiKey,
       videoName,
+      username,
+      groupName,
       actionMap: this._getActionMap(),
     })
 

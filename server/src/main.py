@@ -346,6 +346,8 @@ async def video__get__list(user: User = Depends(current_active_user)):
 				objects.append({
 					'id': video_id,
 					'name': action_map.get('name', 'Unnamed Video'),
+					'username': action_map.get('username', 'Unnamed User'),
+					'groupName': action_map.get('groupName', 'Unnamed Group'),
 					'metadata': action_map.get('metadata', {}),
 				})
 
