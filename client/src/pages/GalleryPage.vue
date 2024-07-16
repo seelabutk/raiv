@@ -154,17 +154,17 @@
           </v-tooltip>
         </v-row>
         <v-row>
-          <ul v-if="folderGroupsShown">
+          <ul v-if="folderGroupsShown && showGroups">
             <FolderContainer 
-              v-if="showGroups"
               v-for="videoList in groups"
               :key="videoList[0].groupName"
               :name="videoList[0].groupName"
               :videoList="videoList"
               @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList)"
             ></FolderContainer>
+          </ul>
+          <ul v-else-if="folderGroupsShown && showUsers">
             <FolderContainer 
-              v-if="showUsers"
               v-for="videoList in users"
               :key="videoList[0].username"
               :name="videoList[0].username"
@@ -271,6 +271,7 @@ function getVideoList() {
 
 async function getFilteredAndSortedVideoList() {
   resultsLoading.value = true
+  backToFoldersBtn.value = false
   // retreive the proper video list
   let videoList = getVideoList()
 
