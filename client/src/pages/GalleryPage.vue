@@ -28,9 +28,26 @@
         single-line
       ></v-text-field>
 
+
+      <v-select
+        class="mr-4 nav--view-by"
+        prepend-inner-icon="mdi-eye"
+        variant="solo-filled"
+        v-model="viewType"
+        density="compact"
+        :items="orderByViews"
+        item-value="value"
+        item-title="text"
+        label="View By"
+        hide-details
+        return-object
+        single-line
+      ></v-select>
+
       <!-- Order By Field -->
       <v-select
         class="mr-4 nav--sort-by"
+        prepend-inner-icon="mdi-sort"
         variant="solo-filled"
         v-model="sortType"
         density="compact"
@@ -142,16 +159,14 @@
           <v-col cols="12">
             <h1 v-if="showGroups" class="text-center" style="font-size: 30px;">Group {{ group_name }}</h1> 
             <h1 v-if="showUsers" class="text-center" style="font-size: 30px;">User {{ user_name }}</h1> 
-          </v-col>
-        </v-row>
-        <v-row v-if="backToFoldersBtn">
-          <v-tooltip text="Go Back">
+            <v-tooltip text="Go Back">
             <template v-slot:activator="{ props }">
               <v-btn icon @click="toggleBackToFolderGroups" v-bind="props" color="black">
                 <v-icon>mdi-arrow-left</v-icon>
               </v-btn>
             </template>
           </v-tooltip>
+          </v-col>
         </v-row>
         <v-row>
           <ul v-if="folderGroupsShown && showGroups">
@@ -160,7 +175,7 @@
               :key="videoList[0].groupName"
               :name="videoList[0].groupName"
               :videoList="videoList"
-              @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList)"
+              @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList, 'group')"
             ></FolderContainer>
           </ul>
           <ul v-else-if="folderGroupsShown && showUsers">
@@ -169,7 +184,7 @@
               :key="videoList[0].username"
               :name="videoList[0].username"
               :videoList="videoList"
-              @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList)"
+              @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList, 'user')"
             ></FolderContainer>
           </ul>
           <ul v-else>
@@ -207,6 +222,11 @@ const searchType = ref(false)
 const searchQuery = ref('')
 const searchDialog = ref(false)
 const resultsLoading = ref(false)
+const orderByViews = ref([
+  { text: 'All Cards', value: 'allCards' },
+  { text: 'User Name', value: 'username' },
+  { text: 'Group Name', value: 'groupName' },
+])
 const orderByOptions = ref([
   { text: 'Created', value: 'created' },
   { text: 'Updated', value: 'updated' },
@@ -215,6 +235,8 @@ const orderByOptions = ref([
   { text: 'User Name', value: 'username' },
   { text: 'Group Name', value: 'groupName' },
 ])
+const viewType = ref({ text: 'All Cards', value: 'allCards' })
+const currentViewType = ref({ text: 'All Cards', value: 'allCards' })
 const sortType = ref({ text: 'Created', value: 'created' })
 const folderGroupsShown = ref(false)
 const backToFoldersBtn = ref(false)
@@ -229,6 +251,7 @@ const imageSearchResults = ref([])
 const filteredSortedVideos = ref([])
 const first_name = ref('')
 const api_key = ref('')
+watch(viewType, getFilteredAndSortedVideoList)
 watch(sortType, getFilteredAndSortedVideoList)
 watch(searchQuery, getFilteredAndSortedVideoList)
 watch(searchType, getFilteredAndSortedVideoList)
@@ -275,63 +298,121 @@ async function getFilteredAndSortedVideoList() {
   // retreive the proper video list
   let videoList = getVideoList()
 
-  // sort videos
-  if (sortType.value) {
-    switch(sortType.value.value){
+  console.log("view: ", viewType.value.value)
+  console.log("sort: ", sortType.value.value)
+  console.log("current: ", currentViewType.value.value)
+
+  //Determines which user/group folders to show or just PreviewCards
+  changeView()
+
+  //Sort and filter videos based on pre-existing list or new compiled list
+  if(showUsers.value || showGroups.value){
+    if(user_name.value){
+      videoList = videoList.filter(video => video.username.includes(user_name.value))
+      videoList = await filterVideos(videoList)
+      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+      filteredSortedVideos.value = videoList
+    }
+    else if(group_name.value){
+      videoList = videoList.filter(video => video.groupName.includes(group_name.value))
+      videoList = await filterVideos(videoList)
+      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+      filteredSortedVideos.value = videoList
+    }
+    else{
+      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+      console.log(videoList)
+      let nameList = getNames(videoList, viewType.value.value)
+      for(let i = 0; i < nameList.length; i++){
+        if(showUsers.value){
+          users.value[i] = videoList.filter((video) => {
+            let index = video.username.indexOf(nameList[i])
+            return index === 0 && video.username.length === nameList[i].length
+          })
+        }
+        if(showGroups.value){
+          groups.value[i] = videoList.filter((video) => {
+            let index = video.groupName.indexOf(nameList[i])
+            return index === 0 && video.groupName.length === nameList[i].length
+          })
+        }
+      }
+    }
+  }
+  //Regular filter and sort videoList if no folders
+  else{
+    videoList = await filterVideos(videoList)
+    videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+    filteredSortedVideos.value = videoList
+  }
+  resultsLoading.value = false
+  return videoList    
+}
+
+function changeView(){
+  if(viewType.value){
+    //Reset values and hides/unhides elements
+    switch(viewType.value.value){
         case 'groupName':
-          folderGroupsShown.value = true
-          showUsers.value = false
           showGroups.value = true
-          groups.value = []
+          if(currentViewType.value.value != 'groupName'){
+            folderGroupsShown.value = true
+            showUsers.value = false
+            user_name.value = ''
+            groups.value = []
+          }
+          else if(!folderGroupsShown.value){
+            backToFoldersBtn.value = true
+          }
           break
         case 'username':
-          folderGroupsShown.value = true
           showUsers.value = true
-          showGroups.value = false
-          users.value = []
+          if(currentViewType.value.value != 'username'){
+            folderGroupsShown.value = true
+            showGroups.value = false
+            group_name.value = ''
+            users.value = []
+          }
+          else if(!folderGroupsShown.value){
+            backToFoldersBtn.value = true
+          }
           break
         default:
           folderGroupsShown.value = false
           showUsers.value = false
           showGroups.value = false
+          user_name.value = ''
+          group_name.value = ''
     }
-
-    if(showUsers.value || showGroups.value){
-      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
-      //Separates videos by user/group name
-      let nameList = getNames(videoList, sortType.value.value)
-      for(let i = 0; i < nameList.length; i++){
-        groups.value[i] = videoList.filter((video) => video.groupName.toLowerCase().includes(nameList[i]))
-        users.value[i] = videoList.filter((video) => video.username.toLowerCase().includes(nameList[i]))
-      }
-    }
-    else{
-      // filter videos
-      videoList = await filterVideos(videoList)
-      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
-      filteredSortedVideos.value = videoList
-    }
+    currentViewType.value = viewType.value
+    //console.log("user: ", user_name.value)
+    //console.log("group: ", group_name.value)
   }
-  resultsLoading.value = false
-  return videoList
 }
 
-function getNames(videoList, sortTypeVal){
+function getNames(videoList, viewTypeVal){
   let vids = []
   for(let i = 0; i < videoList.length; i++){
-      if(sortTypeVal == 'groupName' && !vids.includes(videoList[i].groupName)){
+      if(viewTypeVal === 'groupName' && vids.indexOf(videoList[i].groupName) === -1){
         vids.push(videoList[i].groupName)
       }
-      else if(sortTypeVal == 'username' && !vids.includes(videoList[i].username)){
+      else if(viewTypeVal === 'username' && vids.indexOf(videoList[i].username) === -1){
         vids.push(videoList[i].username)
       }
   }
   return vids
 }
 
-function showGroupVideoListOnly(chosenGroupVideoList){
-  group_name.value = chosenGroupVideoList.value[0].groupName
-  user_name.value = chosenGroupVideoList.value[0].username
+function showGroupVideoListOnly(chosenGroupVideoList, nameType){
+  switch(nameType){
+    case 'user':
+      user_name.value = chosenGroupVideoList.value[0].username
+      break
+    case 'group':
+      group_name.value = chosenGroupVideoList.value[0].groupName
+      break
+    
+  }
   folderGroupsShown.value = false
   backToFoldersBtn.value = true
   filteredSortedVideos.value = chosenGroupVideoList.value
@@ -340,6 +421,9 @@ function showGroupVideoListOnly(chosenGroupVideoList){
 function toggleBackToFolderGroups(){
   backToFoldersBtn.value = false
   folderGroupsShown.value = true
+  user_name.value = ''
+  group_name.value = ''
+  getFilteredAndSortedVideoList()
 }
 
 function sortVideoList(videoList, sortType = 'created', reversed = false) {
@@ -544,7 +628,11 @@ ul {
   max-width: 300px;
 }
 .nav--sort-by {
-  max-width: 150px;
+  max-width: 200px;
+}
+
+.nav--view-by {
+  max-width: 200px;
 }
 
 .copyable {
