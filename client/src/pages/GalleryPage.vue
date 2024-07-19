@@ -192,6 +192,8 @@
               v-for="video in filteredSortedVideos"
               :key="video.frame_no ? `${video.id}-${video.frame_no}` : video.id"
               :name="video.name"
+              :username="video.username"
+              :groupName="video.groupName"
               :video-id="video.id"
               :metadata="video.metadata"
               :frameNo="video.frame_no"
@@ -228,12 +230,12 @@ const orderByViews = ref([
   { text: 'Group Name', value: 'groupName' },
 ])
 const orderByOptions = ref([
-  { text: 'Created', value: 'created' },
-  { text: 'Updated', value: 'updated' },
-  { text: 'File Size', value: 'size' },
   { text: 'Title', value: 'title' },
   { text: 'User Name', value: 'username' },
   { text: 'Group Name', value: 'groupName' },
+  { text: 'Created', value: 'created' },
+  { text: 'Updated', value: 'updated' },
+  { text: 'File Size', value: 'size' },
 ])
 const viewType = ref({ text: 'All Cards', value: 'allCards' })
 const currentViewType = ref({ text: 'All Cards', value: 'allCards' })

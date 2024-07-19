@@ -8,13 +8,34 @@
       "
     >
       <v-img
+        v-if="!showVideoDetalis"
         :src="`/video/${props.videoId}/preview/`"
         class="align-end"
         gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,1)"
         height="200"
         cover
+        @mouseover="hoverVideoDetails"
       >
         <v-card-title class="text-white">{{ props.name }}</v-card-title>
+      </v-img>
+
+      <v-img
+        v-else
+        :src="`/video/${props.videoId}/preview/`"
+        class="align-end"
+        gradient="to bottom, rgba(0,0,0,.7), rgba(0,0,0,1)"
+        height="200"
+        cover
+        @mouseleave="hideVideoDetails"
+      >
+        <v-card-text class="text-white">
+          Title: {{ props.name }}<br>
+          User name: {{ props.username }}<br>
+          Group name: {{ props.groupName }}<br>
+          Created: {{ props.metadata.created }}<br>
+          Updated: {{ props.metadata.updated }}<br>
+          File size: {{ props.metadata.size }}<br>
+        </v-card-text>
       </v-img>
     </router-link>
 
@@ -95,6 +116,14 @@ const props = defineProps({
     required: true,
     type: String,
   },
+  username: {
+    required: true,
+    type: String,
+  },
+  groupName: {
+    required: true,
+    type: String,
+  },
   videoId: {
     required: true,
     type: String,
@@ -113,6 +142,15 @@ const emit = defineEmits(['delete', 'rename'])
 const shareText = ref('Share')
 const renameDialog = ref(false)
 const newName = ref('')
+const showVideoDetalis = ref(false)
+
+function hoverVideoDetails() {
+  showVideoDetalis.value = true
+}
+
+function hideVideoDetails(){
+  showVideoDetalis.value = false
+}
 
 function shareVideo() {
   navigator.clipboard.writeText(
