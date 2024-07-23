@@ -472,21 +472,11 @@ async def archive__get_download(
 	video_id,
 	user: User = Depends(current_active_user)
 ):
-	'''
-	files = []
-	all_files = os.listdir(os.path.join(VIDEO_DIR, user.api_key, video_id))
-	for f in all_files:
-		files.append(os.path.join(VIDEO_DIR, user.api_key, video_id, f))
-
-	frames = os.listdir(os.path.join(VIDEO_DIR, user.api_key, video_id, 'frames'))
-	for frame in frames:
-		files.append(os.path.join(VIDEO_DIR, user.api_key, video_id, 'frames', frame))	
-	return zipfiles(files)
-	'''
 	""" Retrieve a zipfile of the RAIV archive. """
 	return zipfiles([
 		_get_video_file(video_id, 'video.mp4', user.api_key),
 		_get_video_file(video_id, 'action_map.json', user.api_key),
+		_get_video_file(video_id, 'first_frame.png', user.api_key),
 	])
 
 @app.get('/video/{video_id}/video/')

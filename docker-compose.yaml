@@ -36,6 +36,9 @@ services:
         - action: sync
           path: ./server
           target: /opt/run/server
+        - action: sync
+          path: ./data
+          target: /opt/run/data
   
   postgres:
     container_name: raiv-postgres

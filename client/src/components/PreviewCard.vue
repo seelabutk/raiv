@@ -30,6 +30,7 @@
       >
         <v-card-text class="text-white">
           Title: {{ props.name }}<br>
+          ID: {{ props.videoId }}<br>
           User name: {{ props.username }}<br>
           Group name: {{ props.groupName }}<br>
           Created: {{ props.metadata.created }}<br>
