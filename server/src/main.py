@@ -261,7 +261,7 @@ def _compose_video(video_id, video, api_key):
 
 	# update the metadata
 	video_stat = stat_video(video_id, api_key)
-	_update_metadata(video_id, {
+	action_map = _update_metadata(video_id, {
 		'complete': video.complete,
 		'updated': datetime.now().isoformat(),
 		'size': video_stat.st_size
@@ -423,7 +423,7 @@ def _update_metadata(video_id, data, api_key):
 
 	with open(path, 'w', encoding='utf-8') as file:
 		json.dump(action_map, file)
-
+	return action_map
 
 @app.get('/video/{video_id}/meta/')
 async def metadata__get__detail(

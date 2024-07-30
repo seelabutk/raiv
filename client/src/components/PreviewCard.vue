@@ -35,7 +35,7 @@
           Group name: {{ props.groupName }}<br>
           Created: {{ props.metadata.created }}<br>
           Updated: {{ props.metadata.updated }}<br>
-          File size: {{ props.metadata.size }}<br>
+          File size: {{ humanFileSize(props.metadata.size) }}<br>
         </v-card-text>
       </v-img>
     </router-link>
@@ -110,7 +110,8 @@
 </template>
 
 <script setup>
-import { defineEmits, defineProps, ref } from 'vue'
+import { defineEmits, defineProps, ref, onMounted } from 'vue'
+import { humanFileSize } from '@/utils/HumanFileSize'
 
 const props = defineProps({
   name: {
@@ -144,6 +145,11 @@ const shareText = ref('Share')
 const renameDialog = ref(false)
 const newName = ref('')
 const showVideoDetalis = ref(false)
+
+//Rename text field prefills the current video name
+onMounted(() => {
+  newName.value = props.name
+})
 
 function hoverVideoDetails() {
   showVideoDetalis.value = true

@@ -230,6 +230,7 @@ const orderByViews = ref([
   { text: 'Group Name', value: 'groupName' },
 ])
 const orderByOptions = ref([
+  { text: 'Video ID', value: 'id' },
   { text: 'Title', value: 'title' },
   { text: 'User Name', value: 'username' },
   { text: 'Group Name', value: 'groupName' },
@@ -300,10 +301,6 @@ async function getFilteredAndSortedVideoList() {
   // retreive the proper video list
   let videoList = getVideoList()
 
-  console.log("view: ", viewType.value.value)
-  console.log("sort: ", sortType.value.value)
-  console.log("current: ", currentViewType.value.value)
-
   //Determines which user/group folders to show or just PreviewCards
   changeView()
 
@@ -323,7 +320,6 @@ async function getFilteredAndSortedVideoList() {
     }
     else{
       videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
-      console.log(videoList)
       let nameList = getNames(videoList, viewType.value.value)
       for(let i = 0; i < nameList.length; i++){
         if(showUsers.value){

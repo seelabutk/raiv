@@ -12,6 +12,8 @@ export function getSortFunction(sortType) {
       return sortByUsername
     case 'groupName':
       return sortByGroupName
+    case 'id':
+      return sortByVideoId
     default:
       return sortByCreated
   }
@@ -73,6 +75,18 @@ export function sortByUsername(a, b) {
 export function sortByGroupName(a, b) {
   a = a.groupName.toLowerCase()
   b = b.groupName.toLowerCase()
+  if (a < b) {
+    return 1
+  }
+  if (a > b) {
+    return -1
+  }
+  return 0
+}
+
+export function sortByVideoId(a, b) {
+  a = a.metadata.id
+  b = b.metadata.id
   if (a < b) {
     return 1
   }
