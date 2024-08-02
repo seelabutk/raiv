@@ -39,6 +39,8 @@ from .util import (
 	stat_video
 )
 from .vector_db import (
+	populate_image_vec_db,
+	populate_text_vec_db,
 	query_image_vec_db,
 	query_text_vec_db,
 	add_videos_to_vec_db,
@@ -122,11 +124,10 @@ get_user_db_context = contextlib.asynccontextmanager(get_user_db)
 # get the embedder model and populate the db (if any videos exist)
 IMAGE_VEC_COLLECTION_NAME = "raiv-image"
 TEXT_VEC_COLLECTION_NAME = "raiv-text"
-# populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
-# populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
+populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
+populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
 
 # get the spacy nlp model
-#nlp = spacy.load("en_core_web_sm")
 nlp = spacy.load('en_core_web_sm')
 
 @app.on_event("startup")
@@ -514,12 +515,13 @@ async def video__get__detail(video_id, range: str = Header(None), user: User = D
 
 
 @app.post('/search/image/')
-async def video_reverse_image_search(query: Query):
+async def video_reverse_image_search(query: Query, user: User = Depends(current_active_user)):
 	frame_data = b64decode(query.image.split(',')[1])
 	image = image_from_bin(frame_data)
 	results = query_image_vec_db(
 		VIDEO_DIR,
 		image,
+		user.api_key,
 		n_results=query.nResults,
 		collection_name=IMAGE_VEC_COLLECTION_NAME
 	)
@@ -527,10 +529,11 @@ async def video_reverse_image_search(query: Query):
 
 
 @app.post('/search/text/')
-async def video_text_search(query: Query):
+async def video_text_search(query: Query, user: User = Depends(current_active_user)):
 	results = query_text_vec_db(
 		VIDEO_DIR,
 		query.text,
+		user.api_key,
 		n_results=query.nResults,
 		collection_name=TEXT_VEC_COLLECTION_NAME
 	)

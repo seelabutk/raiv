@@ -383,8 +383,6 @@ function changeView(){
           group_name.value = ''
     }
     currentViewType.value = viewType.value
-    //console.log("user: ", user_name.value)
-    //console.log("group: ", group_name.value)
   }
 }
 
@@ -455,9 +453,9 @@ async function filterVideos(videoList) {
 
 async function semanticSearch(videoList) {
   // filter by semantic search
-  const nResults = 4
+  const nResults = 20
   const text = searchQuery.value.toLowerCase()
-  const body = JSON.stringify({ text, nResults: nResults })
+  const body = JSON.stringify({ text, nResults: nResults})
   const res = await fetch('/search/text/', {
     method: 'POST',
     headers: {
@@ -465,23 +463,35 @@ async function semanticSearch(videoList) {
     },
     body,
   }).then((res) => res.json())
+  console.log(res)
+
+  const filteredMetadatas = res.metadatas[0].filter((video, index) => {
+    return res.documents[0][index] && res.documents[0][index].trim() !== '';
+  });
+
   // Filter results
-  const results = res.metadatas[0].map((video) => {
+  const results = filteredMetadatas.map((video) => {
     const v = videoList.find((v) => v.id === video.video_id)
     return {
       id: v.id,
       name: v.name,
+      username: v.username,
+      groupName: v.groupName,
       metadata: v.metadata,
       frame_no: video.frame_no,
     }
   })
+  console.log(results)
   return results
 }
 
 function textSearch(videoList) {
   // filter by text search
   return videoList.filter((video) =>
-    video.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    video.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    video.groupName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    video.username.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    video.id.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 }
 
@@ -515,7 +525,7 @@ async function imageSearch() {
   imageSearchFile.value = []
 
   // Build query
-  const nResults = 4
+  const nResults = 20
   const body = JSON.stringify({ image, nResults: nResults })
   const res = await fetch('/search/image/', {
     method: 'POST',
@@ -524,6 +534,7 @@ async function imageSearch() {
     },
     body,
   }).then((res) => res.json())
+  console.log(res)
 
   // Filter results
   imageSearchResults.value = res.metadatas[0].map((video) => {
@@ -531,10 +542,13 @@ async function imageSearch() {
     return {
       id: v.id,
       name: v.name,
+      username: v.username,
+      groupName: v.groupName,
       metadata: v.metadata,
       frame_no: video.frame_no,
     }
   })
+  console.log(imageSearchResults.value)
   getFilteredAndSortedVideoList()
 }
 

@@ -28,7 +28,7 @@ export default class BaseAction {
         : []
     this.scrollPosition =
       document.documentElement.scrollTop || document.body.scrollTop
-    this.waitTime = 0 // milliseconds before capture occurs, cannot be below 500ms in Chrome
+    this.waitTime = 1000 // milliseconds before capture occurs, cannot be below 500ms in Chrome
     this.timeout = 1000 // timeout for the action to complete, in milliseconds
     this.capturedImageSize = [0, 0] // [width, height] of the captured iamge
     this.canvasRanges = [1, 1] // the number of rows and columns to treate a canvas as when repeating an Action over it
@@ -88,16 +88,39 @@ export default class BaseAction {
   _openConfirmCapture(resolve) {
     const captureElement = document.querySelector('.confirm-capture-dialog')
     captureElement.show()
-
     const confirmButton = captureElement.querySelector('.confirm-btn')
-    confirmButton.addEventListener(
-      'click',
-      () => {
-        resolve()
-        captureElement.close()
-      },
-      { once: true }
-    )
+    const closeConfirmCapture = () => {
+      resolve();
+      document.removeEventListener('keydown', detectKeyDown);
+      captureElement.close()
+    }
+
+    let cKeyPressed = false
+    let spacebarPressed = false
+    let keyTimeout = null
+    const detectKeyDown = (event) => {
+      if(event.key === 'c' || event.keyCode === 67){
+        cKeyPressed = true
+      }      
+      if(event.key === ' ' || event.keyCode === 32){
+        event.preventDefault()
+        spacebarPressed = true
+      }
+
+      if(cKeyPressed && spacebarPressed){
+        closeConfirmCapture()
+      }
+      else{
+        clearTimeout(keyTimeout)
+        keyTimeout = setTimeout(resetKeyStates, 500)
+      }
+    }
+    const resetKeyStates = () => {
+      cKeyPressed = false
+      spacebarPressed = false
+    }
+    confirmButton.addEventListener('click', closeConfirmCapture, { once: true })
+    document.addEventListener('keydown', detectKeyDown)
   }
 
   _takeAction() {
@@ -110,6 +133,11 @@ export default class BaseAction {
 
   _revertActionPostChildren() {
     // This is a stub method that should be overridden by subclasses
+  }
+
+  //Noscript elements usually leave behind their HTML code written on the page
+  filterOutElements(node) {
+    return node.tagName !== 'NOSCRIPT';
   }
 
   async _captureCanvas(port) {
@@ -127,7 +155,7 @@ export default class BaseAction {
     if(getComputedStyle(document.body).backgroundColor === 'rgba(0, 0, 0, 0)'){
       document.body.style.backgroundColor = 'white';
     }
-    const canvas = await domtoimage.toCanvas(document.body)
+    const canvas = await domtoimage.toCanvas(document.body, { filter: this.filterOutElements.bind(this) })
     this.capturedImageSize = [canvas.width, canvas.height]
     port.postMessage({
       scrollOffset: 0,
