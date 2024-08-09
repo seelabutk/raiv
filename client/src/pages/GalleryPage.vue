@@ -453,7 +453,7 @@ async function filterVideos(videoList) {
 
 async function semanticSearch(videoList) {
   // filter by semantic search
-  const nResults = 20
+  const nResults = 12
   const text = searchQuery.value.toLowerCase()
   const body = JSON.stringify({ text, nResults: nResults})
   const res = await fetch('/search/text/', {

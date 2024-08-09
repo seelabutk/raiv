@@ -39,7 +39,9 @@ def get_vec_db(video_dir, collection_name="raiv"):
 		name=collection_name,
 		metadata={
 			"hnsw:space": "cosine",
-			"hnsw:M": 50 #resolve the contigous 2D array runtime error
+			"hnsw:M": 50,					#The maximum number of connections per node in the graph.
+			"hnsw:search_ef": 150,			#The size of the dynamic list for the nearest neighbors during the search process.
+			"hnsw:construction_ef": 250 	#The size of the dynamic list for the nearest neighbors during the graph construction.
 		}
 	)
 	return collection
@@ -131,12 +133,13 @@ def add_text_to_vec_db(video_dir, video_dirs, video_fns, collection_name="raiv")
 def query_text_vec_db(video_dir, query_text, api_key, collection_name="raiv", n_results=2):
 	# get the collection
 	collection = get_vec_db(video_dir, collection_name)
-
 	# query the collection
 	results = collection.query(
 		query_texts=query_text,
 		n_results=n_results,
 		where={"api_key": api_key}
+		#where={"$and": [{"api_key": api_key}, {"video_id": ""}]}
+
 	)
 	return results
 
