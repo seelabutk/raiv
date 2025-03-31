@@ -516,6 +516,7 @@ async def video__get__detail(video_id, range: str = Header(None), user: User = D
 
 @app.post('/search/image/')
 async def video_reverse_image_search(query: Query, user: User = Depends(current_active_user)):
+	populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
 	frame_data = b64decode(query.image.split(',')[1])
 	image = image_from_bin(frame_data)
 	results = query_image_vec_db(
@@ -530,6 +531,7 @@ async def video_reverse_image_search(query: Query, user: User = Depends(current_
 
 @app.post('/search/text/')
 async def video_text_search(query: Query, user: User = Depends(current_active_user)):
+	populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
 	results = query_text_vec_db(
 		VIDEO_DIR,
 		query.text,
