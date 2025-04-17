@@ -159,6 +159,28 @@
             </label>
           </div>
 
+          <div class="visibility-toggle" v-if="settingsShown">
+            <label>
+              Visibility
+              <div class="toggle-container">
+                <button 
+                  :class="['toggle-btn', props.store.isPublic.value ? 'active' : 'inactive']" 
+                  @click="toggleVisibility(true)"
+                >
+                  Public
+                </button>
+                <button 
+                  :class="['toggle-btn', !props.store.isPublic.value ? 'active' : 'inactive']" 
+                  @click="toggleVisibility(false)"
+                >
+                  Private
+                </button>
+              </div>
+            </label>
+          </div>
+
+         
+
           <!-- <div class="upload-action-map" v-if="settingsShown">
             <input type="file" ref="fileInput" @change="handleFileUpload">
             <button @click="confirmFileUpload">Upload Action Map</button>
@@ -240,6 +262,11 @@ const recordPauseTooltipText = computed(() =>
 
 function toggleSettings() {
   settingsShown.value = !settingsShown.value
+}
+
+function toggleVisibility(value) {
+  props.store.set('isPublic', value)
+  console.log(`Visibility set to: ${props.store.isPublic.value ? 'Public' : 'Private'}`)
 }
 
 function onClick(event) {
@@ -438,7 +465,8 @@ function capture() {
     props.store.apiKey.value,
     props.store.videoName.value,
     props.store.username.value,
-    props.store.groupName.value
+    props.store.groupName.value,
+    props.store.isPublic.value
   )
 }
 
@@ -545,5 +573,36 @@ input {
 
 .settings-btn {
   cursor: pointer;
+}
+
+/* New styles for the visibility toggle */
+.toggle-container {
+  display: inline-flex;
+  margin-left: 0.5em;
+}
+
+.toggle-btn {
+  font-size: 0.9em;
+  margin: 0;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  color: black;
+}
+
+.toggle-btn.active {
+  background-color: #007bff;
+  border-color: #0056b3;
+}
+
+.toggle-btn.inactive {
+  background-color: #e0e0e0;
+  color: #666;
+  border-color: #ccc;
+}
+
+.visibility-toggle {
+  display: flex;
+  align-items: center;
 }
 </style>

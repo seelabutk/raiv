@@ -434,7 +434,7 @@ export default class ActionMap {
     this.reset()
   }
 
-  async capture(controls, serverLocation, apiKey, videoName, username, groupName) {
+  async capture(controls, serverLocation, apiKey, videoName, username, groupName, isPublic) {
     this._prepareStyles(serverLocation)
     this._prepareActions(this.root)
     this._preparePositions(this.root, 0)
@@ -446,6 +446,7 @@ export default class ActionMap {
       videoName,
       username,
       groupName,
+      isPublic,
       actionMap: this._getActionMap(),
     })
 

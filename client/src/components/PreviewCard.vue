@@ -33,6 +33,7 @@
           ID: {{ props.videoId }}<br>
           User name: {{ props.username }}<br>
           Group name: {{ props.groupName }}<br>
+          Is Public: {{ props.isPublic }}<br>
           Created: {{ props.metadata.created }}<br>
           Updated: {{ props.metadata.updated }}<br>
           File size: {{ humanFileSize(props.metadata.size) }}<br>
@@ -49,9 +50,10 @@
       </span>
       <v-spacer />
 
-      <v-tooltip text="Rename" location="bottom">
-        <template v-slot:activator="{ props }">
-          <v-btn icon v-bind="props" size="small">
+      <!-- Only show rename button if user is owner -->
+      <v-tooltip v-if="props.isOwner" text="Rename" location="bottom">
+        <template v-slot:activator="{ props: tooltipProps }">
+          <v-btn icon v-bind="tooltipProps" size="small">
             <v-icon>mdi-rename</v-icon>
             <v-dialog v-model="renameDialog" activator="parent" width="400px">
               <v-card>
@@ -73,9 +75,9 @@
       </v-tooltip>
 
       <v-tooltip :text="shareText" location="bottom">
-        <template v-slot:activator="{ props }">
+        <template v-slot:activator="{ props: tooltipProps }">
           <v-btn
-            v-bind="props"
+            v-bind="tooltipProps"
             icon="mdi-share-variant"
             size="small"
             @click="shareVideo"
@@ -84,9 +86,9 @@
       </v-tooltip>
 
       <v-tooltip text="Download" location="bottom">
-        <template v-slot:activator="{ props }">
+        <template v-slot:activator="{ props: tooltipProps }">
           <v-btn
-            v-bind="props"
+            v-bind="tooltipProps"
             icon="mdi-download"
             size="small"
             @click="downloadVideo"
@@ -94,19 +96,35 @@
         </template>
       </v-tooltip>
 
-      <v-tooltip text="Delete" location="bottom">
-        <template v-slot:activator="{ props }">
+      <!-- Only show delete button if user is owner -->
+      <v-tooltip v-if="props.isOwner" text="Delete" location="bottom">
+        <template v-slot:activator="{ props: tooltipProps }">
           <v-btn
-            v-bind="props"
+            v-bind="tooltipProps"
             color="red"
             icon="mdi-delete"
             size="small"
-            @click="deleteVideo"
+            @click="openDeleteDialog"
           />
         </template>
       </v-tooltip>
     </v-card-actions>
   </v-card>
+  
+  <!-- Delete confirmation dialog -->
+  <v-dialog v-model="deleteDialog" max-width="400">
+    <v-card>
+      <v-card-title class="text-h5">Delete Video</v-card-title>
+      <v-card-text>
+        Are you sure you want to delete "{{ props.name }}"? This action cannot be undone.
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="blue-darken-1" variant="text" @click="deleteDialog = false">Cancel</v-btn>
+        <v-btn color="red" variant="text" @click="confirmDelete">Delete</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
@@ -126,6 +144,10 @@ const props = defineProps({
     required: true,
     type: String,
   },
+  isPublic: {
+    required: true,
+    type: Boolean,
+  },
   videoId: {
     required: true,
     type: String,
@@ -138,11 +160,18 @@ const props = defineProps({
     required: false,
     type: Number,
   },
+  // New prop to determine if current user is the owner
+  isOwner: {
+    required: false,
+    type: Boolean,
+    default: false
+  }
 })
 
 const emit = defineEmits(['delete', 'rename'])
 const shareText = ref('Share')
 const renameDialog = ref(false)
+const deleteDialog = ref(false)
 const newName = ref('')
 const showVideoDetalis = ref(false)
 
@@ -187,7 +216,29 @@ function downloadVideo() {
   window.open(`/video/${props.videoId}/download/`)
 }
 
-function deleteVideo() {
+function openDeleteDialog() {
+  deleteDialog.value = true
+}
+
+function confirmDelete() {
+  fetch(`/video/${props.videoId}/`, {
+    method: 'DELETE',
+  }).then((response) => {
+    if (response.status >= 200 && response.status <= 299) {
+      emit('delete', props.videoId)
+    } else {
+      alert('Failed to delete video. Please try again.')
+    }
+  }).catch(error => {
+    console.error('Error deleting video:', error)
+    alert('An error occurred while trying to delete the video.')
+  }).finally(() => {
+    deleteDialog.value = false
+  })
+}
+
+
+/*function deleteVideo() {
   const apiKey = prompt(
     `To delete "${props.name}", please enter the API key used to generate it.`
   )
@@ -205,5 +256,6 @@ function deleteVideo() {
       alert('Invalid API key.')
     }
   })
-}
+}*/
+
 </script>

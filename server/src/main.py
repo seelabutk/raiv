@@ -349,10 +349,83 @@ async def video__get__list(user: User = Depends(current_active_user)):
 					'name': action_map.get('name', 'Unnamed Video'),
 					'username': action_map.get('username', 'Unnamed User'),
 					'groupName': action_map.get('groupName', 'Unnamed Group'),
+					'isPublic': action_map.get('isPublic', 'n/a'),
+					'isOwner': True,
 					'metadata': action_map.get('metadata', {}),
 				})
+	
+
+	#Time to include to public ones too
+	all_api_dirs = [d for d in os.listdir(VIDEO_DIR) if os.path.isdir(os.path.join(VIDEO_DIR, d))]
+
+	for api_key in all_api_dirs:
+		if api_key == user.api_key or api_key == "embeddings" or api_key == "global_swarm_lock":
+			continue
+		
+		try:
+			api_dir = os.path.join(VIDEO_DIR, api_key)
+			video_list = os.listdir(api_dir)
+
+			for video_id in video_list:
+				path = os.path.join(api_dir, video_id)
+				if os.path.isdir(path) and \
+					not video_id == "embeddings" and \
+					not video_id == "global_swarm_lock":
+
+					with open(
+						os.path.join(path, 'action_map.json'), 'r', encoding='utf-8'
+					) as action_file:
+						action_map = json.load(action_file)
+						if action_map.get('isPublic', False) is True:
+							objects.append({
+								'id': video_id,
+								'name': action_map.get('name', 'Unnamed Video'),
+								'username': action_map.get('username', 'Unnamed User'),
+								'groupName': action_map.get('groupName', 'Unnamed Group'),
+								'isPublic': action_map.get('isPublic', None),
+								'isOwner': False,
+								'metadata': action_map.get('metadata', {}),
+							})
+		except (IOError, json.JSONDecodeError) as e:
+			print(f"Error processing video {video_id} from user {api_key}: {str(e)}")
+			continue
 
 	return objects
+
+
+
+def can_access_video(video_id, api_key):
+	owner_path = os.path.join(VIDEO_DIR, api_key, video_id)
+	
+	#Check to see if your current api key is the owner of the RAIV capture
+	if os.path.exists(owner_path):
+		return True, api_key
+		
+	#If the current user is not the owner, find that creator's api key
+	for api_key in os.listdir(VIDEO_DIR):
+		if not os.path.isdir(os.path.join(VIDEO_DIR, api_key)):
+			continue
+		if api_key == "embeddings" or api_key == "global_swarm_lock":
+			continue
+			
+		video_path = os.path.join(VIDEO_DIR, api_key, video_id)
+		if os.path.isdir(video_path):
+			# Found a video with this ID, check if it's public
+			try:
+				action_map_path = os.path.join(video_path, 'action_map.json')
+				if os.path.exists(action_map_path):
+					with open(action_map_path, 'r', encoding='utf-8') as file:
+						action_map = json.load(file)
+						if action_map.get('isPublic', False) is True:
+							return True, api_key
+			except (IOError, json.JSONDecodeError):
+				continue
+
+	#Video doesn't exist then
+	return False, None
+
+
+
 
 
 @app.delete('/video/{video_id}/')
@@ -372,11 +445,18 @@ async def video__delete(video_id, user: User = Depends(current_active_user)):
 			video_id,
 			collection_name=TEXT_VEC_COLLECTION_NAME
 		)
+	else:
+		raise HTTPException(status_code=403, detail='Permission Denied')
 
 
 def _get_video_file(video_id, filename, api_key):
 	""" Gets the path to a file within a video's directory. """
-	path = os.path.join(VIDEO_DIR, api_key, video_id, filename)
+	can_access, owner_api_key = can_access_video(video_id, api_key)
+	
+	if not can_access:
+		raise HTTPException(status_code=403, detail='Access denied')
+	
+	path = os.path.join(VIDEO_DIR, owner_api_key, video_id, filename)
 
 	if not os.path.exists(path):
 		raise HTTPException(status_code=404, detail='File not found')
@@ -392,20 +472,23 @@ def _update_action_map(video_id, action_map_new, api_key):
 		with open(path, 'r', encoding='utf-8') as file:
 			action_map = json.load(file)
 
-	# preserve metadata
-	metadata = action_map.get('metadata', {})
-	metadata_new = action_map_new.get('metadata', {})
+		# preserve metadata
+		metadata = action_map.get('metadata', {})
+		metadata_new = action_map_new.get('metadata', {})
 
-	# update the action map
-	action_map.update(action_map_new)
+		# update the action map
+		action_map.update(action_map_new)
 
-	# preserve metadata
-	action_map['metadata'] = metadata
-	action_map.get('metadata', {}).update(metadata_new)
+		# preserve metadata
+		action_map['metadata'] = metadata
+		action_map.get('metadata', {}).update(metadata_new)
 
-	with open(path, 'w', encoding='utf-8') as file:
-		json.dump(action_map, file, indent=2)
-	return action_map
+		with open(path, 'w', encoding='utf-8') as file:
+			json.dump(action_map, file, indent=2)
+	
+		return action_map
+	else:
+		raise HTTPException(status_code=403, detail='Access denied')
 
 
 def _update_metadata(video_id, data, api_key):
@@ -445,6 +528,9 @@ async def video__rename(video_id, new_name, user: User = Depends(current_active_
 			action_map_file = json.load(file)
 		action_map_file['name'] = new_name
 		_update_action_map(video_id, action_map_file, user.api_key)
+	else:
+		raise HTTPException(status_code=403, detail='Access denied')
+
 
 @app.get('/video/{video_id}/action-map/')
 async def action_map__get__detail(
@@ -516,7 +602,7 @@ async def video__get__detail(video_id, range: str = Header(None), user: User = D
 
 @app.post('/search/image/')
 async def video_reverse_image_search(query: Query, user: User = Depends(current_active_user)):
-	populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
+	#populate_image_vec_db(VIDEO_DIR, collection_name=IMAGE_VEC_COLLECTION_NAME)
 	frame_data = b64decode(query.image.split(',')[1])
 	image = image_from_bin(frame_data)
 	results = query_image_vec_db(
@@ -531,7 +617,7 @@ async def video_reverse_image_search(query: Query, user: User = Depends(current_
 
 @app.post('/search/text/')
 async def video_text_search(query: Query, user: User = Depends(current_active_user)):
-	populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
+	#populate_text_vec_db(VIDEO_DIR, collection_name=TEXT_VEC_COLLECTION_NAME)
 	results = query_text_vec_db(
 		VIDEO_DIR,
 		query.text,

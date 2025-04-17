@@ -136,6 +136,19 @@
       </v-menu>
     </v-app-bar>
 
+
+
+    <!-- Add this loading overlay -->
+    <div v-if="imageSearchLoading" class="search-loading-overlay">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="64"
+      ></v-progress-circular>
+      <div class="mt-3">Searching...</div>
+    </div>
+
+
     <!--Video Preview Gallery  -->
     <v-main>
       <v-container fluid class="pa-8">
@@ -194,6 +207,8 @@
               :name="video.name"
               :username="video.username"
               :groupName="video.groupName"
+              :isPublic="video.isPublic"
+              :isOwner="video.isOwner" 
               :video-id="video.id"
               :metadata="video.metadata"
               :frameNo="video.frame_no"
@@ -254,6 +269,10 @@ const imageSearchResults = ref([])
 const filteredSortedVideos = ref([])
 const first_name = ref('')
 const api_key = ref('')
+
+const imageSearchLoading = ref(false)
+
+
 watch(viewType, getFilteredAndSortedVideoList)
 watch(sortType, getFilteredAndSortedVideoList)
 watch(searchQuery, getFilteredAndSortedVideoList)
@@ -452,6 +471,7 @@ async function filterVideos(videoList) {
 }
 
 async function semanticSearch(videoList) {
+  imageSearchLoading.value = true
   // filter by semantic search
   const nResults = 12
   const text = searchQuery.value.toLowerCase()
@@ -464,6 +484,7 @@ async function semanticSearch(videoList) {
     body,
   }).then((res) => res.json())
   console.log(res)
+  
 
   const filteredMetadatas = res.metadatas[0].filter((video, index) => {
     return res.documents[0][index] && res.documents[0][index].trim() !== '';
@@ -477,11 +498,13 @@ async function semanticSearch(videoList) {
       name: v.name,
       username: v.username,
       groupName: v.groupName,
+      isPublic: v.isPublic,
       metadata: v.metadata,
       frame_no: video.frame_no,
     }
   })
   console.log(results)
+  imageSearchLoading.value = false
   return results
 }
 
@@ -509,6 +532,8 @@ async function imageSearch() {
   if (imageSearchFile.value.length === 0) {
     return
   }
+
+  imageSearchLoading.value = true
 
   // Get file input and clear the form
   const fileInput = imageSearchFile.value[0]
@@ -544,12 +569,15 @@ async function imageSearch() {
       name: v.name,
       username: v.username,
       groupName: v.groupName,
+      isPublic: v.isPublic,
       metadata: v.metadata,
       frame_no: video.frame_no,
     }
   })
   console.log(imageSearchResults.value)
   getFilteredAndSortedVideoList()
+
+  imageSearchLoading.value = false
 }
 
 function copyApiKey() {
@@ -650,4 +678,20 @@ ul {
 .copyable {
   cursor: pointer;
 }
+
+.search-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+
 </style>

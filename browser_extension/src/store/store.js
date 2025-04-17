@@ -8,6 +8,7 @@ export default class Store {
     this.apiKey = ref('')
     this.username = ref('')
     this.groupName = ref('')
+    this.isPublic = ref(false)
     this.paused = ref(false)
     this.recording = ref(false)
     this.serverAddress = ref('localhost')
@@ -22,6 +23,7 @@ export default class Store {
         this.apiKey,
         this.username,
         this.groupName,
+        this.isPublic,
         this.paused,
         this.recording,
         this.serverAddress,
@@ -55,6 +57,7 @@ export default class Store {
       this.apiKey.value = storageObj.apiKey
       this.username.value = storageObj.username
       this.groupName.value = storageObj.groupName
+      this.isPublic.value = storageObj.isPublic
       this.paused.value = storageObj.paused
       this.recording.value = storageObj.recording
       this.serverAddress.value = storageObj.serverAddress
@@ -80,6 +83,7 @@ export default class Store {
           apiKey: this.apiKey.value,
           username: this.username.value,
           groupName: this.groupName.value,
+          isPublic: this.isPublic.value,
           paused: this.paused.value,
           recording: this.recording.value,
           serverAddress: this.serverAddress.value,
