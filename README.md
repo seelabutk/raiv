@@ -43,7 +43,8 @@ docker compose watch client
 ```
 
 
-### Browser extension setup
+### Below are alternatives to setup RAIV without Docker:
+#### Browser extension setup
 
 ```
 cd browser_extension
@@ -52,7 +53,7 @@ yarn install --frozen-lockfile
 yarn build-watch
 ```
 
-### Recording/playback server setup
+#### Recording/playback server setup
 
 ```
 cd server
@@ -62,7 +63,7 @@ pipenv sync -d
 pipenv run uvicorn src.main:app --reload --port PORT
 ```
 
-### Playback client setup
+#### Playback client setup
 
 ```
 cd client
@@ -71,7 +72,7 @@ yarn install --frozen-lockfile
 yarn build-watch
 ```
 
-### start.sh
+#### start.sh
 
 Alternatively, you can run `start.sh` which should initialize each
 component of the project and run each one in a separate tmux window.
