@@ -23,6 +23,26 @@ interactivity without any of the original source code or data.
 * [Python 3.11](https://www.python.org)
 * [pipenv](https://pipenv.pypa.io/en/latest/)
 
+
+### Docker
+Make sure you are in the same home directory as the docker file before running these commands.
+To build the server and playback client, run:
+```
+docker compose up
+```
+
+To just build a specific component, run:
+```
+docker compose up --build server
+docker compose up --build client
+```
+To watch the docker container in addition to building, run:
+```
+docker compose watch server
+docker compose watch client
+```
+
+
 ### Browser extension setup
 
 ```
