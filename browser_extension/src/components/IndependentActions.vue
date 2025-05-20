@@ -86,6 +86,7 @@ const independentNodeOptions = ref(null)
 const nodeTitle = ref('')
 
 let dialog
+let isOpen = false
 
 const independentActions = computed(() => {
   return props.store.actionMap &&
@@ -161,10 +162,16 @@ function render() {
 
 function open() {
   dialog.show()
+  isOpen = true
+}
+
+function checkIsOpen(){
+  return isOpen
 }
 
 function close() {
   dialog.close()
+  isOpen = false
 }
 
 onMounted(() => {
@@ -172,7 +179,7 @@ onMounted(() => {
   render()
 })
 
-defineExpose({ open, close, render })
+defineExpose({ open, close, render, checkIsOpen })
 </script>
 
 <style scoped>

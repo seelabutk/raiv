@@ -41,7 +41,7 @@
         />
       </div>
       <!-- Title -->
-      <div class="title" data-testid="title">{{ data.label }}</div>
+      <div class="title" data-testid="title">{{ "Action " + data.action.ID }}</div>
       <!-- Outputs-->
       <div
         class="output"

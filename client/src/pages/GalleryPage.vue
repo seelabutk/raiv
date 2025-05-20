@@ -28,9 +28,26 @@
         single-line
       ></v-text-field>
 
+
+      <v-select
+        class="mr-4 nav--view-by"
+        prepend-inner-icon="mdi-eye"
+        variant="solo-filled"
+        v-model="viewType"
+        density="compact"
+        :items="orderByViews"
+        item-value="value"
+        item-title="text"
+        label="View By"
+        hide-details
+        return-object
+        single-line
+      ></v-select>
+
       <!-- Order By Field -->
       <v-select
         class="mr-4 nav--sort-by"
+        prepend-inner-icon="mdi-sort"
         variant="solo-filled"
         v-model="sortType"
         density="compact"
@@ -119,6 +136,19 @@
       </v-menu>
     </v-app-bar>
 
+
+
+    <!-- Add this loading overlay -->
+    <div v-if="imageSearchLoading" class="search-loading-overlay">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="64"
+      ></v-progress-circular>
+      <div class="mt-3">Searching...</div>
+    </div>
+
+
     <!--Video Preview Gallery  -->
     <v-main>
       <v-container fluid class="pa-8">
@@ -137,16 +167,53 @@
           </v-btn>
           <v-divider></v-divider>
         </v-row>
+
+        <v-row v-if="backToFoldersBtn">
+          <v-col cols="12">
+            <h1 v-if="showGroups" class="text-center" style="font-size: 30px;">Group {{ group_name }}</h1> 
+            <h1 v-if="showUsers" class="text-center" style="font-size: 30px;">User {{ user_name }}</h1> 
+            <v-tooltip text="Go Back">
+            <template v-slot:activator="{ props }">
+              <v-btn icon @click="toggleBackToFolderGroups" v-bind="props" color="black">
+                <v-icon>mdi-arrow-left</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
+          </v-col>
+        </v-row>
         <v-row>
-          <ul>
+          <ul v-if="folderGroupsShown && showGroups">
+            <FolderContainer 
+              v-for="videoList in groups"
+              :key="videoList[0].groupName"
+              :name="videoList[0].groupName"
+              :videoList="videoList"
+              @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList, 'group')"
+            ></FolderContainer>
+          </ul>
+          <ul v-else-if="folderGroupsShown && showUsers">
+            <FolderContainer 
+              v-for="videoList in users"
+              :key="videoList[0].username"
+              :name="videoList[0].username"
+              :videoList="videoList"
+              @show="(chosenGroupVideoList) => showGroupVideoListOnly(chosenGroupVideoList, 'user')"
+            ></FolderContainer>
+          </ul>
+          <ul v-else>
             <PreviewCard
               v-for="video in filteredSortedVideos"
               :key="video.frame_no ? `${video.id}-${video.frame_no}` : video.id"
               :name="video.name"
+              :username="video.username"
+              :groupName="video.groupName"
+              :isPublic="video.isPublic"
+              :isOwner="video.isOwner" 
               :video-id="video.id"
               :metadata="video.metadata"
               :frameNo="video.frame_no"
               @delete="deleteCard(video)"
+              @rename="(newName) => renameVideo(video, newName)"
             ></PreviewCard>
           </ul>
         </v-row>
@@ -156,10 +223,11 @@
 </template>
 
 <script setup>
-import Cookies from 'js-cookie'
+// import Cookies from 'js-cookie'
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import PreviewCard from '@/components/PreviewCard'
+import FolderContainer from '@/components/FolderContainer'
 import 'tippy.js/dist/tippy.css'
 import { getSortFunction } from '@/utils/Sorts'
 
@@ -171,18 +239,41 @@ const searchType = ref(false)
 const searchQuery = ref('')
 const searchDialog = ref(false)
 const resultsLoading = ref(false)
+const orderByViews = ref([
+  { text: 'All Cards', value: 'allCards' },
+  { text: 'User Name', value: 'username' },
+  { text: 'Group Name', value: 'groupName' },
+])
 const orderByOptions = ref([
+  { text: 'Video ID', value: 'id' },
+  { text: 'Title', value: 'title' },
+  { text: 'User Name', value: 'username' },
+  { text: 'Group Name', value: 'groupName' },
   { text: 'Created', value: 'created' },
   { text: 'Updated', value: 'updated' },
   { text: 'File Size', value: 'size' },
-  { text: 'Title', value: 'title' },
 ])
+const viewType = ref({ text: 'All Cards', value: 'allCards' })
+const currentViewType = ref({ text: 'All Cards', value: 'allCards' })
 const sortType = ref({ text: 'Created', value: 'created' })
+const folderGroupsShown = ref(false)
+const backToFoldersBtn = ref(false)
+const groups = ref([])
+const group_name = ref('')
+const showGroups = ref(false)
+const users = ref([])
+const user_name = ref('')
+const showUsers = ref(false)
 const imageSearchFile = ref([])
 const imageSearchResults = ref([])
 const filteredSortedVideos = ref([])
 const first_name = ref('')
 const api_key = ref('')
+
+const imageSearchLoading = ref(false)
+
+
+watch(viewType, getFilteredAndSortedVideoList)
 watch(sortType, getFilteredAndSortedVideoList)
 watch(searchQuery, getFilteredAndSortedVideoList)
 watch(searchType, getFilteredAndSortedVideoList)
@@ -196,6 +287,21 @@ function deleteCard(video) {
 
   getFilteredAndSortedVideoList()
 }
+
+function renameVideo(video, newName){
+  video.name = newName
+  fetch(`/video/${video.id}/action-map/${newName}/`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      apiKey: api_key.value,
+      newName: newName,
+    }),
+  })
+}
+
 function toggleSortDirection() {
   sortReversed.value = !sortReversed.value
   getFilteredAndSortedVideoList()
@@ -210,20 +316,129 @@ function getVideoList() {
 
 async function getFilteredAndSortedVideoList() {
   resultsLoading.value = true
+  backToFoldersBtn.value = false
   // retreive the proper video list
   let videoList = getVideoList()
 
-  // filter videos
-  videoList = await filterVideos(videoList)
+  //Determines which user/group folders to show or just PreviewCards
+  changeView()
 
-  // sort videos
-  if (sortType.value) {
-    videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+  //Sort and filter videos based on pre-existing list or new compiled list
+  if(showUsers.value || showGroups.value){
+    if(user_name.value){
+      videoList = videoList.filter(video => video.username.includes(user_name.value))
+      videoList = await filterVideos(videoList)
+      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+      filteredSortedVideos.value = videoList
+    }
+    else if(group_name.value){
+      videoList = videoList.filter(video => video.groupName.includes(group_name.value))
+      videoList = await filterVideos(videoList)
+      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+      filteredSortedVideos.value = videoList
+    }
+    else{
+      videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+      let nameList = getNames(videoList, viewType.value.value)
+      for(let i = 0; i < nameList.length; i++){
+        if(showUsers.value){
+          users.value[i] = videoList.filter((video) => {
+            let index = video.username.indexOf(nameList[i])
+            return index === 0 && video.username.length === nameList[i].length
+          })
+        }
+        if(showGroups.value){
+          groups.value[i] = videoList.filter((video) => {
+            let index = video.groupName.indexOf(nameList[i])
+            return index === 0 && video.groupName.length === nameList[i].length
+          })
+        }
+      }
+    }
   }
-  filteredSortedVideos.value = videoList
+  //Regular filter and sort videoList if no folders
+  else{
+    videoList = await filterVideos(videoList)
+    videoList = sortVideoList(videoList, sortType.value, sortReversed.value)
+    filteredSortedVideos.value = videoList
+  }
   resultsLoading.value = false
+  return videoList    
+}
 
-  return videoList
+function changeView(){
+  if(viewType.value){
+    //Reset values and hides/unhides elements
+    switch(viewType.value.value){
+        case 'groupName':
+          showGroups.value = true
+          if(currentViewType.value.value != 'groupName'){
+            folderGroupsShown.value = true
+            showUsers.value = false
+            user_name.value = ''
+            groups.value = []
+          }
+          else if(!folderGroupsShown.value){
+            backToFoldersBtn.value = true
+          }
+          break
+        case 'username':
+          showUsers.value = true
+          if(currentViewType.value.value != 'username'){
+            folderGroupsShown.value = true
+            showGroups.value = false
+            group_name.value = ''
+            users.value = []
+          }
+          else if(!folderGroupsShown.value){
+            backToFoldersBtn.value = true
+          }
+          break
+        default:
+          folderGroupsShown.value = false
+          showUsers.value = false
+          showGroups.value = false
+          user_name.value = ''
+          group_name.value = ''
+    }
+    currentViewType.value = viewType.value
+  }
+}
+
+function getNames(videoList, viewTypeVal){
+  let vids = []
+  for(let i = 0; i < videoList.length; i++){
+      if(viewTypeVal === 'groupName' && vids.indexOf(videoList[i].groupName) === -1){
+        vids.push(videoList[i].groupName)
+      }
+      else if(viewTypeVal === 'username' && vids.indexOf(videoList[i].username) === -1){
+        vids.push(videoList[i].username)
+      }
+  }
+  return vids
+}
+
+function showGroupVideoListOnly(chosenGroupVideoList, nameType){
+  switch(nameType){
+    case 'user':
+      user_name.value = chosenGroupVideoList.value[0].username
+      break
+    case 'group':
+      group_name.value = chosenGroupVideoList.value[0].groupName
+      break
+    
+  }
+  folderGroupsShown.value = false
+  backToFoldersBtn.value = true
+  filteredSortedVideos.value = chosenGroupVideoList.value
+}
+
+function toggleBackToFolderGroups(){
+  backToFoldersBtn.value = false
+  folderGroupsShown.value = true
+  user_name.value = ''
+  group_name.value = ''
+  getFilteredAndSortedVideoList()
 }
 
 function sortVideoList(videoList, sortType = 'created', reversed = false) {
@@ -256,10 +471,11 @@ async function filterVideos(videoList) {
 }
 
 async function semanticSearch(videoList) {
+  imageSearchLoading.value = true
   // filter by semantic search
-  const nResults = 4
+  const nResults = 12
   const text = searchQuery.value.toLowerCase()
-  const body = JSON.stringify({ text, nResults: nResults })
+  const body = JSON.stringify({ text, nResults: nResults})
   const res = await fetch('/search/text/', {
     method: 'POST',
     headers: {
@@ -267,23 +483,38 @@ async function semanticSearch(videoList) {
     },
     body,
   }).then((res) => res.json())
+  console.log(res)
+  
+
+  const filteredMetadatas = res.metadatas[0].filter((video, index) => {
+    return res.documents[0][index] && res.documents[0][index].trim() !== '';
+  });
+
   // Filter results
-  const results = res.metadatas[0].map((video) => {
+  const results = filteredMetadatas.map((video) => {
     const v = videoList.find((v) => v.id === video.video_id)
     return {
       id: v.id,
       name: v.name,
+      username: v.username,
+      groupName: v.groupName,
+      isPublic: v.isPublic,
       metadata: v.metadata,
       frame_no: video.frame_no,
     }
   })
+  console.log(results)
+  imageSearchLoading.value = false
   return results
 }
 
 function textSearch(videoList) {
   // filter by text search
   return videoList.filter((video) =>
-    video.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    video.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    video.groupName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    video.username.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    video.id.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 }
 
@@ -302,6 +533,8 @@ async function imageSearch() {
     return
   }
 
+  imageSearchLoading.value = true
+
   // Get file input and clear the form
   const fileInput = imageSearchFile.value[0]
   function getBase64(file) {
@@ -317,7 +550,7 @@ async function imageSearch() {
   imageSearchFile.value = []
 
   // Build query
-  const nResults = 4
+  const nResults = 20
   const body = JSON.stringify({ image, nResults: nResults })
   const res = await fetch('/search/image/', {
     method: 'POST',
@@ -326,6 +559,7 @@ async function imageSearch() {
     },
     body,
   }).then((res) => res.json())
+  console.log(res)
 
   // Filter results
   imageSearchResults.value = res.metadatas[0].map((video) => {
@@ -333,36 +567,40 @@ async function imageSearch() {
     return {
       id: v.id,
       name: v.name,
+      username: v.username,
+      groupName: v.groupName,
+      isPublic: v.isPublic,
       metadata: v.metadata,
       frame_no: video.frame_no,
     }
   })
+  console.log(imageSearchResults.value)
   getFilteredAndSortedVideoList()
+
+  imageSearchLoading.value = false
 }
 
 function copyApiKey() {
-  if(navigator.clipboard) {
+  if (navigator.clipboard) {
     navigator.clipboard.writeText(api_key.value)
   } else {
     // no https workaround
-    const textArea = document.createElement("textarea");
-    textArea.style = "opacity: 0;";
-    document.body.appendChild(textArea);
-    textArea.value = api_key.value;
-    textArea.select();
+    const textArea = document.createElement('textarea')
+    textArea.style = 'opacity: 0;'
+    document.body.appendChild(textArea)
+    textArea.value = api_key.value
+    textArea.select()
     try {
-      document.execCommand('copy');
+      document.execCommand('copy')
     } catch (err) {
-      console.error('Unable to copy to clipboard', err);
+      console.error('Unable to copy to clipboard', err)
     }
-    document.body.removeChild(textArea);
+    document.body.removeChild(textArea)
   }
 }
 
 function logout() {
-  fetch('/auth/jwt/logout',
-    { method: 'POST' }
-  );
+  fetch('/auth/jwt/logout', { method: 'POST' })
   router.go()
 }
 
@@ -430,10 +668,30 @@ ul {
   max-width: 300px;
 }
 .nav--sort-by {
-  max-width: 150px;
+  max-width: 200px;
+}
+
+.nav--view-by {
+  max-width: 200px;
 }
 
 .copyable {
   cursor: pointer;
 }
+
+.search-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+
 </style>

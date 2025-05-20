@@ -19,6 +19,9 @@ chrome.runtime.onConnect.addListener((port) => {
             actionMap: Object.assign(
               {
                 name: message.videoName,
+                username: message.username,
+                groupName: message.groupName,
+                isPublic: message.isPublic
               },
               message.actionMap
             ),

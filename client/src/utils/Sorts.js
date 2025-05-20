@@ -1,5 +1,5 @@
 export function getSortFunction(sortType) {
-  switch (sortType) {
+  switch (sortType.value) {
     case 'created':
       return sortByCreated
     case 'updated':
@@ -8,6 +8,12 @@ export function getSortFunction(sortType) {
       return sortBySize
     case 'title':
       return sortByTitle
+    case 'username':
+      return sortByUsername
+    case 'groupName':
+      return sortByGroupName
+    case 'id':
+      return sortByVideoId
     default:
       return sortByCreated
   }
@@ -46,6 +52,41 @@ export function sortBySize(a, b) {
 export function sortByTitle(a, b) {
   a = a.name.toLowerCase()
   b = b.name.toLowerCase()
+  if (a < b) {
+    return 1
+  }
+  if (a > b) {
+    return -1
+  }
+  return 0
+}
+export function sortByUsername(a, b) {
+  a = a.username.toLowerCase()
+  b = b.username.toLowerCase()
+  if (a < b) {
+    return 1
+  }
+  if (a > b) {
+    return -1
+  }
+  return 0
+}
+
+export function sortByGroupName(a, b) {
+  a = a.groupName.toLowerCase()
+  b = b.groupName.toLowerCase()
+  if (a < b) {
+    return 1
+  }
+  if (a > b) {
+    return -1
+  }
+  return 0
+}
+
+export function sortByVideoId(a, b) {
+  a = a.metadata.id
+  b = b.metadata.id
   if (a < b) {
     return 1
   }

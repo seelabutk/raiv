@@ -65,7 +65,7 @@ pipenv run uvicorn src.main:app --reload --port PORT
 ### Playback client setup
 
 ```
-cd server/client
+cd client
 yarn install --frozen-lockfile
 
 yarn build-watch

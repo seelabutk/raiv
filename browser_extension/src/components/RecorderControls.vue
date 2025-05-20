@@ -14,7 +14,7 @@
       v-show="isModalShown"
     >
       <div id="controls-handle" class="handle">
-        <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip" />
+        <font-awesome-icon class="fa-fw fa-lg" icon="fa-solid fa-grip"/>
         <span>RAIV Recorder</span>
 
         <div class="spacer"></div>
@@ -131,6 +131,61 @@
             </label>
           </div>
 
+          <div class="user-name" v-if="settingsShown">
+            <label>
+              User Name
+              <input
+                class="name-input"
+                type="text"
+                :value="props.store.username.value"
+                @input="
+                  (event) => props.store.set('username', event.target.value)
+                "
+              />
+            </label>
+          </div>
+
+          <div class="group-name" v-if="settingsShown">
+            <label>
+              Group Name
+              <input
+                class="name-input"
+                type="text"
+                :value="props.store.groupName.value"
+                @input="
+                  (event) => props.store.set('groupName', event.target.value)
+                "
+              />
+            </label>
+          </div>
+
+          <div class="visibility-toggle" v-if="settingsShown">
+            <label>
+              Visibility
+              <div class="toggle-container">
+                <button 
+                  :class="['toggle-btn', props.store.isPublic.value ? 'active' : 'inactive']" 
+                  @click="toggleVisibility(true)"
+                >
+                  Public
+                </button>
+                <button 
+                  :class="['toggle-btn', !props.store.isPublic.value ? 'active' : 'inactive']" 
+                  @click="toggleVisibility(false)"
+                >
+                  Private
+                </button>
+              </div>
+            </label>
+          </div>
+
+         
+
+          <!-- <div class="upload-action-map" v-if="settingsShown">
+            <input type="file" ref="fileInput" @change="handleFileUpload">
+            <button @click="confirmFileUpload">Upload Action Map</button>
+          </div> -->
+          
           <div>
             <label class="input">
               Video Name
@@ -209,6 +264,11 @@ function toggleSettings() {
   settingsShown.value = !settingsShown.value
 }
 
+function toggleVisibility(value) {
+  props.store.set('isPublic', value)
+  console.log(`Visibility set to: ${props.store.isPublic.value ? 'Public' : 'Private'}`)
+}
+
 function onClick(event) {
   const raivWidget = document.querySelector('#raiv')
   const target = event.target
@@ -262,6 +322,7 @@ function recordToggle() {
 
     document.addEventListener('click', onClick, true)
     document.addEventListener('mousemove', throttledMousemove, true)
+    //document.addEventListener('keydown', detectKeyDown, true)
   } else {
     stopRecording()
   }
@@ -270,6 +331,7 @@ function recordToggle() {
 function stopRecording() {
   document.removeEventListener('click', onClick, true)
   document.removeEventListener('mousemove', throttledMousemove, true)
+  //document.removeEventListener('keydown', detectKeyDown, true)
 
   if (hoveredElement !== undefined) {
     hoveredElement.classList.remove('raiv-hovered')
@@ -278,17 +340,89 @@ function stopRecording() {
   props.store.set('recording', false)
 }
 
+/*function detectKeyDown(){
+  let cKeyPressed = false
+  let rKeyPressed = false
+  let spacebarPressed = false
+  let keyTimeout = null
+
+  const keyDownHandler = (event) => {
+    if(event.key === 'c'){
+      cKeyPressed = true
+    }    
+    if(event.key === 'r'){
+      rKeyPressed = true
+    }    
+    if(event.key === ' ' || event.keyCode === 32){
+      event.preventDefault()  
+      spacebarPressed = true
+    }
+
+    if(((cKeyPressed && !rKeyPressed) || (!cKeyPressed && rKeyPressed)) && spacebarPressed){
+      if(rKeyPressed){
+        stopRecording()
+      }
+      else if(cKeyPressed){
+        capture()
+      }
+    }
+    else{
+      clearTimeout(keyTimeout)
+      keyTimeout = setTimeout(resetKeyStates, 500)
+    }
+  }
+  const resetKeyStates = () => {
+    cKeyPressed = false
+    rKeyPressed = false
+    spacebarPressed = false
+  }
+  return keyDownHandler
+}*/
+
 function resetRecording() {
   stopRecording()
   props.store.reset()
 }
 
+/*let jsonActionMap
+function handleFileUpload(){
+  const file = event.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      jsonActionMap = JSON.parse(e.target.result);
+      console.log('Action map:', jsonActionMap);
+    };
+    reader.readAsText(file);
+  }
+}
+
+function confirmFileUpload(){
+  console.log('Upload button clicked');
+  //Remember to do some security checking 
+  props.store.actionMap.value.uploadActionMap(jsonActionMap)
+  actionMapComponent.value.render()
+  console.log("finished render")
+  props.store.save()
+
+}*/
+
 function openActionMap() {
-  actionMapComponent.value.open()
+  if(actionMapComponent.value.checkIsOpen()){
+    actionMapComponent.value.close()
+  }
+  else{
+    actionMapComponent.value.open()
+  }
 }
 
 function openIndependentActions() {
-  independentActionsComponent.value.open()
+  if(independentActionsComponent.value.checkIsOpen()){
+    independentActionsComponent.value.close()
+  }
+  else{
+    independentActionsComponent.value.open()
+  }
 }
 
 function toggleControlPanel(value) {
@@ -329,7 +463,10 @@ function capture() {
     controls,
     serverLocation,
     props.store.apiKey.value,
-    props.store.videoName.value
+    props.store.videoName.value,
+    props.store.username.value,
+    props.store.groupName.value,
+    props.store.isPublic.value
   )
 }
 
@@ -346,12 +483,19 @@ button {
   font-size: 1.5em;
   outline: 0;
   padding: 0 0.25em;
+  color: black;
+}
+
+input {
+  text-align: left;
+  color: black;
 }
 
 .control-container {
   background: white;
   border: 1px solid black;
   border-radius: 4px;
+  color: black;
 }
 
 .controls-handle {
@@ -404,11 +548,21 @@ button {
 
 .capture-settings label {
   margin-right: 0.25em;
+  position: static;
+}
+
+.capture-settings p {
+  color: black;
 }
 
 .api-key-input {
   width: 20em !important;
 }
+
+.name-input {
+  width: 10em;
+}
+
 .recording-dialogs {
   display: flex;
   flex-direction: row;
@@ -419,5 +573,36 @@ button {
 
 .settings-btn {
   cursor: pointer;
+}
+
+/* New styles for the visibility toggle */
+.toggle-container {
+  display: inline-flex;
+  margin-left: 0.5em;
+}
+
+.toggle-btn {
+  font-size: 0.9em;
+  margin: 0;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  color: black;
+}
+
+.toggle-btn.active {
+  background-color: #007bff;
+  border-color: #0056b3;
+}
+
+.toggle-btn.inactive {
+  background-color: #e0e0e0;
+  color: #666;
+  border-color: #ccc;
+}
+
+.visibility-toggle {
+  display: flex;
+  align-items: center;
 }
 </style>

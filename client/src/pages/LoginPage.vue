@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import Cookies from 'js-cookie'
+// import Cookies from 'js-cookie'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 

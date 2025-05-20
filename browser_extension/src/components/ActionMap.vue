@@ -57,6 +57,7 @@ const options = {
 
 let dialog
 let dragging = false
+let isOpen = false
 const dragOrigin = {
   x: 0,
   y: 0,
@@ -67,10 +68,16 @@ let newViewBox = viewBox
 
 function open() {
   dialog.show()
+  isOpen = true
+}
+
+function checkIsOpen(){
+  return isOpen
 }
 
 function close() {
   dialog.close()
+  isOpen = false
 }
 
 function label(d) {
@@ -272,7 +279,7 @@ onMounted(() => {
 // Object passed in. Even if reactivity can be properly established, this
 // render likely needs to be throttled to avoid many render calls when
 // performing an action that affects many nodes.
-defineExpose({ open, close, render })
+defineExpose({ open, close, render, checkIsOpen })
 </script>
 
 <style scoped>

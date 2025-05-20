@@ -20,7 +20,7 @@
       <table class="form-table">
         <tr>
           <td class="form-label">
-            <label for="wait-time">Wait time (s) before capture</label>
+            <label for="wait-time" style="left: 49% !important;">Wait time (s) before capture</label>
           </td>
           <td class="form-divider"></td>
 
@@ -41,7 +41,7 @@
         </tr>
         <tr>
           <td class="form-label">
-            <label for="manual-capture">Manual capture</label>
+            <label for="manual-capture" style="left: 49% !important;">Manual capture</label>
           </td>
           <td class="form-divider"></td>
 
@@ -51,12 +51,13 @@
               :checked="props.action.manualCapture"
               type="checkbox"
               @input="toggleManualCapture"
+              style="left: 49% !important;"
             />
           </td>
         </tr>
         <tr>
           <td class="form-label">
-            <label for="disables-siblings">Disables siblings</label>
+            <label for="disables-siblings" style="left: 49% !important;">Disables siblings</label>
           </td>
           <td class="form-divider"></td>
 
@@ -66,6 +67,7 @@
               :checked="props.action.disableSiblings"
               type="checkbox"
               @input="toggleDisableSiblings"
+              style="left: 49% !important;"
             />
           </td>
         </tr>
@@ -111,7 +113,6 @@
                 type="number"
                 @change="
                   (event) => {
-                    console.log('here?')
                     props.action.set('sliderSteps', event.target.value)
                     props.store.save()
                   }
@@ -292,10 +293,23 @@ defineExpose({ open, isChangeParent })
 
 input {
   max-width: 10em !important;
+  max-height: 2em;
+  appearance: auto !important;
+  visibility: visible !important;
 }
 
 h3 {
   color: black;
+}
+
+td {
+  border: none !important;
+  border-top: none !important;
+}
+
+label {
+  margin-top: 0em !important;
+  position: static !important;
 }
 
 .contents {
@@ -306,6 +320,7 @@ h3 {
   width: 100%;
   margin-top: 1em;
   table-layout: fixed;
+  border: none !important;
 }
 .form-label {
   text-align: right;

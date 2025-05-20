@@ -67,28 +67,31 @@ def encode_video(video_id, action_map, api_key):
 	max_wh = get_max_wh(action_map)
 
 	os.chdir(path)
-	subprocess.run([
-		'ffmpeg',
-		'-y',
-		'-framerate',
-		'1',
-		'-i',
-		'%05d.png',
-		'-c:v',
-		'libx264',
-		'-vf',
-		f'pad=ceil({max_wh[0]}/2)*2:ceil({max_wh[1]}/2)*2',
-		# 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
-		'-profile:v',
-		'high',
-		'-crf',
-		'20',
-		'-pix_fmt',
-		'yuv420p',
-		'../video.mp4'
-	], check=True)
-	os.chdir(cwd)
+	try: 
+		subprocess.run([
+			'ffmpeg',
+			'-y',
+			'-framerate',
+			'1',
+			'-i',
+			'%05d.png',
+			'-c:v',
+			'libx264',
+			'-vf',
+			f'pad=ceil({max_wh[0]}/2)*2:ceil({max_wh[1]}/2)*2',
+			# 'pad=ceil(iw/2)*2:ceil(ih/2)*2',
+			'-profile:v',
+			'high',
+			'-crf',
+			'20',
+			'-pix_fmt',
+			'yuv420p',
+			'../video.mp4'
+		], check=True)
+	except subprocess.CalledProcessError as e:
+		print(e)
 
+	os.chdir(cwd)
 	# rmtree(path)
 
 
