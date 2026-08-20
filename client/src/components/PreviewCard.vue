@@ -28,7 +28,7 @@
         cover
         @mouseleave="hideVideoDetails"
       >
-        <v-card-text class="text-white">
+        <v-card-text class="text-white" style="font-size: 12px;">
           Title: {{ props.name }}<br>
           ID: {{ props.videoId }}<br>
           User name: {{ props.username }}<br>
